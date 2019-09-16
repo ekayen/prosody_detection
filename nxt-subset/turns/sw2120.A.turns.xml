@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+<nite:turn_stream nite:id="sw2120-A-turns" xmlns:nite="http://nite.sourceforge.net/">
+   <turn nite:id="t2" nite:start="1.76375" nite:end="10.781625" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s2)..id(s3)"/>
+   </turn>
+   <turn nite:id="t4" nite:start="10.781625" nite:end="20.949" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s5)..id(s7)"/>
+   </turn>
+   <turn nite:id="t6" nite:start="20.949" nite:end="39.77625" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s9)..id(s12)"/>
+   </turn>
+   <turn nite:id="t8" nite:start="40.54975" nite:end="46.525625" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s14)..id(s15)"/>
+   </turn>
+   <turn nite:id="t10" nite:start="53.28175" nite:end="53.771375" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s20)"/>
+   </turn>
+   <turn nite:id="t12" nite:start="55.3195" nite:end="55.733" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s21)"/>
+   </turn>
+   <turn nite:id="t14" nite:start="64.3775" nite:end="64.886" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s24)"/>
+   </turn>
+   <turn nite:id="t16" nite:start="65.515" nite:end="68.10175" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s26)"/>
+   </turn>
+   <turn nite:id="t18" nite:start="73.025375" nite:end="73.213875" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s30)"/>
+   </turn>
+   <turn nite:id="t20" nite:start="75.475375" nite:end="77.50975" approx="false">
+      <nite:child href="sw2120.A.syntax.xml#id(s32)..id(s34)"/>
+   </turn>
+</nite:turn_stream>

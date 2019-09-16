@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+<nite:turn_stream nite:id="sw4101-A-turns" xmlns:nite="http://nite.sourceforge.net/">
+   <turn nite:id="t1" nite:start="6.467" nite:end="6.707" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s1)"/>
+   </turn>
+   <turn nite:id="t3" nite:start="22.967125" nite:end="86.442" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s9)..id(s20)"/>
+   </turn>
+   <turn nite:id="t5" nite:start="88.553125" nite:end="88.903125" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s22)"/>
+   </turn>
+   <turn nite:id="t7" nite:start="89.035875" nite:end="92.733625" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s24)"/>
+   </turn>
+   <turn nite:id="t9" nite:start="93.894875" nite:end="109.878375" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s26)..id(s27)"/>
+   </turn>
+   <turn nite:id="t11" nite:start="110.766875" nite:end="131.839125" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s29)..id(s31)"/>
+   </turn>
+   <turn nite:id="t13" nite:start="142.762125" nite:end="146.772875" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s36)"/>
+   </turn>
+   <turn nite:id="t15" nite:start="147.47825" nite:end="178.67625" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s38)..id(s41)"/>
+   </turn>
+   <turn nite:id="t17" nite:start="213.392625" nite:end="229.147625" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s49)..id(s53)"/>
+   </turn>
+   <turn nite:id="t19" nite:start="230.338625" nite:end="265.504625" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s55)..id(s57)"/>
+   </turn>
+   <turn nite:id="t21" nite:start="269.274375" nite:end="296.033625" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s59)..id(s64)"/>
+   </turn>
+   <turn nite:id="t23" nite:start="296.651" nite:end="298.1665" approx="false">
+      <nite:child href="sw4101.A.syntax.xml#id(s66)"/>
+   </turn>
+</nite:turn_stream>

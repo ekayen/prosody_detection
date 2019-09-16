@@ -1,0 +1,1608 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- =========================================================================== -->
+<!-- NXT METADATA FOR THE PUBLIC RELEASE OF THE SWITCHBOARD CORPUS IN NXT FORMAT -->
+<!-- =========================================================================== -->
+<!--
+     JEAN CARLETTA                            4 FEB 03
+     
+     This file uses metadata syntax that requires NXT v1.4 or higher.
+
+     Last update: 25 Aug 09.  See CVS for change log.
+
+     -->
+<!-- ============================================================ -->
+<corpus description="Annotated Switchboard - Treebank3" id="switchboard"
+		links="ltxml1" type="standoff">
+
+  <!-- ============================================================ -->
+  <!-- RESERVED ATTRIBUTES AND ELEMENTS -->
+  <!-- ============================================================ -->
+  <reserved-attributes>
+    <identifier name="nite:id"/>
+    <starttime name="nite:start"/>
+    <endtime name="nite:end"/>
+    <!-- expose the agent as a "who" attribute -->
+    <agentname name="who"/>
+  </reserved-attributes>
+  <reserved-elements>
+    <pointername name="nite:pointer"/>
+    <child name="nite:child"/>
+  </reserved-elements>
+
+
+  <!-- ============================================================ -->
+  <!-- DOCUMENTS -->
+  <!-- ============================================================ -->
+  <!-- No external documents people can refer to   -->
+  <documents/>
+
+
+  <!-- ============================================================ -->
+  <!-- OBSERVATION VARIABLES -->
+  <!-- ============================================================ -->
+  <!-- No observation variables -->
+  <observation-variables/>
+
+
+  <!-- ============================================================ -->
+  <!-- AGENTS -->
+  <!-- ============================================================ -->
+  <!-- There are two agents in the dialogues -->
+  <agents>
+	<agent name="A"/>
+	<agent name="B"/>
+  </agents>
+  
+
+  <!-- ============================================================ -->
+  <!-- SIGNALS -->
+  <!-- ============================================================ -->
+  <!-- Set the path here if you wish to access signals
+       from a different location.  Paths can be relative or absolute.
+       Interaction signals cover more than one agent; agent signals
+	   cover a single agent.  The filename for signal is the observation
+       name followed by the agent name (for agent signals) followed
+       by the signal name followed by the extension, with dot separation.
+  -->
+  <signals path="../signals/">
+    <interaction-signals>
+      <!--  mono audio wav files -->
+      <signal extension="wav" format="WAV" name="mix" type="audio"/>
+    </interaction-signals>
+  </signals>
+
+
+  <!-- ============================================================ -->
+  <!--  CORPUS RESOURCES                                    -->
+  <!-- ============================================================ -->
+  <!-- We define the speakers and discussion topics as objects in corpus resources.
+       They can be used by multiple dialogues and so are not attached to 
+       specific observations. -->
+  <corpus-resources path="corpus-resources">
+	  <corpus-resource-file name="dialogues" path="dialogues">
+		<featural-layer name="dialogue-layer">
+              	  <code name="dialogue">
+                        <attribute name="swbdid" value-type="string"/>
+			<pointer number="1" role="topic" target="topic-layer"/>
+			<pointer number="1" role="A" target="speaker-layer"/>
+			<pointer number="1" role="B" target="speaker-layer"/>
+		  </code>
+		</featural-layer>
+	  </corpus-resource-file>
+    <!-- ============================================================ -->
+    <!-- SPEAKERS -->
+    <corpus-resource-file name="speakers" description="">
+        <structural-layer name="speaker-layer">
+      <code name="speaker">
+        <attribute name="sex" value-type="enumerated">
+          <value>M</value>
+          <value>F</value>
+        </attribute>
+        <attribute name="dob" value-type="number"/>
+        <attribute name="dialect" value-type="string"/>
+      </code>
+	</structural-layer>
+    </corpus-resource-file>
+    <!-- ============================================================ -->
+    <!-- TOPICS -->
+    <corpus-resource-file name="topics" description="">
+        <structural-layer name="topic-layer">
+      <code name="topic">
+        <attribute name="abstract" value-type="string"/>
+        <attribute name="question" value-type="string"/>
+      </code>
+	</structural-layer>
+    </corpus-resource-file>
+  </corpus-resources>
+  
+  
+  <!-- ============================================================ -->
+  <!-- CODINGS -->
+  <!-- ============================================================ -->
+  <codings>
+
+    <!-- ============================================================ -->
+    <!-- AGENT CODINGS -->
+    <!-- ============================================================ -->
+	<agent-codings>
+
+	  <!-- ============================================================ -->
+	  <!-- THE PHONETIC TREE -->
+	  <!-- ============================================================ -->
+	  <!-- PHONWORDS -->
+	  <coding-file name="phonwords" path="phonwords">
+		<structural-layer name="phonword-layer" draws-children-from="syllable-layer">
+		  <code name="phonword">
+			<attribute name="msstate" value-type="string"/>
+			<attribute name="orth" value-type="string"/>
+                        <!-- A sequence of syllable stresses -->
+			<attribute name="stressProfile" value-type="string"/>
+		  </code>
+		  <code name="noise">
+			<attribute name="orth" value-type="string"/>
+			<attribute name="phonRange" value-type="string"/>
+		  </code>
+		  <code name="laughter">
+			<attribute name="orth" value-type="string"/>
+			<attribute name="phonRange" value-type="string"/>
+		  </code>
+        </structural-layer>
+      </coding-file>
+      <!-- ============================================================ -->
+	  <!-- SYLLABLES -->
+	  <coding-file name="syllables" path="syllables">
+		<structural-layer name="syllable-layer" draws-children-from="phoneme-layer">
+		  <code name="syllable">
+			<attribute name="msstate" value-type="string"/>
+			<attribute name="stress" value-type="enumerated">
+			  <value>n</value> <!-- none -->
+			  <value>p</value> <!-- primary -->
+			  <value>s</value> <!-- secondary -->
+			</attribute>
+		  </code>
+        </structural-layer>
+      </coding-file>
+      <!-- ============================================================ -->
+	  <!-- PHONEMES -->
+	  <coding-file name="phones" path="phones">
+		<structural-layer name="phoneme-layer">
+		  <code name="ph" text-content="true">
+			<attribute name="msstate" value-type="string"/>
+			<attribute name="MSUerror" value-type="enumerated">
+			  <value>zero-length-phoneme</value>
+			  <value>negative-length</value>
+			  <!-- do we need to record zero-length word too?? -->
+			  <!--<value>zero-length-word</value>-->
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+
+
+	  <!-- ============================================================ -->
+	  <!-- ============================================================ -->
+	  <!-- THE PROSODIC TREE -->
+	  <!-- ============================================================ -->
+	  <!-- ============================================================ -->
+	  <!-- prosody notes -->
+	  <coding-file name="prosnotes" path="prosnotes">
+		<structural-layer name="prosnote-layer">
+		  <code name="prosnote">
+			<attribute name="time" value-type="string"/>
+			<attribute name="comment" value-type="string"/>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+	  <!-- accents -->
+	  <coding-file name="accents" path="accent">
+		<structural-layer name="accent-layer">
+		  <code name="accent">
+			<pointer number="1" role="at" target="phonword-layer"/>
+			<attribute name="strength" value-type="enumerated">
+			  <value>weak</value> 
+			  <value>full</value> 
+			</attribute>
+			<attribute name="type" value-type="enumerated">
+			  <value>nuclear</value>
+			  <value>pre-nuclear</value>
+			  <value>plain</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+	  <!-- phrases -->
+	  <coding-file name="phrases" path="phrase">
+		<structural-layer name="phrase-layer" draws-children-from="phonword-layer">
+		  <code name="phrase">
+			<attribute name="type" value-type="enumerated">
+			  <value>disfluent</value>
+			  <value>backchannel</value>
+			  <value>minor</value>
+			  <value>major</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+	  <!-- breaks -->
+	  <coding-file name="breaks" path="breaks">
+		<structural-layer name="break-layer">
+		  <code name="break">
+			<pointer number="1" role="at"  target="phonword-layer"/>
+			<!-- an optional attribute which provides the original exact time of the break, from UW files;
+				 other times are derived from the closest word end -->
+			<attribute name="UWtime" value-type="string"/>
+			<attribute name="phraseTone" value-type="enumerated">
+			  <value>H</value>
+			  <value>L</value>
+			  <value>X</value>
+			  <value>?</value>
+			  <value>!H</value>
+			  <value>H?</value>
+			  <value>L?</value>
+			  <value>X?</value>
+			</attribute>
+			<attribute name="boundaryTone" value-type="enumerated">
+			  <value>H</value>
+			  <value>L</value>
+			  <value>X</value>
+			  <value>?</value>
+			  <value>!H</value>
+			  <value>H?</value>
+			  <value>L?</value>
+			  <value>X?</value>
+			</attribute>
+			<attribute name="index" value-type="enumerated">
+              <value>0</value>
+			  <value>1-</value>
+			  <value>1</value>
+			  <value>1p</value>
+			  <value>2-</value>
+			  <value>2</value>
+			  <value>2p</value>
+			  <value>3-</value>
+			  <value>3</value>
+			  <value>3p</value>
+			  <value>4-</value>
+			  <value>4</value>
+			  <value>X</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+
+	  <!-- ============================================================ -->
+	  <!-- DISFLUENCY  -->
+	  <coding-file name="disfluency" path="disfluency">
+		<structural-layer name="disf-top" recursive-draws-children-from="terminal-layer">
+		  <code name="disfluency"/>
+		  <code name="reparandum"/>		   
+		  <code name="repair"/>
+		</structural-layer>
+	  </coding-file>
+
+	  <!-- ============================================================ -->
+	  <!-- MOVEMENTS -->
+	  <coding-file name="movement" path="movement">
+		<featural-layer name="movement-layer">
+		  <code name="movement">
+			<attribute name="label" value-type="enumerated">
+			  <value>*</value>
+			  <value>*EXP*</value>
+			  <value>*ICH*</value>
+			  <value>*T*</value>
+			</attribute>
+			<!-- NOTE: Source should point to an nt and target to either 
+                 a trace or a syntactic nt, but there isn't a way to say that -->
+			<pointer number="1" role="source" target="syntax-top"/>
+			<pointer number="*" role="target" target="terminal-layer"/>
+			<pointer number="*" role="target-syn" target="syntax-top"/>
+		  </code>
+		</featural-layer>
+	  </coding-file>
+
+	  <!-- ============================================================ -->
+      <!-- SYNTAX -->
+	  <coding-file name="syntax" path="syntax">
+		<structural-layer name="syntax-top" draws-children-from="constituents">
+		  <code name="parse">
+			<attribute name="note" value-type="string"/>
+		  </code>
+		</structural-layer>
+		<structural-layer name="constituents" recursive-draws-children-from="terminal-layer">
+		  <code name="nt">
+			<attribute name="wc" value-type="number"/>
+			<attribute name="cat" value-type="enumerated">
+			  <value>ADVP</value>
+			  <value>CONJP</value>
+			  <value>EDITED</value>
+			  <value>FRAG</value>
+			  <value>INTJ</value>
+			  <value>IP</value>
+			  <value>NAC</value>
+			  <value>NP</value>
+			  <value>PP</value>
+			  <value>PRN</value>
+			  <value>PRT</value>
+			  <value>QP</value>
+			  <value>RM</value>
+			  <value>RS</value>
+			  <value>S</value>
+			  <value>SBAR</value>
+			  <value>SBARQ</value>
+			  <value>SQ</value>
+			  <value>TYPO</value>
+			  <value>UCP</value>
+			  <value>VP</value>
+			  <value>WHADVP</value>
+			  <value>WHNP</value>
+			  <value>X</value>
+			</attribute>
+			<attribute name="subcat" value-type="enumerated">
+			  <value>ADV</value>
+			  <value>DIR</value>
+			  <value>IMP</value>
+			  <value>LOC</value>
+			  <value>LOC,PRD</value>
+			  <value>MNR</value>
+			  <value>NOM</value>
+			  <value>NOM,TPC</value>
+			  <value>PRD</value>
+			  <value>PRD,PRP</value>
+			  <value>PRD,UNF</value>
+			  <value>PRP</value>
+			  <value>PRP,TPC</value>
+			  <value>PUT</value>
+			  <value>SBJ</value>
+			  <value>SBJ,UNF</value>
+			  <value>SEZ</value>
+			  <value>TMP</value>
+			  <value>TMP,UNF</value>
+			  <value>TPC</value>
+			  <value>UNF</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+
+	  <!-- ============================================================ -->
+      <!-- TERMINALS -->
+	  <coding-file name="terminals" path="terminals">
+		<structural-layer name="terminal-layer">
+		  <code name="sil"/>
+		  <!-- Poor design:  words have orth attributes, but puncs 
+		       have textual content. -->
+		  <code name="punc" text-content="true"/>
+		  <code name="trace">
+		    <attribute name="type" value-type="string"/>
+		  </code>
+		  <code name="word">
+			<!-- Words contain a pointer to counterparts in the phonetic tree -->
+			<pointer number="1" role="phon" target="phonword-layer"/>
+			<!-- The utterance id in the MSState transcript -->
+			<attribute name="msstate" value-type="string"/>
+			<attribute name="msstateID" value-type="string"/>
+			<!-- The transcribed word in the MSState transcript -->
+			<attribute name="swWord" value-type="string"/>
+			<!-- Orthography is now stored in an attribute -->
+			<attribute name="orth" value-type="string"/>
+			
+			<attribute name="pos" value-type="enumerated">
+			  <value>BES</value>
+			  <value>CC</value>
+			  <value>CD</value>
+			  <value>DT</value>
+			  <value>EX</value>
+			  <value>IN</value>
+			  <value>JJ</value>
+			  <value>JJR</value>
+			  <value>JJS</value>
+			  <value>MD</value>
+			  <value>NN</value>
+			  <value>NNP</value>
+			  <value>NNPS</value>
+			  <value>NNS</value>
+			  <value>PDT</value>
+			  <value>POS</value>
+			  <value>PRP</value>
+			  <value>PRP$</value>
+			  <value>RB</value>
+			  <value>RBR</value>
+			  <value>RP</value>
+			  <value>TO</value>
+			  <value>UH</value>
+			  <value>VB</value>
+			  <value>VBD</value>
+			  <value>VBG</value>
+			  <value>VBN</value>
+			  <value>VBP</value>
+			  <value>VBZ</value>
+			  <value>WDT</value>
+			  <value>WP</value>
+			  <value>WRB</value>
+			  <value>XX</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+
+
+	  <!-- ============================================================ -->
+      <!-- DIALOGUE ACTS -->
+	  <coding-file name="dialAct" path="dialAct">
+		<structural-layer name="dial" draws-children-from="terminal-layer">
+		  <code name="da">
+			<attribute name="niteType" value-type="enumerated">
+			  <value>abandon</value>
+			  <value>acknowledge</value>
+			  <value>affirm</value>
+			  <value>agree</value>
+			  <value>ans_dispref</value>
+			  <value>answer</value>
+			  <value>apology</value>
+			  <value>apprec</value>
+			  <value>backchannel</value>
+			  <value>backchannel_q</value>
+			  <value>close</value>
+			  <value>commit</value>
+			  <value>completion</value>
+			  <value>decl_q</value>
+			  <value>directive</value>
+			  <value>downplay</value>
+			  <value>excluded</value>
+			  <value>hedge</value>
+			  <value>hold</value>
+			  <value>maybe</value>
+			  <value>neg</value>
+			  <value>no</value>
+			  <value>open</value>
+			  <value>open_q</value>
+			  <value>opinion</value>
+			  <value>or</value>
+			  <value>other</value>
+			  <value>quote</value>
+			  <value>reject</value>
+			  <value>repeat</value>
+			  <value>repeat_q</value>
+			  <value>rhet_q</value>
+			  <value>self_talk</value>
+			  <value>statement</value>
+			  <value>sum</value>
+			  <value>tag_q</value>
+			  <value>thank</value>
+			  <value>third_pty</value>
+			  <value>uninterp</value>
+			  <value>wh_q</value>
+			  <value>yes</value>
+			  <value>yn_decl_q</value>
+			  <value>yn_q</value>
+			</attribute>
+			<attribute name="swbdType" value-type="string">
+			  <value>%-</value>
+			  <value>%</value>
+			  <value>%@</value>
+			  <value>%*</value>
+			  <value>+</value>
+			  <value>+@</value>
+			  <value>+*</value>
+			  <value>^2</value>
+			  <value>^2@</value>
+			  <value>^2*</value>
+			  <value>^2^g</value>
+			  <value>^2^t</value>
+			  <value>aa</value>
+			  <value>aa@</value>
+			  <value>aa*</value>
+			  <value>aa^2</value>
+			  <value>aa^m</value>
+			  <value>aap</value>
+			  <value>aap^r</value>
+			  <value>aa^r</value>
+			  <value>aa^t</value>
+			  <value>ad</value>
+			  <value>ad@</value>
+			  <value>ad*</value>
+			  <value>ad^c</value>
+			  <value>ad(^q)</value>
+			  <value>ad^r</value>
+			  <value>ad^t</value>
+			  <value>am</value>
+			  <value>am^r</value>
+			  <value>ar</value>
+			  <value>ar^m</value>
+			  <value>arp</value>
+			  <value>ar^r</value>
+			  <value>b</value>
+			  <value>b@</value>
+			  <value>b*</value>
+			  <value>b^2</value>
+			  <value>ba</value>
+			  <value>ba@</value>
+			  <value>ba,fe</value>
+			  <value>ba^m</value>
+			  <value>ba^r</value>
+			  <value>bc</value>
+			  <value>bd</value>
+			  <value>bd^r</value>
+			  <value>bf</value>
+			  <value>bf*</value>
+			  <value>bf^2</value>
+			  <value>bf^g</value>
+			  <value>bf^m</value>
+			  <value>bf^r</value>
+			  <value>bf^t</value>
+			  <value>bh</value>
+			  <value>bh@</value>
+			  <value>bh^m</value>
+			  <value>bh^r</value>
+			  <value>bk</value>
+			  <value>bk@</value>
+			  <value>bk^m</value>
+			  <value>bk^r</value>
+			  <value>bk^t</value>
+			  <value>b^m</value>
+			  <value>b^m@</value>
+			  <value>b^m^r</value>
+			  <value>b^m^t</value>
+			  <value>b^r</value>
+			  <value>br</value>
+			  <value>br^m</value>
+			  <value>br^r</value>
+			  <value>by</value>
+			  <value>cc</value>
+			  <value>cc^t</value>
+			  <value>co</value>
+			  <value>co^c</value>
+			  <value>co^t</value>
+			  <value>fa</value>
+			  <value>fa^t</value>
+			  <value>fc</value>
+			  <value>fc^m</value>
+			  <value>fc^r</value>
+			  <value>fc^t</value>
+			  <value>fe</value>
+			  <value>fo</value>
+			  <value>fo^c</value>
+			  <value>fp</value>
+			  <value>fp^m</value>
+			  <value>fp^r</value>
+			  <value>ft</value>
+			  <value>ft^m</value>
+			  <value>ft^t</value>
+			  <value>fw</value>
+			  <value>fx</value>
+			  <value>^g</value>
+			  <value>^h</value>
+			  <value>^h@</value>
+			  <value>h</value>
+			  <value>^h^r</value>
+			  <value>h^r</value>
+			  <value>na</value>
+			  <value>na@</value>
+			  <value>na^m</value>
+			  <value>na^m^t</value>
+			  <value>na^r</value>
+			  <value>na^t</value>
+			  <value>nd</value>
+			  <value>nd^t</value>
+			  <value>ng</value>
+			  <value>ng^m</value>
+			  <value>nn</value>
+			  <value>nn^e</value>
+			  <value>nn^m</value>
+			  <value>nn^r</value>
+			  <value>nn^r^t</value>
+			  <value>nn^t</value>
+			  <value>no</value>
+			  <value>no@</value>
+			  <value>no^r</value>
+			  <value>no^t</value>
+			  <value>ny</value>
+			  <value>ny@</value>
+			  <value>ny^e</value>
+			  <value>ny^m</value>
+			  <value>ny^r</value>
+			  <value>ny^t</value>
+			  <value>o</value>
+			  <value>o@</value>
+			  <value>o*</value>
+			  <value>o^c</value>
+			  <value>oo</value>
+			  <value>o^r</value>
+			  <value>o^t</value>
+			  <value>^q</value>
+			  <value>^q@</value>
+			  <value>^q*</value>
+			  <value>qh</value>
+			  <value>qh@</value>
+			  <value>qh^c</value>
+			  <value>qh^g</value>
+			  <value>qh^h</value>
+			  <value>qh^m</value>
+			  <value>qh^r</value>
+			  <value>qo</value>
+			  <value>qo^d</value>
+			  <value>qo^d^c</value>
+			  <value>qo^r</value>
+			  <value>qo^t</value>
+			  <value>^q^r</value>
+			  <value>qr</value>
+			  <value>qr^d</value>
+			  <value>qr(^q)</value>
+			  <value>qrr</value>
+			  <value>qrr^d</value>
+			  <value>qrr^t</value>
+			  <value>qr^t</value>
+			  <value>&quot;</value>
+			  <value>qw</value>
+			  <value>qw@</value>
+			  <value>qw*</value>
+			  <value>qw^c</value>
+			  <value>qw^d</value>
+			  <value>qw^d^c</value>
+			  <value>qw^d^t</value>
+			  <value>qw^g</value>
+			  <value>qw^h</value>
+			  <value>qw^r</value>
+			  <value>qw^t</value>
+			  <value>qy</value>
+			  <value>qy@</value>
+			  <value>qy*</value>
+			  <value>qy^2</value>
+			  <value>qy^c</value>
+			  <value>qy^c^r</value>
+			  <value>qy^d</value>
+			  <value>qy^d@</value>
+			  <value>qy^d^h</value>
+			  <value>qy^d^m</value>
+			  <value>qy^d(^q)</value>
+			  <value>qy^d^r</value>
+			  <value>qy^d^t</value>
+			  <value>qy^g</value>
+			  <value>qy^g@</value>
+			  <value>qy^g*</value>
+			  <value>qy^g^c</value>
+			  <value>qy^g^r</value>
+			  <value>qy^g^t</value>
+			  <value>qy^h</value>
+			  <value>qy^h@</value>
+			  <value>qy^m</value>
+			  <value>qy(^q)</value>
+			  <value>qy^r</value>
+			  <value>qy^t</value>
+			  <value>sd</value>
+			  <value>sd@</value>
+			  <value>sd*</value>
+			  <value>sd^2</value>
+			  <value>sd^c</value>
+			  <value>sd^e</value>
+			  <value>sd^e@</value>
+			  <value>sd^e^m</value>
+			  <value>sd^e^r</value>
+			  <value>sd^e^t</value>
+			  <value>sd^m</value>
+			  <value>sd^m*</value>
+			  <value>sd(^q)</value>
+			  <value>sd(^q)*</value>
+			  <value>sd(^q)^t</value>
+			  <value>sd^r</value>
+			  <value>sd^t</value>
+			  <value>sv</value>
+			  <value>sv@</value>
+			  <value>sv*</value>
+			  <value>sv^2</value>
+			  <value>sv^c</value>
+			  <value>sv^e</value>
+			  <value>sv^m</value>
+			  <value>sv(^q)</value>
+			  <value>sv(^q)@</value>
+			  <value>sv^r</value>
+			  <value>sv^t</value>
+			  <value>t1</value>
+			  <value>t1^t</value>
+			  <value>t3</value>
+			</attribute>
+			<attribute name="spkr" value-type="enumerated">
+			  <value>A</value>
+			  <value>B</value>
+			</attribute>
+		  </code>
+		</structural-layer> 
+	  </coding-file>
+
+
+	  <!-- ============================================================ -->
+      <!-- MARKABLE -->
+	  <coding-file name="markable" path="markable">
+		<featural-layer name="markables">
+		  <code name="markable">
+			<pointer number="1" role="at" target="constituents"/>
+			<!-- new role at Feb 09 - with lazy loading,  only the named target layer is guaranteed to get loaded, so it isn't safe to have one pointer role drawing from more than one layer.  The intended semantics is that only one of these two roles will be filled.  NXT has no way of enforcing that. -->
+			<pointer number="1" role="terminalat" target="terminal-layer"/>
+			<attribute name="animacy" value-type="enumerated">
+			  <value>human</value>
+			  <value>org</value>
+			  <value>animal</value>
+			  <value>mac</value>
+			  <value>veh</value>
+			  <value>place</value>
+			  <value>time</value>
+			  <value>concrete</value>
+			  <value>nonconc</value>
+			  <value>oanim</value>
+			  <value>mix_an</value>
+			  <value>anim-uncoded</value>
+			</attribute>
+			<attribute name="animconf" value-type="enumerated">
+			  <value>vanim</value>
+			  <value>not-vanim</value>
+			  <value>animconf-uncoded</value>
+			</attribute>
+			<attribute name="anthro" value-type="enumerated">
+			  <value>anthro</value>
+			  <value>not-anthro</value>
+			  <value>anthro-uncoded</value>
+			</attribute>
+			<attribute name="status" value-type="enumerated">
+			  <value>-ap</value> <!-- not applicable -->
+			  <value>-un</value> <!-- not understood -->
+			  <value>old</value> 
+			  <value>med</value>
+			  <value>new</value>
+			  <value>status-uncoded</value>
+			</attribute>
+			<attribute name="statustype" value-type="enumerated">
+			  <value>general</value>
+			  <value>event</value>
+			  <value>ident</value>
+			  <value>bound</value>
+			  <value>none</value>
+			  <value>aggregation</value>
+			  <value>generic</value>
+			  <value>ident_generic</value>
+			  <value>func_value</value>
+			  <value>set</value>
+			  <value>poss</value>
+			  <value>part</value>
+			  <value>situation</value>
+			  <value>instantiation</value>
+			  <value>statustype-unclass</value>
+			  <value>statustype-uncoded</value>
+			</attribute>
+			<!-- an couple of optional attributes allowing descriptive notes to be added by Edinburgh or Stanford -->
+			<attribute name="edin-note" value-type="string"/>
+			<attribute name="stan-note" value-type="string"/>
+		  </code>
+		</featural-layer>
+	  </coding-file>
+
+
+	  <!-- ============================================================ -->
+      <!-- TURNS -->
+	  <coding-file name="turns" path="turns">
+		<structural-layer name="turn-layer" draws-children-from="syntax-top">
+		  <code name="turn">
+			<attribute name="speaker" value-type="enumerated">
+			  <value>A</value>
+			  <value>B</value>
+			</attribute>
+            <!-- Indicates whether the timings are approximated -->
+			<attribute name="approx" value-type="enumerated">
+              <value>true</value>
+			  <value>false</value>
+            </attribute>
+            <!-- Optional attributes which should be present if the times were approximated -->
+			<attribute name="firstKnownStart" value-type="number"/>
+			<attribute name="lastKnownEnd" value-type="number"/>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+
+	</agent-codings>
+
+
+    <!-- ============================================================ -->
+    <!--              INTERACTION CODINGS                             -->
+    <!-- ============================================================ -->
+	<interaction-codings> 
+      <!-- there was previously a dialogues interactioncoding - with one short 
+           file per dialogue giving topic and speaker information.  This 
+	   information is now encoded in a corpus resource. -->
+
+      <!-- ============================================================ -->
+      <!-- ACTIVE -->
+	  <!-- indexing for active sentences -->
+	  <coding-file name="active" path="active">
+		<featural-layer name="active-layer">
+		  <code name="active">
+			<pointer number="1" role="at" target="syntax-top"/>
+		  </code>
+		</featural-layer>
+	  </coding-file>
+
+	<!-- ============================================================ -->
+    <!-- COREFERENCE -->
+	  <coding-file name="coreference" path="coreference">
+		<!-- for coreference, we just want a flat list of links
+			 that we can form chains from later. -->
+                <!-- there was previously preliminary apparatus here for link types, but it has
+		been removed since there's no record of them having been used. -->
+		<featural-layer name="links">
+		  <code name="link">
+			<pointer number="1" role="antecedent" target="markables"/>
+			<pointer number="1" role="referent" target="markables"/>
+		  </code>
+		</featural-layer>
+	  </coding-file>
+
+      <!-- ============================================================ -->
+      <!-- TRIGGER -->
+	  <coding-file name="trigger" path="kontrast">
+		<!-- NOTE: for coreference, we just want a flat list of links that we can form chains from later. -->
+		<featural-layer name="trigger-layer">
+		  <code name="trigger">
+			<pointer number="1" role="trigger" target="kontrast"/>
+			<pointer number="1" role="referent" target="kontrast"/>
+		  </code>
+		</featural-layer>
+	  </coding-file>
+
+      <!-- ============================================================ -->
+      <!-- KONTRAST -->
+	  <coding-file name="kontrast" path="kontrast" >
+		<structural-layer name="kontrast" draws-children-from="terminal-layer">
+		  <code name="kontrast">
+			<attribute name="level" value-type="string"/>
+			<attribute name="type" value-type="enumerated">
+			  <value>noncomp</value>
+			  <value>nonapplic</value>
+			  <value>correction</value>
+			  <value>contrastive</value>
+			  <value>subset</value>
+			  <value>adverbial</value>
+			  <value>answer</value>
+			  <value>other</value>
+			  <value>background</value>
+			  <value>uncoded</value>
+			</attribute>
+		  </code>
+		</structural-layer>
+	  </coding-file>
+      
+    </interaction-codings>
+  </codings>
+  
+  <!-- ============================================================ -->
+  <!-- CALLABLE PROGRAMS  see README.TOOLS.txt for descriptions -->
+  <!-- ============================================================ -->
+  <callable-programs>
+
+    <!-- ============================================================ -->
+
+    <!-- PROGRAM: Switchboard Display.  The display is buggy.
+    <callable-program name="SwitchboardDisplay" description="syntax and markable display">
+      <required-argument name="corpus" type="corpus"/>
+      <required-argument name="observation" type="observation"/>
+      <required-argument name="syntax" default=""/>
+    </callable-program>
+-->
+
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Switchboard Kontrast Coder -->
+    <callable-program name="SwitchboardKontrast" description="kontrast coder">
+      <required-argument name="corpus" type="corpus"/>
+      <required-argument name="observation" type="observation"/>
+    </callable-program>
+    
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Switchboard Animacy Coder  - this is how to invoke in coding mode, but it's buggy. -->
+   <!-- <callable-program name="SwitchboardAnimacy" description="animacy coder">
+      <required-argument name="corpus" type="corpus"/>
+      <required-argument name="observation" type="observation"/>
+	</callable-program>
+   -->
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Switchboard Animacy Checker -->
+    <!-- 7 Jan 07 On some calls, doesn't skip forward/back until bring the transcription window into focus. -->
+	<callable-program name="SwitchboardAnimacy" description="animacy checker">
+	  <required-argument name="corpus" type="corpus"/>
+	  <required-argument name="prefix" default=""/>
+	  <required-argument name="observation" type="observation"/>
+	</callable-program>
+
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Switchboard Information Status Coder - this is how to invoke in coding mode, but it's buggy. -->
+<!--	<callable-program name="SwitchboardInfoStatus" description="information status coder">
+	  <required-argument name="corpus" type="corpus"/>
+	  <required-argument name="observation" type="observation"/>
+	</callable-program>
+-->
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Switchboard Information Status Checker -->
+	<callable-program name="SwitchboardInfoStatus" description="information status checker">
+	  <required-argument name="corpus" type="corpus"/>
+	  <required-argument name="prefix" default=""/>
+	  <required-argument name="observation" type="observation"/>
+	</callable-program>
+       
+    <!-- ============================================================ -->
+    <!-- PROGRAM: Dialogue Act Coder -->
+	<callable-program description="Dialogue Act Coder" name="net.sourceforge.nite.tools.dacoder.DACoder">
+	  <required-argument name="corpus" type="corpus"/>
+	  <required-argument name="observation" type="observation"/>
+	  <required-argument default="swconfig.xml" name="config"/>
+	  <required-argument default="swgui" name="gui-settings"/>
+	  <required-argument default="swcor" name="corpus-settings"/>
+	</callable-program>
+
+    <!-- ============================================================ -->
+   <!-- PROGRAM: NECODER used on SYNTAX.
+         This is incredibly slow to render - but it's an example of how to set up NXT's configurable named entity tool using syntax as the data.
+	<callable-program description="Very Slow Syntax Coder" name="net.sourceforge.nite.tools.necoder.NELinker">
+	  <required-argument name="corpus" type="corpus"/>
+	  <required-argument name="observation" type="observation"/>
+	  <required-argument default="swconfig.xml" name="config"/>
+	  <required-argument default="swgui" name="gui-settings"/>
+	  <required-argument default="swcor" name="corpus-settings"/>
+	</callable-program>
+-->
+
+  </callable-programs>
+
+  
+  <!-- ============================================================ -->
+  <!-- OBSERVATIONS -->
+  <!-- ============================================================ -->
+  <observations>
+	<observation name="sw2005"/>
+	<observation name="sw2008"/>
+	<observation name="sw2010"/>
+	<observation name="sw2012"/>
+	<observation name="sw2015"/>
+	<observation name="sw2018"/>
+	<observation name="sw2020"/>
+	<observation name="sw2022"/>
+	<observation name="sw2024"/>
+	<observation name="sw2027"/>
+	<observation name="sw2028"/>
+	<observation name="sw2032"/>
+	<observation name="sw2035"/>
+	<observation name="sw2039"/>
+	<observation name="sw2041"/>
+	<observation name="sw2051"/>
+	<observation name="sw2053"/>
+	<observation name="sw2060"/>
+	<observation name="sw2061"/>
+	<observation name="sw2062"/>
+	<observation name="sw2065"/>
+	<observation name="sw2067"/>
+	<observation name="sw2072"/>
+	<observation name="sw2073"/>
+	<observation name="sw2078"/>
+	<observation name="sw2079"/>
+	<observation name="sw2092"/>
+	<observation name="sw2093"/>
+	<observation name="sw2094"/>
+	<observation name="sw2095"/>
+	<observation name="sw2102"/>
+	<observation name="sw2104"/>
+	<observation name="sw2105"/>
+	<observation name="sw2107"/>
+	<observation name="sw2109"/>
+	<observation name="sw2111"/>
+	<observation name="sw2113"/>
+	<observation name="sw2120"/>
+	<observation name="sw2121"/>
+	<observation name="sw2124"/>
+	<observation name="sw2130"/>
+	<observation name="sw2131"/>
+	<observation name="sw2137"/>
+	<observation name="sw2139"/>
+	<observation name="sw2145"/>
+	<observation name="sw2151"/>
+	<observation name="sw2154"/>
+	<observation name="sw2157"/>
+	<observation name="sw2160"/>
+	<observation name="sw2163"/>
+	<observation name="sw2171"/>
+	<observation name="sw2177"/>
+	<observation name="sw2184"/>
+	<observation name="sw2187"/>
+	<observation name="sw2220"/>
+	<observation name="sw2226"/>
+	<observation name="sw2229"/>
+<!--    <observation name="sw2231"/> INCOMPLETE (only disfluency, markable, turns) - some are now broken through uptranslation -->
+	<observation name="sw2241"/>
+	<observation name="sw2247"/>
+	<observation name="sw2249"/>
+	<observation name="sw2252"/>
+	<observation name="sw2253"/>
+	<observation name="sw2259"/>
+	<observation name="sw2260"/>
+	<observation name="sw2264"/>
+	<observation name="sw2266"/>
+	<observation name="sw2275"/>
+	<observation name="sw2279"/>
+	<observation name="sw2285"/>
+	<observation name="sw2290"/>
+	<observation name="sw2295"/>
+	<observation name="sw2299"/>
+	<observation name="sw2302"/>
+	<observation name="sw2304"/>
+	<observation name="sw2305"/>
+	<observation name="sw2314"/>
+	<observation name="sw2316"/>
+	<observation name="sw2324"/>
+	<observation name="sw2330"/>
+	<observation name="sw2331"/>
+	<observation name="sw2334"/>
+	<observation name="sw2336"/>
+	<observation name="sw2349"/>
+	<observation name="sw2362"/>
+	<observation name="sw2365"/>
+	<observation name="sw2366"/>
+	<observation name="sw2370"/>
+	<observation name="sw2372"/>
+	<observation name="sw2382"/>
+	<observation name="sw2383"/>
+	<observation name="sw2395"/>
+	<observation name="sw2397"/>
+	<observation name="sw2399"/>
+	<observation name="sw2405"/>
+	<observation name="sw2406"/>
+	<observation name="sw2407"/>
+	<observation name="sw2421"/>
+	<observation name="sw2423"/>
+	<observation name="sw2427"/>
+	<observation name="sw2429"/>
+	<observation name="sw2433"/>
+	<observation name="sw2434"/>
+	<observation name="sw2435"/>
+	<observation name="sw2436"/>
+	<observation name="sw2439"/>
+	<observation name="sw2441"/>
+	<observation name="sw2442"/>
+	<observation name="sw2445"/>
+	<observation name="sw2451"/>
+	<observation name="sw2455"/>
+	<observation name="sw2460"/>
+	<observation name="sw2461"/>
+	<observation name="sw2465"/>
+	<observation name="sw2466"/>
+	<observation name="sw2469"/>
+	<observation name="sw2472"/>
+	<observation name="sw2477"/>
+	<observation name="sw2479"/>
+	<observation name="sw2485"/>
+	<observation name="sw2486"/>
+	<observation name="sw2488"/>
+	<observation name="sw2490"/>
+	<observation name="sw2492"/>
+	<observation name="sw2499"/>
+	<observation name="sw2501"/>
+	<observation name="sw2502"/>
+	<observation name="sw2503"/>
+	<observation name="sw2504"/>
+	<observation name="sw2510"/>
+	<observation name="sw2521"/>
+	<observation name="sw2525"/>
+	<observation name="sw2526"/>
+	<observation name="sw2527"/>
+	<observation name="sw2533"/>
+	<observation name="sw2539"/>
+	<observation name="sw2540"/>
+	<observation name="sw2545"/>
+	<observation name="sw2546"/>
+	<observation name="sw2547"/>
+	<observation name="sw2548"/>
+	<observation name="sw2549"/>
+	<observation name="sw2554"/>
+	<observation name="sw2558"/>
+	<observation name="sw2559"/>
+	<observation name="sw2565"/>
+	<observation name="sw2566"/>
+	<observation name="sw2568"/>
+	<observation name="sw2571"/>
+	<observation name="sw2584"/>
+	<observation name="sw2587"/>
+	<observation name="sw2589"/>
+	<observation name="sw2593"/>
+	<observation name="sw2597"/>
+	<observation name="sw2598"/>
+	<observation name="sw2599"/>
+	<observation name="sw2602"/>
+	<observation name="sw2603"/>
+	<observation name="sw2604"/>
+	<observation name="sw2608"/>
+	<observation name="sw2609"/>
+	<observation name="sw2611"/>
+	<observation name="sw2615"/>
+	<observation name="sw2617"/>
+	<observation name="sw2619"/>
+	<observation name="sw2627"/>
+	<observation name="sw2628"/>
+	<observation name="sw2634"/>
+	<observation name="sw2640"/>
+	<observation name="sw2641"/>
+	<observation name="sw2645"/>
+	<observation name="sw2648"/>
+	<observation name="sw2650"/>
+	<observation name="sw2653"/>
+	<observation name="sw2657"/>
+	<observation name="sw2658"/>
+	<observation name="sw2667"/>
+	<observation name="sw2669"/>
+	<observation name="sw2672"/>
+	<observation name="sw2676"/>
+	<observation name="sw2678"/>
+	<observation name="sw2691"/>
+	<observation name="sw2703"/>
+	<observation name="sw2708"/>
+	<observation name="sw2710"/>
+	<observation name="sw2717"/>
+	<observation name="sw2719"/>
+	<observation name="sw2724"/>
+	<observation name="sw2729"/>
+	<observation name="sw2734"/>
+	<observation name="sw2743"/>
+	<observation name="sw2749"/>
+	<observation name="sw2756"/>
+	<observation name="sw2759"/>
+	<observation name="sw2761"/>
+	<observation name="sw2772"/>
+	<observation name="sw2775"/>
+	<observation name="sw2782"/>
+	<observation name="sw2784"/>
+	<observation name="sw2785"/>
+	<observation name="sw2789"/>
+	<observation name="sw2790"/>
+	<observation name="sw2792"/>
+	<observation name="sw2800"/>
+	<observation name="sw2818"/>
+	<observation name="sw2819"/>
+	<observation name="sw2826"/>
+	<observation name="sw2828"/>
+	<observation name="sw2832"/>
+	<observation name="sw2835"/>
+	<observation name="sw2836"/>
+	<observation name="sw2837"/>
+	<observation name="sw2840"/>
+	<observation name="sw2851"/>
+	<observation name="sw2858"/>
+	<observation name="sw2860"/>
+	<observation name="sw2866"/>
+	<observation name="sw2868"/>
+	<observation name="sw2870"/>
+	<observation name="sw2876"/>
+	<observation name="sw2877"/>
+	<observation name="sw2883"/>
+	<observation name="sw2893"/>
+	<observation name="sw2896"/>
+	<observation name="sw2910"/>
+	<observation name="sw2913"/>
+	<observation name="sw2932"/>
+	<observation name="sw2938"/>
+	<observation name="sw2945"/>
+	<observation name="sw2956"/>
+	<observation name="sw2962"/>
+	<observation name="sw2965"/>
+	<observation name="sw2969"/>
+	<observation name="sw2970"/>
+	<observation name="sw2989"/>
+	<observation name="sw2998"/>
+	<observation name="sw3011"/>
+	<observation name="sw3012"/>
+	<observation name="sw3015"/>
+	<observation name="sw3020"/>
+	<observation name="sw3021"/>
+	<observation name="sw3023"/>
+	<observation name="sw3030"/>
+	<observation name="sw3038"/>
+	<observation name="sw3040"/>
+	<observation name="sw3041"/>
+	<observation name="sw3045"/>
+	<observation name="sw3047"/>
+	<observation name="sw3049"/>
+	<observation name="sw3051"/>
+	<observation name="sw3052"/>
+	<observation name="sw3056"/>
+	<observation name="sw3062"/>
+	<observation name="sw3067"/>
+	<observation name="sw3068"/>
+	<observation name="sw3069"/>
+	<observation name="sw3070"/>
+	<observation name="sw3072"/>
+	<observation name="sw3073"/>
+	<observation name="sw3074"/>
+	<observation name="sw3075"/>
+	<observation name="sw3080"/>
+	<observation name="sw3081"/>
+	<observation name="sw3082"/>
+	<observation name="sw3083"/>
+	<observation name="sw3085"/>
+	<observation name="sw3086"/>
+	<observation name="sw3088"/>
+	<observation name="sw3090"/>
+	<observation name="sw3093"/>
+	<observation name="sw3096"/>
+	<observation name="sw3097"/>
+	<observation name="sw3099"/>
+	<observation name="sw3103"/>
+	<observation name="sw3108"/>
+	<observation name="sw3111"/>
+	<observation name="sw3113"/>
+	<observation name="sw3115"/>
+	<observation name="sw3120"/>
+	<observation name="sw3124"/>
+	<observation name="sw3130"/>
+	<observation name="sw3131"/>
+	<observation name="sw3133"/>
+	<observation name="sw3134"/>
+	<observation name="sw3135"/>
+	<observation name="sw3138"/>
+	<observation name="sw3140"/>
+	<observation name="sw3142"/>
+	<observation name="sw3144"/>
+	<observation name="sw3146"/>
+	<observation name="sw3148"/>
+	<observation name="sw3150"/>
+	<observation name="sw3152"/>
+	<observation name="sw3154"/>
+	<observation name="sw3155"/>
+	<observation name="sw3156"/>
+	<observation name="sw3159"/>
+	<observation name="sw3161"/>
+	<observation name="sw3168"/>
+	<observation name="sw3169"/>
+	<observation name="sw3171"/>
+<!--    <observation name="sw3173"/> only disfluency annotation -->
+	<observation name="sw3174"/>
+	<observation name="sw3182"/>
+	<observation name="sw3186"/>
+	<observation name="sw3187"/>
+	<observation name="sw3188"/>
+	<observation name="sw3195"/>
+	<observation name="sw3200"/>
+	<observation name="sw3201"/>
+	<observation name="sw3202"/>
+	<observation name="sw3205"/>
+	<observation name="sw3206"/>
+	<observation name="sw3207"/>
+	<observation name="sw3215"/>
+	<observation name="sw3219"/>
+	<observation name="sw3223"/>
+	<observation name="sw3227"/>
+	<observation name="sw3229"/>
+	<observation name="sw3232"/>
+	<observation name="sw3235"/>
+	<observation name="sw3236"/>
+	<observation name="sw3237"/>
+	<observation name="sw3238"/>
+	<observation name="sw3239"/>
+	<observation name="sw3242"/>
+	<observation name="sw3245"/>
+	<observation name="sw3246"/>
+	<observation name="sw3251"/>
+	<observation name="sw3252"/>
+	<observation name="sw3254"/>
+	<observation name="sw3256"/>
+	<observation name="sw3259"/>
+	<observation name="sw3260"/>
+	<observation name="sw3266"/>
+	<observation name="sw3268"/>
+	<observation name="sw3269"/>
+	<observation name="sw3275"/>
+	<observation name="sw3279"/>
+	<observation name="sw3283"/>
+	<observation name="sw3284"/>
+	<observation name="sw3286"/>
+	<observation name="sw3288"/>
+	<observation name="sw3294"/>
+	<observation name="sw3296"/>
+	<observation name="sw3300"/>
+	<observation name="sw3303"/>
+	<observation name="sw3304"/>
+	<observation name="sw3306"/>
+	<observation name="sw3309"/>
+	<observation name="sw3311"/>
+	<observation name="sw3313"/>
+	<observation name="sw3315"/>
+	<observation name="sw3317"/>
+	<observation name="sw3320"/>
+	<observation name="sw3324"/>
+	<observation name="sw3325"/>
+	<observation name="sw3327"/>
+	<observation name="sw3328"/>
+	<observation name="sw3331"/>
+	<observation name="sw3333"/>
+	<observation name="sw3334"/>
+	<observation name="sw3338"/>
+	<observation name="sw3342"/>
+	<observation name="sw3343"/>
+	<observation name="sw3344"/>
+	<observation name="sw3345"/>
+	<observation name="sw3349"/>
+	<observation name="sw3351"/>
+	<observation name="sw3353"/>
+	<observation name="sw3354"/>
+	<observation name="sw3360"/>
+<!--    <observation name="sw3362"/> only disfluency annotation -->
+	<observation name="sw3364"/>
+	<observation name="sw3365"/>
+	<observation name="sw3367"/>
+	<observation name="sw3368"/>
+	<observation name="sw3369"/>
+	<observation name="sw3375"/>
+	<observation name="sw3377"/>
+	<observation name="sw3382"/>
+	<observation name="sw3387"/>
+	<observation name="sw3389"/>
+	<observation name="sw3393"/>
+	<observation name="sw3397"/>
+	<observation name="sw3398"/>
+	<observation name="sw3399"/>
+	<observation name="sw3403"/>
+	<observation name="sw3406"/>
+	<observation name="sw3408"/>
+	<observation name="sw3409"/>
+	<observation name="sw3411"/>
+	<observation name="sw3417"/>
+	<observation name="sw3420"/>
+	<observation name="sw3425"/>
+	<observation name="sw3427"/>
+	<observation name="sw3435"/>
+	<observation name="sw3441"/>
+	<observation name="sw3443"/>
+	<observation name="sw3445"/>
+	<observation name="sw3447"/>
+	<observation name="sw3449"/>
+	<observation name="sw3450"/>
+	<observation name="sw3458"/>
+	<observation name="sw3467"/>
+	<observation name="sw3473"/>
+	<observation name="sw3476"/>
+	<observation name="sw3487"/>
+	<observation name="sw3491"/>
+	<observation name="sw3495"/>
+	<observation name="sw3497"/>
+	<observation name="sw3503"/>
+<!--    <observation name="sw3506"/> only disfluency annotation -->
+	<observation name="sw3508"/>
+	<observation name="sw3509"/>
+<!--    <observation name="sw3513"/> only disfluency annotation -->
+	<observation name="sw3514"/>
+	<observation name="sw3515"/>
+	<observation name="sw3517"/>
+	<observation name="sw3523"/>
+	<observation name="sw3524"/>
+	<observation name="sw3525"/>
+	<observation name="sw3526"/>
+	<observation name="sw3537"/>
+	<observation name="sw3539"/>
+	<observation name="sw3541"/>
+	<observation name="sw3549"/>
+	<observation name="sw3550"/>
+	<observation name="sw3551"/>
+<!--    <observation name="sw3557"/> only disfluency annotation -->
+	<observation name="sw3561"/>
+	<observation name="sw3565"/>
+	<observation name="sw3569"/>
+	<observation name="sw3573"/>
+	<observation name="sw3574"/>
+	<observation name="sw3576"/>
+	<observation name="sw3580"/>
+	<observation name="sw3584"/>
+	<observation name="sw3586"/>
+	<observation name="sw3595"/>
+	<observation name="sw3596"/>
+	<observation name="sw3606"/>
+	<observation name="sw3607"/>
+	<observation name="sw3615"/>
+	<observation name="sw3628"/>
+	<observation name="sw3633"/>
+	<observation name="sw3636"/>
+	<observation name="sw3638"/>
+	<observation name="sw3639"/>
+	<observation name="sw3646"/>
+	<observation name="sw3651"/>
+	<observation name="sw3655"/>
+	<observation name="sw3658"/>
+	<observation name="sw3660"/>
+	<observation name="sw3663"/>
+	<observation name="sw3680"/>
+	<observation name="sw3682"/>
+	<observation name="sw3688"/>
+	<observation name="sw3691"/>
+	<observation name="sw3697"/>
+	<observation name="sw3699"/>
+	<observation name="sw3707"/>
+	<observation name="sw3720"/>
+	<observation name="sw3725"/>
+	<observation name="sw3727"/>
+	<observation name="sw3728"/>
+	<observation name="sw3746"/>
+	<observation name="sw3750"/>
+	<observation name="sw3756"/>
+	<observation name="sw3763"/>
+	<observation name="sw3768"/>
+	<observation name="sw3773"/>
+	<observation name="sw3776"/>
+	<observation name="sw3781"/>
+	<observation name="sw3784"/>
+	<observation name="sw3796"/>
+	<observation name="sw3798"/>
+	<observation name="sw3801"/>
+	<observation name="sw3809"/>
+	<observation name="sw3811"/>
+	<observation name="sw3821"/>
+	<observation name="sw3825"/>
+	<observation name="sw3830"/>
+	<observation name="sw3838"/>
+	<observation name="sw3850"/>
+	<observation name="sw3862"/>
+	<observation name="sw3876"/>
+	<observation name="sw3883"/>
+	<observation name="sw3887"/>
+	<observation name="sw3902"/>
+	<observation name="sw3917"/>
+	<observation name="sw3925"/>
+	<observation name="sw3962"/>
+	<observation name="sw3983"/>
+	<observation name="sw3988"/>
+	<observation name="sw3993"/>
+	<observation name="sw4004"/>
+	<observation name="sw4008"/>
+<!--    <observation name="sw4013"/> only disfluency annotation -->
+	<observation name="sw4019"/>
+	<observation name="sw4022"/>
+	<observation name="sw4023"/>
+	<observation name="sw4026"/>
+	<observation name="sw4028"/>
+	<observation name="sw4032"/>
+	<observation name="sw4033"/>
+	<observation name="sw4036"/>
+	<observation name="sw4038"/>
+	<observation name="sw4048"/>
+	<observation name="sw4049"/>
+	<observation name="sw4050"/>
+	<observation name="sw4051"/>
+	<observation name="sw4055"/>
+	<observation name="sw4056"/>
+	<observation name="sw4060"/>
+	<observation name="sw4064"/>
+	<observation name="sw4071"/>
+	<observation name="sw4072"/>
+	<observation name="sw4074"/>
+	<observation name="sw4077"/>
+	<observation name="sw4079"/>
+	<observation name="sw4080"/>
+	<observation name="sw4082"/>
+	<observation name="sw4090"/>
+	<observation name="sw4092"/>
+	<observation name="sw4096"/>
+	<observation name="sw4099"/>
+	<observation name="sw4101"/>
+	<observation name="sw4103"/>
+	<observation name="sw4104"/>
+	<observation name="sw4108"/>
+	<observation name="sw4109"/>
+	<observation name="sw4113"/>
+	<observation name="sw4114"/>
+	<observation name="sw4123"/>
+	<observation name="sw4127"/>
+	<observation name="sw4129"/>
+	<observation name="sw4130"/>
+	<observation name="sw4133"/>
+	<observation name="sw4137"/>
+	<observation name="sw4138"/>
+	<observation name="sw4148"/>
+	<observation name="sw4149"/>
+	<observation name="sw4150"/>
+	<observation name="sw4151"/>
+	<observation name="sw4152"/>
+	<observation name="sw4153"/>
+	<observation name="sw4154"/>
+	<observation name="sw4155"/>
+	<observation name="sw4158"/>
+	<observation name="sw4159"/>
+	<observation name="sw4166"/>
+	<observation name="sw4168"/>
+	<observation name="sw4171"/>
+	<observation name="sw4174"/>
+	<observation name="sw4175"/>
+	<observation name="sw4177"/>
+	<observation name="sw4181"/>
+	<observation name="sw4184"/>
+	<observation name="sw4311"/>
+	<observation name="sw4312"/>
+	<observation name="sw4314"/>
+	<observation name="sw4316"/>
+	<observation name="sw4318"/>
+	<observation name="sw4319"/>
+	<observation name="sw4320"/>
+	<observation name="sw4321"/>
+	<observation name="sw4325"/>
+	<observation name="sw4327"/>
+	<observation name="sw4329"/>
+	<observation name="sw4330"/>
+	<observation name="sw4333"/>
+	<observation name="sw4334"/>
+	<observation name="sw4336"/>
+	<observation name="sw4339"/>
+	<observation name="sw4340"/>
+	<observation name="sw4341"/>
+	<observation name="sw4342"/>
+	<observation name="sw4345"/>
+	<observation name="sw4346"/>
+	<observation name="sw4347"/>
+	<observation name="sw4349"/>
+	<observation name="sw4353"/>
+	<observation name="sw4356"/>
+	<observation name="sw4358"/>
+	<observation name="sw4360"/>
+	<observation name="sw4362"/>
+	<observation name="sw4363"/>
+	<observation name="sw4364"/>
+	<observation name="sw4366"/>
+	<observation name="sw4370"/>
+	<observation name="sw4372"/>
+	<observation name="sw4376"/>
+	<observation name="sw4378"/>
+	<observation name="sw4379"/>
+	<observation name="sw4380"/>
+	<observation name="sw4382"/>
+	<observation name="sw4483"/>
+	<observation name="sw4519"/>
+	<observation name="sw4548"/>
+	<observation name="sw4565"/>
+	<observation name="sw4572"/>
+	<observation name="sw4603"/>
+	<observation name="sw4608"/>
+	<observation name="sw4611"/>
+	<observation name="sw4617"/>
+	<observation name="sw4618"/>
+	<observation name="sw4619"/>
+	<observation name="sw4626"/>
+	<observation name="sw4628"/>
+	<observation name="sw4633"/>
+	<observation name="sw4642"/>
+	<observation name="sw4646"/>
+	<observation name="sw4649"/>
+	<observation name="sw4659"/>
+	<observation name="sw4679"/>
+	<observation name="sw4682"/>
+	<observation name="sw4688"/>
+	<observation name="sw4691"/>
+	<observation name="sw4697"/>
+	<observation name="sw4698"/>
+	<observation name="sw4707"/>
+	<observation name="sw4720"/>
+	<observation name="sw4725"/>
+	<observation name="sw4728"/>
+	<observation name="sw4733"/>
+	<observation name="sw4736"/>
+	<observation name="sw4765"/>
+	<observation name="sw4784"/>
+	<observation name="sw4785"/>
+	<observation name="sw4792"/>
+	<observation name="sw4796"/>
+	<observation name="sw4801"/>
+	<observation name="sw4812"/>
+	<observation name="sw4826"/>
+	<observation name="sw4830"/>
+	<observation name="sw4831"/>
+	<observation name="sw4834"/>
+	<observation name="sw4858"/>
+	<observation name="sw4859"/>
+	<observation name="sw4868"/>
+<!--    <observation name="sw4876"/> only disfluency annotation -->
+	<observation name="sw4877"/>
+	<observation name="sw4880"/>
+	<observation name="sw4886"/>
+	<observation name="sw4890"/>
+	<observation name="sw4902"/>
+	<observation name="sw4908"/>
+	<observation name="sw4928"/>
+	<observation name="sw4936"/>
+  </observations>
+
+</corpus>

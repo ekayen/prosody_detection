@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+<nite:turn_stream nite:id="sw3541-A-turns" xmlns:nite="http://nite.sourceforge.net/">
+   <turn nite:id="t1" nite:start="0.070375" nite:end="2.771125" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s1)..id(s2)"/>
+   </turn>
+   <turn nite:id="t5" nite:start="14.538" nite:end="17.44525" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s5)"/>
+   </turn>
+   <turn nite:id="t7" nite:start="21.819375" nite:end="58.787875" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s9)..id(s14)"/>
+   </turn>
+   <turn nite:id="t9" nite:start="65.421625" nite:end="65.933875" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s17)"/>
+   </turn>
+   <turn nite:id="t11" nite:start="68.699625" nite:end="69.192125" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s18)"/>
+   </turn>
+   <turn nite:id="t13" nite:start="80.40925" nite:end="81.3785" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s20)..id(s21)"/>
+   </turn>
+   <turn nite:id="t15" nite:start="89.948125" nite:end="134.02525" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s25)..id(s30)"/>
+   </turn>
+   <turn nite:id="t17" nite:start="139.072125" nite:end="140.203625" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s33)..id(s34)"/>
+   </turn>
+   <turn nite:id="t19" nite:start="142.2555" nite:end="157.003125" approx="true" firstKnownStart="142.2555" lastKnownEnd="150.468375">
+      <nite:child href="sw3541.A.syntax.xml#id(s37)..id(s41)"/>
+   </turn>
+   <turn nite:id="t21" nite:start="157.003125" nite:end="162.5725" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s43)"/>
+   </turn>
+   <turn nite:id="t23" nite:start="164.861875" nite:end="177.96" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s44)..id(s46)"/>
+   </turn>
+   <turn nite:id="t25" nite:start="178.434625" nite:end="193.089125" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s48)..id(s51)"/>
+   </turn>
+   <turn nite:id="t27" nite:start="206.552625" nite:end="236.87825" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s57)..id(s64)"/>
+   </turn>
+   <turn nite:id="t29" nite:start="237.72425" nite:end="261.766875" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s66)..id(s67)"/>
+   </turn>
+   <turn nite:id="t33" nite:start="262.286875" nite:end="276.742" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s70)..id(s71)"/>
+   </turn>
+   <turn nite:id="t35" nite:start="278.049375" nite:end="297.134" approx="false">
+      <nite:child href="sw3541.A.syntax.xml#id(s73)..id(s76)"/>
+   </turn>
+</nite:turn_stream>

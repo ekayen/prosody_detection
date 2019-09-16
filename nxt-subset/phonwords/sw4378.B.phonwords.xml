@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<nite:phonword_stream xmlns:nite="http://nite.sourceforge.net/" nite:id="sw4378.B-phonwords">
+<noise nite:id="sw4378B_nw1"  nite:start="0.190000" nite:end="0.450000" orth="[noise]" phonRange="id(ms2B_ph1)"/>
+<phonword nite:id="ms1B_pw1" msstate="sw4378B-ms98-a-0001" orth="one"  nite:start="0.450000" nite:end="0.730000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms1B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw2" msstate="sw4378B-ms98-a-0001" orth="way"  nite:start="0.730000" nite:end="0.860000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms2B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw3" msstate="sw4378B-ms98-a-0001" orth="or"  nite:start="0.860000" nite:end="0.993625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms3B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw4" msstate="sw4378B-ms98-a-0001" orth="the"  nite:start="0.993625" nite:end="1.110375" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms4B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw5" msstate="sw4378B-ms98-a-0001" orth="other"  nite:start="1.110375" nite:end="1.300000" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms5B_sy1)..id(ms5B_sy2)"/>
+</phonword>
+<phonword nite:id="ms1B_pw6" msstate="sw4378B-ms98-a-0001" orth="we're"  nite:start="1.300000" nite:end="1.450000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms6B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw7" msstate="sw4378B-ms98-a-0001" orth="now"  nite:start="1.450000" nite:end="1.655875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms7B_sy1)"/>
+</phonword>
+<phonword nite:id="ms1B_pw8" msstate="sw4378B-ms98-a-0001" orth="recording"  nite:start="1.655875" nite:end="2.088250" stressProfile="npn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms8B_sy1)..id(ms8B_sy3)"/>
+</phonword>
+<phonword nite:id="ms2B_pw9" msstate="sw4378B-ms98-a-0002" orth="um"  nite:start="3.741875" nite:end="4.168500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms9B_sy1)"/>
+</phonword>
+<phonword nite:id="ms3B_pw10" msstate="sw4378B-ms98-a-0003" orth="um"  nite:start="5.262500" nite:end="5.672875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms10B_sy1)"/>
+</phonword>
+<phonword nite:id="ms3B_pw11" msstate="sw4378B-ms98-a-0003" orth="oh"  nite:start="6.200125" nite:end="6.382500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms11B_sy1)"/>
+</phonword>
+<phonword nite:id="ms3B_pw12" msstate="sw4378B-ms98-a-0003" orth="yeah"  nite:start="6.382500" nite:end="6.572500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms12B_sy1)"/>
+</phonword>
+<phonword nite:id="ms3B_pw13" msstate="sw4378B-ms98-a-0003" orth="home"  nite:start="6.572500" nite:end="6.786125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms13B_sy1)"/>
+</phonword>
+<phonword nite:id="ms3B_pw14" msstate="sw4378B-ms98-a-0003" orth="repair"  nite:start="6.786125" nite:end="7.156125" stressProfile="np">
+	<nite:child href="sw4378.B.syllables.xml#id(ms14B_sy1)..id(ms14B_sy2)"/>
+</phonword>
+<phonword nite:id="ms4B_pw15" msstate="sw4378B-ms98-a-0004" orth="right"  nite:start="8.171500" nite:end="8.581500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms15B_sy1)"/>
+</phonword>
+<phonword nite:id="ms4B_pw16" msstate="sw4378B-ms98-a-0004" orth="i"  nite:start="8.581500" nite:end="8.651500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms16B_sy1)"/>
+</phonword>
+<phonword nite:id="ms4B_pw17" msstate="sw4378B-ms98-a-0004" orth="still"  nite:start="8.651500" nite:end="8.951500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms17B_sy1)"/>
+</phonword>
+<phonword nite:id="ms4B_pw18" msstate="sw4378B-ms98-a-0004" orth="am"  nite:start="8.951500" nite:end="9.181500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms18B_sy1)"/>
+</phonword>
+<phonword nite:id="ms4B_pw19" msstate="sw4378B-ms98-a-0004" orth="really"  nite:start="9.181500" nite:end="9.498875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms19B_sy1)..id(ms19B_sy3)"/>
+</phonword>
+<phonword nite:id="ms4B_pw20" msstate="sw4378B-ms98-a-0004" orth="they're"  nite:start="9.498875" nite:end="9.819000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms20B_sy1)"/>
+</phonword>
+<phonword nite:id="ms4B_pw21" msstate="sw4378B-ms98-a-0004" orth="um"  nite:start="9.819000" nite:end="10.192250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms21B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw22" msstate="sw4378B-ms98-a-0005" orth="sort"  nite:start="11.252875" nite:end="11.522875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms22B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw23" msstate="sw4378B-ms98-a-0005" orth="of"  nite:start="11.522875" nite:end="11.592875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms23B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw24" msstate="sw4378B-ms98-a-0005" orth="remodeling"  nite:start="11.592875" nite:end="12.132875" stressProfile="npnn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms24B_sy1)..id(ms24B_sy4)"/>
+</phonword>
+<phonword nite:id="ms5B_pw25" msstate="sw4378B-ms98-a-0005" orth="a"  nite:start="12.132875" nite:end="12.192875" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms25B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw26" msstate="sw4378B-ms98-a-0005" orth="house"  nite:start="12.192875" nite:end="12.764375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms26B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw27" msstate="sw4378B-ms98-a-0005" orth="out"  nite:start="12.937625" nite:end="13.182875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms27B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw28" msstate="sw4378B-ms98-a-0005" orth="in"  nite:start="13.372875" nite:end="13.641625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms28B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw29" msstate="sw4378B-ms98-a-0005" orth="downtown"  nite:start="13.939125" nite:end="14.352875" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms29B_sy1)..id(ms29B_sy2)"/>
+</phonword>
+<phonword nite:id="ms5B_pw30" msstate="sw4378B-ms98-a-0005" orth="Atlanta"  nite:start="14.352875" nite:end="14.682875" stressProfile="npn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms30B_sy1)..id(ms30B_sy3)"/>
+</phonword>
+<phonword nite:id="ms5B_pw31" msstate="sw4378B-ms98-a-0005" orth="in"  nite:start="14.682875" nite:end="14.792875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms31B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw32" msstate="sw4378B-ms98-a-0005" orth="Candler"  nite:start="14.792875" nite:end="15.102875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms32B_sy1)..id(ms32B_sy2)"/>
+</phonword>
+<phonword nite:id="ms5B_pw33" msstate="sw4378B-ms98-a-0005" orth="Park"  nite:start="15.102875" nite:end="15.434875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms33B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw34" msstate="sw4378B-ms98-a-0005" orth="and"  nite:start="16.184500" nite:end="16.432875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms34B_sy1)"/>
+</phonword>
+<phonword nite:id="ms5B_pw35" msstate="sw4378B-ms98-a-0005" orth="uh"  nite:start="16.432875" nite:end="16.735250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms35B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw36" msstate="sw4378B-ms98-a-0006" orth="we've"  nite:start="18.064000" nite:end="18.254000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms36B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw37" msstate="sw4378B-ms98-a-0006" orth="done"  nite:start="18.254000" nite:end="18.601375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms37B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw2"  nite:start="18.601375" nite:end="18.932750" orth="[noise]" phonRange="id(ms55B_ph1)"/>
+<phonword nite:id="ms6B_pw38" msstate="sw4378B-ms98-a-0006" orth="lots"  nite:start="18.932750" nite:end="19.350750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms38B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw39" msstate="sw4378B-ms98-a-0006" orth="to"  nite:start="19.350750" nite:end="19.509000" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms39B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw40" msstate="sw4378B-ms98-a-0006" orth="it"  nite:start="19.509000" nite:end="19.694000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms40B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw41" msstate="sw4378B-ms98-a-0006" orth="we've"  nite:start="19.694000" nite:end="19.858375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms41B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw42" msstate="sw4378B-ms98-a-0006" orth="taken"  nite:start="19.858375" nite:end="20.148375" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms42B_sy1)..id(ms42B_sy2)"/>
+</phonword>
+<phonword nite:id="ms6B_pw43" msstate="sw4378B-ms98-a-0006" orth="out"  nite:start="20.148375" nite:end="20.395000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms43B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw44" msstate="sw4378B-ms98-a-0006" orth="the"  nite:start="20.828125" nite:end="20.894000" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms44B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw45" msstate="sw4378B-ms98-a-0006" orth="glass"  nite:start="20.894000" nite:end="21.374000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms45B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw46" msstate="sw4378B-ms98-a-0006" orth="and"  nite:start="21.374000" nite:end="21.464000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms46B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw47" msstate="sw4378B-ms98-a-0006" orth="most"  nite:start="21.464000" nite:end="21.684000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms47B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw48" msstate="sw4378B-ms98-a-0006" orth="the"  nite:start="21.684000" nite:end="21.754000" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms48B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw49" msstate="sw4378B-ms98-a-0006" orth="windows"  nite:start="21.754000" nite:end="22.164000" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms49B_sy1)..id(ms49B_sy2)"/>
+</phonword>
+<phonword nite:id="ms6B_pw50" msstate="sw4378B-ms98-a-0006" orth="and"  nite:start="22.164000" nite:end="22.254000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms50B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw51" msstate="sw4378B-ms98-a-0006" orth="the"  nite:start="22.254000" nite:end="22.324000" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms51B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw52" msstate="sw4378B-ms98-a-0006" orth="sashes"  nite:start="22.324000" nite:end="22.864000" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms52B_sy1)..id(ms52B_sy2)"/>
+</phonword>
+<phonword nite:id="ms6B_pw53" msstate="sw4378B-ms98-a-0006" orth="and"  nite:start="22.864000" nite:end="22.964000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms53B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw54" msstate="sw4378B-ms98-a-0006" orth="replaced"  nite:start="22.964000" nite:end="23.491000" stressProfile="sp">
+	<nite:child href="sw4378.B.syllables.xml#id(ms54B_sy1)..id(ms54B_sy2)"/>
+</phonword>
+<phonword nite:id="ms6B_pw55" msstate="sw4378B-ms98-a-0006" orth="them_1"  nite:start="23.491000" nite:end="23.784875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms55B_sy1)"/>
+</phonword>
+<phonword nite:id="ms6B_pw56" msstate="sw4378B-ms98-a-0006" orth="and"  nite:start="23.784875" nite:end="24.214000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms56B_sy1)"/>
+</phonword>
+<phonword nite:id="ms7B_pw57" msstate="sw4378B-ms98-a-0007" orth="um-hum"  nite:start="25.019250" nite:end="25.402375">
+	<nite:child href="sw4378.B.syllables.xml#id(ms57B_sy1)..id(ms57B_sy2)"/>
+</phonword>
+<phonword nite:id="ms8B_pw58" msstate="sw4378B-ms98-a-0008" orth="how"  nite:start="26.592750" nite:end="26.712750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms58B_sy1)"/>
+</phonword>
+<phonword nite:id="ms8B_pw59" msstate="sw4378B-ms98-a-0008" orth="about"  nite:start="26.712750" nite:end="26.862750" stressProfile="np">
+	<nite:child href="sw4378.B.syllables.xml#id(ms59B_sy1)..id(ms59B_sy2)"/>
+</phonword>
+<phonword nite:id="ms8B_pw60" msstate="sw4378B-ms98-a-0008" orth="you"  nite:start="26.862750" nite:end="27.012750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms60B_sy1)"/>
+</phonword>
+<phonword nite:id="ms10B_pw61" msstate="sw4378B-ms98-a-0010" orth="uh-huh"  nite:start="35.267875" nite:end="35.525500" stressProfile="pp">
+	<nite:child href="sw4378.B.syllables.xml#id(ms61B_sy1)..id(ms61B_sy2)"/>
+</phonword>
+<phonword nite:id="ms12B_pw62" msstate="sw4378B-ms98-a-0012" orth="uh-huh"  nite:start="40.954000" nite:end="41.202125" stressProfile="pp">
+	<nite:child href="sw4378.B.syllables.xml#id(ms62B_sy1)..id(ms62B_sy2)"/>
+</phonword>
+<phonword nite:id="ms14B_pw63" msstate="sw4378B-ms98-a-0014" orth="uh-huh"  nite:start="52.656000" nite:end="53.001125" stressProfile="pp">
+	<nite:child href="sw4378.B.syllables.xml#id(ms63B_sy1)..id(ms63B_sy2)"/>
+</phonword>
+<phonword nite:id="ms16B_pw64" msstate="sw4378B-ms98-a-0016" orth="wow"  nite:start="67.641000" nite:end="68.029750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms64B_sy1)"/>
+</phonword>
+<phonword nite:id="ms18B_pw65" msstate="sw4378B-ms98-a-0018" orth="wow"  nite:start="74.139000" nite:end="74.395750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms65B_sy1)"/>
+</phonword>
+<phonword nite:id="ms20B_pw66" msstate="sw4378B-ms98-a-0020" orth="um-hum"  nite:start="80.902625" nite:end="81.226375">
+	<nite:child href="sw4378.B.syllables.xml#id(ms66B_sy1)..id(ms66B_sy2)"/>
+</phonword>
+<laughter nite:id="sw4378B_nw3"  nite:start="85.525500" nite:end="87.230125" orth="[laughter]" phonRange="id(ms111B_ph1)"/>
+<phonword nite:id="ms24B_pw67" msstate="sw4378B-ms98-a-0024" orth="um-hum"  nite:start="93.516750" nite:end="93.825625">
+	<nite:child href="sw4378.B.syllables.xml#id(ms67B_sy1)..id(ms67B_sy2)"/>
+</phonword>
+<phonword nite:id="ms26B_pw68" msstate="sw4378B-ms98-a-0026" orth="um"  nite:start="98.743125" nite:end="99.145500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms68B_sy1)"/>
+</phonword>
+<phonword nite:id="ms28B_pw69" msstate="sw4378B-ms98-a-0028" orth="um-hum"  nite:start="117.039500" nite:end="117.563500">
+	<nite:child href="sw4378.B.syllables.xml#id(ms69B_sy1)..id(ms69B_sy2)"/>
+</phonword>
+<phonword nite:id="ms30B_pw70" msstate="sw4378B-ms98-a-0030" orth="yeah"  nite:start="126.641625" nite:end="126.942375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms70B_sy1)"/>
+</phonword>
+<phonword nite:id="ms32B_pw71" msstate="sw4378B-ms98-a-0032" orth="um-hum"  nite:start="135.714000" nite:end="136.031125">
+	<nite:child href="sw4378.B.syllables.xml#id(ms71B_sy1)..id(ms71B_sy2)"/>
+</phonword>
+<phonword nite:id="ms34B_pw72" msstate="sw4378B-ms98-a-0034" orth="uh-huh"  nite:start="151.954125" nite:end="152.270750" stressProfile="pp">
+	<nite:child href="sw4378.B.syllables.xml#id(ms72B_sy1)..id(ms72B_sy2)"/>
+</phonword>
+<phonword nite:id="ms36B_pw73" msstate="sw4378B-ms98-a-0036" orth="wow"  nite:start="156.578375" nite:end="156.974375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms73B_sy1)"/>
+</phonword>
+<phonword nite:id="ms38B_pw74" msstate="sw4378B-ms98-a-0038" orth="um-hum"  nite:start="159.944625" nite:end="160.302875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms74B_sy1)..id(ms74B_sy2)"/>
+</phonword>
+<noise nite:id="sw4378B_nw4"  nite:start="167.571625" nite:end="167.763250" orth="[noise]" phonRange="id(ms147B_ph1)"/>
+<phonword nite:id="ms40B_pw75" msstate="sw4378B-ms98-a-0040" orth="nice"  nite:start="167.763250" nite:end="168.488250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms75B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw76" msstate="sw4378B-ms98-a-0041" orth="nice"  nite:start="169.635625" nite:end="169.922750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms76B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw77" msstate="sw4378B-ms98-a-0041" orth="so"  nite:start="169.922750" nite:end="170.185750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms77B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw78" msstate="sw4378B-ms98-a-0041" orth="uh"  nite:start="170.185750" nite:end="170.313625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms78B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw79" msstate="sw4378B-ms98-a-0041" orth="i"  nite:start="170.313625" nite:end="170.403625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms79B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw80" msstate="sw4378B-ms98-a-0041" orth="mean"  nite:start="170.403625" nite:end="170.593625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms80B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw81" msstate="sw4378B-ms98-a-0041" orth="what"  nite:start="170.593625" nite:end="170.763625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms81B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw82" msstate="sw4378B-ms98-a-0041" orth="was"  nite:start="170.763625" nite:end="170.903625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms82B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw83" msstate="sw4378B-ms98-a-0041" orth="it"  nite:start="170.903625" nite:end="171.063625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms83B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw84" msstate="sw4378B-ms98-a-0041" orth="for"  nite:start="171.063625" nite:end="171.343625" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms84B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw85" msstate="sw4378B-ms98-a-0041" orth="you"  nite:start="171.343625" nite:end="171.533625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms85B_sy1)"/>
+</phonword>
+<phonword nite:id="ms41B_pw86" msstate="sw4378B-ms98-a-0041" orth="just"  nite:start="171.533625" nite:end="171.883625" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms86B_sy1)"/>
+</phonword>
+<phonword nite:id="ms43B_pw87" msstate="sw4378B-ms98-a-0043" orth="um-hum"  nite:start="183.070500" nite:end="183.449500">
+	<nite:child href="sw4378.B.syllables.xml#id(ms87B_sy1)..id(ms87B_sy2)"/>
+</phonword>
+<phonword nite:id="ms45B_pw88" msstate="sw4378B-ms98-a-0045" orth="um-hum"  nite:start="188.601875" nite:end="188.938375">
+	<nite:child href="sw4378.B.syllables.xml#id(ms88B_sy1)..id(ms88B_sy2)"/>
+</phonword>
+<phonword nite:id="ms47B_pw89" msstate="sw4378B-ms98-a-0047" orth="that's"  nite:start="193.503250" nite:end="193.763250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms89B_sy1)"/>
+</phonword>
+<phonword nite:id="ms47B_pw90" msstate="sw4378B-ms98-a-0047" orth="great"  nite:start="193.763250" nite:end="194.175250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms90B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw5"  nite:start="195.249125" nite:end="195.378875" orth="[noise]" phonRange="id(ms177B_ph1)"/>
+<phonword nite:id="ms48B_pw91" msstate="sw4378B-ms98-a-0048" orth="wow"  nite:start="195.378875" nite:end="195.818875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms91B_sy1)"/>
+</phonword>
+<phonword nite:id="ms50B_pw92" msstate="sw4378B-ms98-a-0050" orth="hm"  nite:start="204.865625" nite:end="205.161500">
+	<nite:child href="sw4378.B.syllables.xml#id(ms92B_sy1)"/>
+</phonword>
+<phonword nite:id="ms52B_pw93" msstate="sw4378B-ms98-a-0052" orth="yeah"  nite:start="207.261750" nite:end="207.531750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms93B_sy1)"/>
+</phonword>
+<phonword nite:id="ms52B_pw94" msstate="sw4378B-ms98-a-0052" orth="it"  nite:start="207.531750" nite:end="207.641750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms94B_sy1)"/>
+</phonword>
+<phonword nite:id="ms52B_pw95" msstate="sw4378B-ms98-a-0052" orth="does"  nite:start="207.641750" nite:end="208.181750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms95B_sy1)"/>
+</phonword>
+<phonword nite:id="ms54B_pw96" msstate="sw4378B-ms98-a-0054" orth="um"  nite:start="213.618125" nite:end="213.886875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms96B_sy1)"/>
+</phonword>
+<phonword nite:id="ms56B_pw97" msstate="sw4378B-ms98-a-0056" orth="right"  nite:start="224.271500" nite:end="224.635375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms97B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw98" msstate="sw4378B-ms98-a-0058" orth="no"  nite:start="228.718500" nite:end="229.133125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms98B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw99" msstate="sw4378B-ms98-a-0058" orth="we"  nite:start="229.236875" nite:end="229.413500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms99B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw100" msstate="sw4378B-ms98-a-0058" orth="just"  nite:start="229.413500" nite:end="229.703500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms100B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw101" msstate="sw4378B-ms98-a-0058" orth="we"  nite:start="229.703500" nite:end="229.923500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms101B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw102" msstate="sw4378B-ms98-a-0058" orth="just"  nite:start="229.923500" nite:end="230.193500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms102B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw103" msstate="sw4378B-ms98-a-0058" orth="went"  nite:start="230.193500" nite:end="230.423500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms103B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw104" msstate="sw4378B-ms98-a-0058" orth="into"  nite:start="230.423500" nite:end="230.813500" stressProfile="sn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms104B_sy1)..id(ms104B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw105" msstate="sw4378B-ms98-a-0058" orth="a"  nite:start="230.813500" nite:end="230.863500" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms105B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw106" msstate="sw4378B-ms98-a-0058" orth="building"  nite:start="230.863500" nite:end="231.183500" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms106B_sy1)..id(ms106B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw107" msstate="sw4378B-ms98-a-0058" orth="supply"  nite:start="231.183500" nite:end="231.513500" stressProfile="np">
+	<nite:child href="sw4378.B.syllables.xml#id(ms107B_sy1)..id(ms107B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw108" msstate="sw4378B-ms98-a-0058" orth="store"  nite:start="231.513500" nite:end="231.833500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms108B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw109" msstate="sw4378B-ms98-a-0058" orth="and"  nite:start="231.833500" nite:end="232.013500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms109B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw110" msstate="sw4378B-ms98-a-0058" orth="bought"  nite:start="232.013500" nite:end="232.333500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms110B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw111" msstate="sw4378B-ms98-a-0058" orth="plate"  nite:start="232.333500" nite:end="232.623500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms111B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw112" msstate="sw4378B-ms98-a-0058" orth="glass"  nite:start="232.623500" nite:end="233.033500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms112B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw113" msstate="sw4378B-ms98-a-0058" orth="my"  nite:start="233.033500" nite:end="233.153500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms113B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw114" msstate="sw4378B-ms98-a-0058" orth="parents"  nite:start="233.153500" nite:end="233.493500" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms114B_sy1)..id(ms114B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw115" msstate="sw4378B-ms98-a-0058" orth="do"  nite:start="233.493500" nite:end="233.613500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms115B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw116" msstate="sw4378B-ms98-a-0058" orth="not"  nite:start="233.613500" nite:end="233.823500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms116B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw117" msstate="sw4378B-ms98-a-0058" orth="have"  nite:start="233.823500" nite:end="234.291375" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms117B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw118" msstate="sw4378B-ms98-a-0058" orth="a"  nite:start="234.558875" nite:end="234.603500" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms118B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw119" msstate="sw4378B-ms98-a-0058" orth="whole"  nite:start="234.603500" nite:end="234.773500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms119B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw120" msstate="sw4378B-ms98-a-0058" orth="lot"  nite:start="234.773500" nite:end="234.923500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms120B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw121" msstate="sw4378B-ms98-a-0058" orth="of"  nite:start="234.923500" nite:end="234.983500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms121B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw122" msstate="sw4378B-ms98-a-0058" orth="money"  nite:start="234.983500" nite:end="235.303500" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms122B_sy1)..id(ms122B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw123" msstate="sw4378B-ms98-a-0058" orth="to"  nite:start="235.303500" nite:end="235.423500" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms123B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw124" msstate="sw4378B-ms98-a-0058" orth="put"  nite:start="235.423500" nite:end="235.623500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms124B_sy1)"/>
+</phonword>
+<phonword nite:id="ms58B_pw125" msstate="sw4378B-ms98-a-0058" orth="into"  nite:start="235.623500" nite:end="235.993500" stressProfile="sn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms125B_sy1)..id(ms125B_sy2)"/>
+</phonword>
+<phonword nite:id="ms58B_pw126" msstate="sw4378B-ms98-a-0058" orth="it"  nite:start="235.993500" nite:end="236.143750" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms126B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw127" msstate="sw4378B-ms98-a-0059" orth="and"  nite:start="236.902500" nite:end="237.172500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms127B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw128" msstate="sw4378B-ms98-a-0059" orth="uh"  nite:start="237.172500" nite:end="237.374125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms128B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw129" msstate="sw4378B-ms98-a-0059" orth="but"  nite:start="237.582375" nite:end="237.812125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms129B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw6"  nite:start="237.812125" nite:end="238.282500" orth="[vocalized-noise]" phonRange="id(ms237B_ph1)"/>
+<phonword nite:id="ms59B_pw130" msstate="sw4378B-ms98-a-0059" orth="see"  nite:start="238.282500" nite:end="238.492500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms130B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw131" msstate="sw4378B-ms98-a-0059" orth="in"  nite:start="238.492500" nite:end="238.592500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms131B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw132" msstate="sw4378B-ms98-a-0059" orth="a"  nite:start="238.592500" nite:end="238.652500" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms132B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw133" msstate="sw4378B-ms98-a-0059" orth="lot"  nite:start="238.652500" nite:end="238.872500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms133B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw134" msstate="sw4378B-ms98-a-0059" orth="of"  nite:start="238.872500" nite:end="238.942500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms134B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw135" msstate="sw4378B-ms98-a-0059" orth="the"  nite:start="238.942500" nite:end="239.044625" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms135B_sy1)"/>
+</phonword>
+<phonword nite:id="ms59B_pw136" msstate="sw4378B-ms98-a-0059" orth="windows"  nite:start="239.044625" nite:end="239.684375" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms136B_sy1)..id(ms136B_sy2)"/>
+</phonword>
+<phonword nite:id="ms59B_pw137" msstate="sw4378B-ms98-a-0059" orth="um"  nite:start="240.194750" nite:end="240.550500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms137B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw138" msstate="sw4378B-ms98-a-0060" orth="it's"  nite:start="241.843250" nite:end="242.043250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms138B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw139" msstate="sw4378B-ms98-a-0060" orth="the"  nite:start="242.043250" nite:end="242.163250" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms139B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw140" msstate="sw4378B-ms98-a-0060" orth="house"  nite:start="242.163250" nite:end="242.393250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms140B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw141" msstate="sw4378B-ms98-a-0060" orth="is"  nite:start="242.393250" nite:end="242.473250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms141B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw142" msstate="sw4378B-ms98-a-0060" orth="eighty"  nite:start="242.473250" nite:end="242.753250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms142B_sy1)..id(ms142B_sy2)"/>
+</phonword>
+<phonword nite:id="ms60B_pw143" msstate="sw4378B-ms98-a-0060" orth="years"  nite:start="242.753250" nite:end="242.963250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms143B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw144" msstate="sw4378B-ms98-a-0060" orth="old"  nite:start="242.963250" nite:end="243.223250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms144B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw145" msstate="sw4378B-ms98-a-0060" orth="and"  nite:start="243.223250" nite:end="243.353250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms145B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw146" msstate="sw4378B-ms98-a-0060" orth="it's"  nite:start="243.353250" nite:end="243.443250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms146B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw147" msstate="sw4378B-ms98-a-0060" orth="had"  nite:start="243.443250" nite:end="243.623250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms147B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw148" msstate="sw4378B-ms98-a-0060" orth="several"  nite:start="243.623250" nite:end="244.003250" stressProfile="pnn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms148B_sy1)..id(ms148B_sy3)"/>
+</phonword>
+<phonword nite:id="ms60B_pw149" msstate="sw4378B-ms98-a-0060" orth="owners"  nite:start="244.003250" nite:end="244.333250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms149B_sy1)..id(ms149B_sy2)"/>
+</phonword>
+<phonword nite:id="ms60B_pw150" msstate="sw4378B-ms98-a-0060" orth="and"  nite:start="244.333250" nite:end="244.443250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms150B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw151" msstate="sw4378B-ms98-a-0060" orth="stuff"  nite:start="244.443250" nite:end="244.763250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms151B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw152" msstate="sw4378B-ms98-a-0060" orth="and"  nite:start="244.763250" nite:end="245.093250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms152B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw153" msstate="sw4378B-ms98-a-0060" orth="um"  nite:start="245.093250" nite:end="245.393125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms153B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw7"  nite:start="245.393125" nite:end="246.195375" orth="[noise]" phonRange="id(ms265B_ph1)"/>
+<phonword nite:id="ms60B_pw154" msstate="sw4378B-ms98-a-0060" orth="they"  nite:start="246.195375" nite:end="246.303250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms154B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw155" msstate="sw4378B-ms98-a-0060" orth="had"  nite:start="246.303250" nite:end="246.423250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms155B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw156" msstate="sw4378B-ms98-a-0060" orth="put"  nite:start="246.423250" nite:end="246.767875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms156B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw157" msstate="sw4378B-ms98-a-0060" orth="plastic"  nite:start="247.268750" nite:end="248.021625" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms157B_sy1)..id(ms157B_sy2)"/>
+</phonword>
+<phonword nite:id="ms60B_pw158" msstate="sw4378B-ms98-a-0060" orth="Plexiglas"  nite:start="248.153500" nite:end="248.743250" stressProfile="pns">
+	<nite:child href="sw4378.B.syllables.xml#id(ms158B_sy1)..id(ms158B_sy3)"/>
+</phonword>
+<phonword nite:id="ms60B_pw159" msstate="sw4378B-ms98-a-0060" orth="kind"  nite:start="248.743250" nite:end="248.933250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms159B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw160" msstate="sw4378B-ms98-a-0060" orth="of"  nite:start="248.933250" nite:end="249.003250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms160B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw161" msstate="sw4378B-ms98-a-0060" orth="stuff"  nite:start="249.003250" nite:end="249.313250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms161B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw162" msstate="sw4378B-ms98-a-0060" orth="in"  nite:start="249.313250" nite:end="249.413250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms162B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw163" msstate="sw4378B-ms98-a-0060" orth="some"  nite:start="249.413250" nite:end="249.643250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms163B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw164" msstate="sw4378B-ms98-a-0060" orth="of"  nite:start="249.643250" nite:end="249.703250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms164B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw165" msstate="sw4378B-ms98-a-0060" orth="the"  nite:start="249.703250" nite:end="249.763250" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms165B_sy1)"/>
+</phonword>
+<phonword nite:id="ms60B_pw166" msstate="sw4378B-ms98-a-0060" orth="windows"  nite:start="249.763250" nite:end="250.453250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms166B_sy1)..id(ms166B_sy2)"/>
+</phonword>
+<phonword nite:id="ms62B_pw167" msstate="sw4378B-ms98-a-0062" orth="um-hum"  nite:start="252.730375" nite:end="253.167875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms167B_sy1)..id(ms167B_sy2)"/>
+</phonword>
+<phonword nite:id="ms63B_pw168" msstate="sw4378B-ms98-a-0063" orth="um-hum"  nite:start="254.768875" nite:end="255.228875">
+	<nite:child href="sw4378.B.syllables.xml#id(ms168B_sy1)..id(ms168B_sy2)"/>
+</phonword>
+<noise nite:id="sw4378B_nw8"  nite:start="256.161875" nite:end="256.421875" orth="[noise]" phonRange="id(ms290B_ph1)"/>
+<phonword nite:id="ms64B_pw169" msstate="sw4378B-ms98-a-0064" orth="yeah"  nite:start="256.421875" nite:end="256.771875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms169B_sy1)"/>
+</phonword>
+<phonword nite:id="ms64B_pw170" msstate="sw4378B-ms98-a-0064" orth="and"  nite:start="256.771875" nite:end="257.091875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms170B_sy1)"/>
+</phonword>
+<phonword nite:id="ms64B_pw171" msstate="sw4378B-ms98-a-0064" orth="so"  nite:start="257.091875" nite:end="257.361875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms171B_sy1)"/>
+</phonword>
+<phonword nite:id="ms64B_pw172" msstate="sw4378B-ms98-a-0064" orth="uh"  nite:start="257.361875" nite:end="257.681875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms172B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw173" msstate="sw4378B-ms98-a-0065" orth="and"  nite:start="258.660625" nite:end="258.861875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms173B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw174" msstate="sw4378B-ms98-a-0065" orth="and"  nite:start="258.861875" nite:end="259.061875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms174B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw175" msstate="sw4378B-ms98-a-0065" orth="so"  nite:start="259.061875" nite:end="259.251875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms175B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw176" msstate="sw4378B-ms98-a-0065" orth="we"  nite:start="259.251875" nite:end="259.421875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms176B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw177" msstate="sw4378B-ms98-a-0065" orth="wanted"  nite:start="259.421875" nite:end="259.751875" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms177B_sy1)..id(ms177B_sy2)"/>
+</phonword>
+<phonword nite:id="ms65B_pw178" msstate="sw4378B-ms98-a-0065" orth="to"  nite:start="259.751875" nite:end="259.831875" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms178B_sy1)"/>
+</phonword>
+<phonword nite:id="ms65B_pw179" msstate="sw4378B-ms98-a-0065" orth="get"  nite:start="259.831875" nite:end="260.139125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms179B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw180" msstate="sw4378B-ms98-a-0066" orth="all"  nite:start="261.174250" nite:end="261.373125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms180B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw181" msstate="sw4378B-ms98-a-0066" orth="new"  nite:start="261.373125" nite:end="261.790875" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms181B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw182" msstate="sw4378B-ms98-a-0066" orth="stuff"  nite:start="262.088375" nite:end="262.473125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms182B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw183" msstate="sw4378B-ms98-a-0066" orth="in"  nite:start="262.473125" nite:end="262.623125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms183B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw184" msstate="sw4378B-ms98-a-0066" orth="there"  nite:start="262.623125" nite:end="262.892500" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms184B_sy1)"/>
+</phonword>
+<phonword nite:id="ms66B_pw185" msstate="sw4378B-ms98-a-0066" orth="so"  nite:start="263.670000" nite:end="263.997125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms185B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw9"  nite:start="263.997125" nite:end="265.865875" orth="[noise]" phonRange="id(ms314B_ph1)"/>
+<phonword nite:id="ms68B_pw186" msstate="sw4378B-ms98-a-0068" orth="yeah"  nite:start="270.433625" nite:end="270.891250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms186B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw187" msstate="sw4378B-ms98-a-0068" orth="ours"  nite:start="271.595625" nite:end="271.853250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms187B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw188" msstate="sw4378B-ms98-a-0068" orth="didn't"  nite:start="271.853250" nite:end="272.213250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms188B_sy1)..id(ms188B_sy2)"/>
+</phonword>
+<laughter nite:id="sw4378B_nw10"  nite:start="272.213250" nite:end="273.233250" orth="[laughter]" phonRange="id(ms322B_ph1)"/>
+<phonword nite:id="ms68B_pw189" msstate="sw4378B-ms98-a-0068" orth="and"  nite:start="273.233250" nite:end="273.553250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms189B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw190" msstate="sw4378B-ms98-a-0068" orth="the"  nite:start="273.553250" nite:end="273.633250" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms190B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw191" msstate="sw4378B-ms98-a-0068" orth="ones"  nite:start="273.633250" nite:end="273.993250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms191B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw192" msstate="sw4378B-ms98-a-0068" orth="that"  nite:start="273.993250" nite:end="274.173250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms192B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw193" msstate="sw4378B-ms98-a-0068" orth="would"  nite:start="274.173250" nite:end="274.383250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms193B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw194" msstate="sw4378B-ms98-a-0068" orth="open"  nite:start="274.383250" nite:end="274.805625" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms194B_sy1)..id(ms194B_sy2)"/>
+</phonword>
+<phonword nite:id="ms68B_pw195" msstate="sw4378B-ms98-a-0068" orth="uh"  nite:start="275.204875" nite:end="275.333250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms195B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw196" msstate="sw4378B-ms98-a-0068" orth="wouldn't"  nite:start="275.333250" nite:end="275.643250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms196B_sy1)..id(ms196B_sy2)"/>
+</phonword>
+<phonword nite:id="ms68B_pw197" msstate="sw4378B-ms98-a-0068" orth="wanna"  nite:start="275.643250" nite:end="275.903250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms197B_sy1)..id(ms197B_sy2)"/>
+</phonword>
+<phonword nite:id="ms68B_pw198" msstate="sw4378B-ms98-a-0068" orth="stay"  nite:start="275.903250" nite:end="276.123250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms198B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw199" msstate="sw4378B-ms98-a-0068" orth="open"  nite:start="276.123250" nite:end="276.313250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms199B_sy1)..id(ms199B_sy2)"/>
+</phonword>
+<phonword nite:id="ms68B_pw200" msstate="sw4378B-ms98-a-0068" orth="they"  nite:start="276.313250" nite:end="276.403250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms200B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw201" msstate="sw4378B-ms98-a-0068" orth="wanted"  nite:start="276.403250" nite:end="276.683250" stressProfile="pn">
+	<nite:child href="sw4378.B.syllables.xml#id(ms201B_sy1)..id(ms201B_sy2)"/>
+</phonword>
+<phonword nite:id="ms68B_pw202" msstate="sw4378B-ms98-a-0068" orth="to"  nite:start="276.683250" nite:end="276.743250" stressProfile="n">
+	<nite:child href="sw4378.B.syllables.xml#id(ms202B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw203" msstate="sw4378B-ms98-a-0068" orth="slam"  nite:start="276.743250" nite:end="276.963250" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms203B_sy1)"/>
+</phonword>
+<phonword nite:id="ms68B_pw204" msstate="sw4378B-ms98-a-0068" orth="shut"  nite:start="276.963250" nite:end="277.287000" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms204B_sy1)"/>
+</phonword>
+<phonword nite:id="ms70B_pw205" msstate="sw4378B-ms98-a-0070" orth="um-hum"  nite:start="282.698375" nite:end="283.226000">
+	<nite:child href="sw4378.B.syllables.xml#id(ms205B_sy1)..id(ms205B_sy2)"/>
+</phonword>
+<phonword nite:id="ms71B_pw206" msstate="sw4378B-ms98-a-0071" orth="um-hum"  nite:start="284.432875" nite:end="284.929750">
+	<nite:child href="sw4378.B.syllables.xml#id(ms206B_sy1)..id(ms206B_sy2)"/>
+</phonword>
+<phonword nite:id="ms72B_pw207" msstate="sw4378B-ms98-a-0072" orth="yep"  nite:start="286.116750" nite:end="286.319125" stressProfile="p">
+	<nite:child href="sw4378.B.syllables.xml#id(ms207B_sy1)"/>
+</phonword>
+<noise nite:id="sw4378B_nw11"  nite:start="297.096125" nite:end="297.110125" orth="[noise]" phonRange="id(ms353B_ph1)"/>
+</nite:phonword_stream>
+

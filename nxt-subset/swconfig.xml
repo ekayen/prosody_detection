@@ -1,0 +1,55 @@
+<NXTConfig>
+
+<CSLConfig>
+</CSLConfig>
+
+<!-- This version for syntax in named entity tool.
+
+-->
+
+<!-- This is set up for coding "kontrast" using the named entity 
+     tool.  For this coding, there is no type on links.  I think
+     we might have to name one, not sure, when working try without.
+       nenesting               = "false"
+        neelementname           = "kontrast"
+        neattributename         = "type"
+	abbrevattribute         = "type"
+	nelinkelementname       = "trigger"
+	nelinkattribute         = "junk"
+	nelinktypedefault       = "none"
+	nelinktypegloss         = "junk"
+	nelinksourcerole        = "referent"
+	nelinktargetrole        = "trigger"
+-->
+<DACoderConfig>
+    <corpussettings
+        id                      = "swcor"
+        gloss                   = "The corpus settings for the DA coder for the NXT format version of the Switchboard Corpus"
+        
+        segmentationelementname = "turn"  
+        transcriptionlayername  = "terminal-layer"
+        transcriptiondelegateclassname = "SwitchboardDelegate"
+
+        daelementname           = "da"
+        daattributename         = "niteType"
+        
+        nenesting               = "true"
+        neelementname           = "nt"
+        neattributename         = "cat" 
+        
+    />    
+
+
+    <guisettings
+        id                      = "swgui"
+        gloss                   = "Default settings"
+        showapwindow            = "false"
+        showlogwindow           = "true"
+        applicationtitle        = "Switchboard Dialogue act coder"
+        autokeystrokes="true"
+        showkeystrokes="true"
+    />
+    
+</DACoderConfig>
+
+</NXTConfig>

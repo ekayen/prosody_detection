@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="yes"?>
+<nite:turn_stream nite:id="sw2015-A-turns" xmlns:nite="http://nite.sourceforge.net/">
+   <turn nite:id="t1" nite:start="2.643125" nite:end="24.114625" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s1)..id(s6)"/>
+   </turn>
+   <turn nite:id="t3" nite:start="29.083625" nite:end="38.147625" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s10)..id(s12)"/>
+   </turn>
+   <turn nite:id="t5" nite:start="39.241125" nite:end="46.643" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s15)..id(s16)"/>
+   </turn>
+   <turn nite:id="t7" nite:start="47.93825" nite:end="54.632" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s18)"/>
+   </turn>
+   <turn nite:id="t9" nite:start="54.632" nite:end="71.155875" approx="true" firstKnownStart="64.440375" lastKnownEnd="71.155875">
+      <nite:child href="sw2015.A.syntax.xml#id(s23)..id(s25)"/>
+   </turn>
+   <turn nite:id="t11" nite:start="83.863625" nite:end="86.492375" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s33)"/>
+   </turn>
+   <turn nite:id="t13" nite:start="88.99825" nite:end="92.40875" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s35)..id(s36)"/>
+   </turn>
+   <turn nite:id="t15" nite:start="92.40875" nite:end="114.188625" approx="true" firstKnownStart="94.777875" lastKnownEnd="114.188625">
+      <nite:child href="sw2015.A.syntax.xml#id(s38)..id(s40)"/>
+   </turn>
+   <turn nite:id="t17" nite:start="136.6055" nite:end="155.25525" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s51)..id(s54)"/>
+   </turn>
+   <turn nite:id="t19" nite:start="212.55575" nite:end="231.387625" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s74)..id(s78)"/>
+   </turn>
+   <turn nite:id="t21" nite:start="274.923125" nite:end="293.961375" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s93)..id(s99)"/>
+   </turn>
+   <turn nite:id="t23" nite:start="293.961375" nite:end="325.504125" approx="true" firstKnownStart="316.866625" lastKnownEnd="325.504125">
+      <nite:child href="sw2015.A.syntax.xml#id(s114)..id(s116)"/>
+   </turn>
+   <turn nite:id="t25" nite:start="326.793875" nite:end="331.471375" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s118)"/>
+   </turn>
+   <turn nite:id="t29" nite:start="340.14725" nite:end="342.511625" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s127)"/>
+   </turn>
+   <turn nite:id="t31" nite:start="371.68125" nite:end="372.61325" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s138)"/>
+   </turn>
+   <turn nite:id="t33" nite:start="379.03525" nite:end="380.15725" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s142)"/>
+   </turn>
+   <turn nite:id="t35" nite:start="380.15725" nite:end="381.361125" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s144)"/>
+   </turn>
+   <turn nite:id="t37" nite:start="383.3255" nite:end="384.33825" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s146)"/>
+   </turn>
+   <turn nite:id="t39" nite:start="384.884375" nite:end="385.2045" approx="false">
+      <nite:child href="sw2015.A.syntax.xml#id(s150)"/>
+   </turn>
+</nite:turn_stream>
