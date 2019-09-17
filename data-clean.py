@@ -22,7 +22,21 @@ import pickle
 data_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
 #data_dir = '/home/ekayen/repos/stars/nxt-subset'
 
-NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
+mispron_dict = {
+    '[row/wow]':'wow',
+    '[mot/lot]':'lot',
+    '[trest/test]':'test',
+    '[adamnet/adapted]':'adapted',
+    '[storly/story]':'story',
+    '[unconvenient/inconvenient]':'inconvenient',
+    '[dib/bit]': 'bit',
+    '[tack/talking]': 'talking',
+    '[banding/banning]': 'banning',
+    '[ruther/rather]': 'rather',
+    '[shrip/shrimp]': 'shrimp',
+}
+
+NUC_ONLY = False # if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'nuc_only.pickle'
     out_txt = 'nuc_only.txt'
@@ -45,7 +59,7 @@ accent_dict = {'nuclear':1,
 
 
 
-dialog_nums = [f.split('.')[0] for f in os.listdir(os.path.join(data_dir,'accent'))]
+dialog_nums = list(set([f.split('.')[0] for f in os.listdir(os.path.join(data_dir,'accent'))]))
 
 if NUC_ONLY:
     dialog_nums_tmp = []
@@ -57,10 +71,8 @@ if NUC_ONLY:
     dialog_nums=dialog_nums_tmp
 
 
-#import pdb;pdb.set_trace()
-
 for dialog_num in dialog_nums:
-    print('processing ',dialog_num,'...')
+    #print('processing ',dialog_num,'...')
 
     turn_files = [os.path.join(data_dir,'turns','.'.join([dialog_num,user,'turns','xml'])) for user in users]
     acc_files = [os.path.join(data_dir,'accent','.'.join([dialog_num,user,'accents','xml'])) for user in users]
@@ -71,10 +83,6 @@ for dialog_num in dialog_nums:
     times = []
 
     for i,wd_file in enumerate(wd_files):
-        if '.A.' in wd_file:
-            print('speaker A')
-        elif '.B.' in wd_file:
-            print('speaker B')
         tmp_wds = []
         tmp_ids = []
         tmp_times = []
@@ -82,6 +90,13 @@ for dialog_num in dialog_nums:
         wd_root = wd_tree.getroot()
         for phonword in wd_root.findall('phonword'):
             orth = phonword.attrib['orth']
+            # Clean up orth form:
+            orth = orth.strip('-')
+            orth = orth.strip('{')
+            orth = orth.strip('}')
+            if orth in mispron_dict:
+                print(orth)
+                orth = mispron_dict[orth]
             id_num = phonword.attrib[nite+'id']
             start_time = float(phonword.attrib[nite+'start'])
             if not orth in wd_to_i:
@@ -100,7 +115,6 @@ for dialog_num in dialog_nums:
         for acc in acc_root.findall('accent'):
             for chld in acc:
                 acc_id = chld.attrib['href'].split('(')[-1][:-1]
-                #import pdb;pdb.set_trace()
                 if NUC_ONLY:
                     id_to_acc[acc_id] = accent_dict[acc.attrib['type']]
                 else:
@@ -141,19 +155,12 @@ for dialog_num in dialog_nums:
         labels = ' '.join([str(i) for i in acc])
         lines.append((tokens,labels))
 
-
-#import pdb;pdb.set_trace()
-
 # Pickle the results
-
-
-
 with open(out_pickle,'wb') as f:
     pickle.dump(lines,f)
 
 
 # Also write them to a text file:
-
 with open(out_txt,'w') as f:
     for line in lines:
         f.write(line[0]+'\t'+str(line[1])+'\n')
