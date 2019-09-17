@@ -36,13 +36,15 @@ mispron_dict = {
     '[shrip/shrimp]': 'shrimp',
 }
 
-NUC_ONLY = False # if true, only consider nuclear accents; if false, consider all accents
+NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'nuc_only.pickle'
     out_txt = 'nuc_only.txt'
+    out_vocab = 'nuc_vocab.pickle'
 else:
     out_pickle = 'all_acc.pickle'
     out_txt = 'all_acc.txt'
+    out_vocab = 'all_vocab.pickle'
 
 wd_to_i = {}
 i_to_wd = {}
@@ -159,6 +161,8 @@ for dialog_num in dialog_nums:
 with open(out_pickle,'wb') as f:
     pickle.dump(lines,f)
 
+with open(out_vocab,'wb') as f:
+    pickle.dump((wd_to_i,i_to_wd),f)
 
 # Also write them to a text file:
 with open(out_txt,'w') as f:
