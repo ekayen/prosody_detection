@@ -36,7 +36,7 @@ mispron_dict = {
     '[shrip/shrimp]': 'shrimp',
 }
 
-NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
+NUC_ONLY = False # if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'data/nuc_only.pickle'
     out_txt = 'data/nuc_only.txt'
@@ -94,8 +94,9 @@ for dialog_num in dialog_nums:
         wd_tree = ET.parse(wd_file)
         wd_root = wd_tree.getroot()
         for phonword in wd_root.findall('phonword'):
-            orth = phonword.attrib['orth'].lower()
+            orth = phonword.attrib['orth']
             # Clean up orth form:
+            orth = orth.lower()
             orth = orth.strip('-')
             orth = orth.strip('{')
             orth = orth.strip('}')
