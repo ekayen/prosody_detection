@@ -36,15 +36,17 @@ mispron_dict = {
     '[shrip/shrimp]': 'shrimp',
 }
 
-NUC_ONLY = False # if true, only consider nuclear accents; if false, consider all accents
+NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'data/nuc_only.pickle'
     out_txt = 'data/nuc_only.txt'
     out_vocab = 'data/nuc_vocab.pickle'
+    out_conll = 'data/nuc_only.conll'
 else:
     out_pickle = 'data/all_acc.pickle'
     out_txt = 'data/all_acc.txt'
     out_vocab = 'data/all_vocab.pickle'
+    out_conll = 'data/all_acc.conll'
 
 wd_to_i = {}
 i_to_wd = {}
@@ -92,7 +94,7 @@ for dialog_num in dialog_nums:
         wd_tree = ET.parse(wd_file)
         wd_root = wd_tree.getroot()
         for phonword in wd_root.findall('phonword'):
-            orth = phonword.attrib['orth']
+            orth = phonword.attrib['orth'].lower()
             # Clean up orth form:
             orth = orth.strip('-')
             orth = orth.strip('{')
@@ -171,6 +173,27 @@ with open(out_txt,'w') as f:
     for line in lines:
         f.write(line[0]+'\t'+str(line[1])+'\n')
 
+
+train_idx = int(len(lines)*0.6)
+dev_idx = int(len(lines)*0.8)
+
+train_lines = lines[:train_idx]
+dev_lines = lines[train_idx:dev_idx]
+test_lines = lines[dev_idx:]
+
+# Also make a conll file:
+split_dict = {'train':train_lines,
+              'dev':dev_lines,
+              'test':test_lines}
+
+for sec in split_dict:
+    with open(sec+'_'+out_conll,'w') as f:
+        for line in split_dict[sec]:
+            wds = line[0].split()
+            lbls = line[1].split()
+            for w,l in zip(wds,lbls):
+                f.write(w+'\t'+l+'\n')
+            f.write('\n')
 
 
 
