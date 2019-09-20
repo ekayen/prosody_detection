@@ -5,6 +5,7 @@ import torch
 from torchtext import data,datasets
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+from utils import load_data,BatchWrapper
 
 
 # Use torchtext to numericalize the text and pad the seqs
@@ -28,6 +29,7 @@ txt = [text.vocab.itos[i] for i in sent]
 lbl = batch.labels[0:1,]
 lbl = lbl.tolist()[0]
 
+import pdb;pdb.set_trace()
 print("sanity check of one sentence:")
 print(txt,lbl)
 
@@ -39,20 +41,28 @@ class LSTM(nn.module):
     # Keras version:
     # seq_len, batch_size
     # ___, seq_len
-    def __init__(self, seq_len, hidden_size=128, lstm_layer=1):
+    def __init__(self, seq_len, batch_size, vocab_size, tagset_size, hidden_size=128, lstm_layers=1):
         super(LSTM,self).__init__()
+        # hparams:
         self.hidden_size = hidden_size
         self.seq_len = seq_len
-        self.embedding = nn.Embedding(seq_len, hidden_size)  # Here probably use F.one_hot (yes, do that)
-        self.lstm = nn.LSTM(hidden_size, hidden_size, bidirectional=True) # add bidrectional flag
-        self.out = nn.Linear(hidden_size, seq_len) # Second input should possibly be '2', because binary classification (might include bias term by default)
+        self.vocab_size = vocab_size
+        self.tagset_size = tagset_size
+
+        # layers:
+        self.embedding = nn.Embedding(seq_len, hidden_size)  # Currently using one-hot instead of embeddings, but this is here for future
+        self.lstm = nn.LSTM(vocab_size, hidden_size, bidirectional=True, num_layers=lstm_layers)
+        self.hidden2tag = nn.Linear(hidden_size, tagset_size)
 
     def forward(self,input,hidden):
         # Or maybe just insert F.one_hot here?
-        x = self.embedding(input).view(1,1,-1)
-        x,hidden = self.lstm(x,hidden) # double check what lstms output
-        output = self.out(x)
+        #x = self.embedding(input).view(1,1,-1)
+        one_hots = F.one_hot(input) # Should have dims (batch_size, seq_len, vocab_size)
+        lstm_out,hidden = self.lstm(one_hots.view(seq_len,1,-1),hidden) # Not sure why you might need that 'view' thing...
+        tag_space= self.hidden2tag(lstm_out)
+        tag_scores = F.log_softmax(tag_space, dim=1)
         return output,hidden
+
 
     def initHidden(self):
         return torch.zeros(1, 1, self.hidden_size)
