@@ -36,7 +36,7 @@ mispron_dict = {
     '[shrip/shrimp]': 'shrimp',
 }
 
-NUC_ONLY = False # if true, only consider nuclear accents; if false, consider all accents
+NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'data/nuc_only.pickle'
     out_txt = 'data/nuc_only.txt'
@@ -100,6 +100,9 @@ for dialog_num in dialog_nums:
             orth = orth.strip('-')
             orth = orth.strip('{')
             orth = orth.strip('}')
+            if '[laughter-' in orth:
+                orth = orth.replace('[laughter-','')
+                orth = orth.replace(']','')
             if orth in mispron_dict:
                 print(orth)
                 orth = mispron_dict[orth]
