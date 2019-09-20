@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import torch
 
 def load_data(filename):
     data = []
@@ -13,24 +14,41 @@ def load_data(filename):
     elif '.pickle' in filename:
         with open(filename,'rb') as f:
             data = pickle.load(f)
-
+    else:
+        print("File format not recognized.")
     return data
+
+def to_ints(data):
+    wd_to_i = {}
+    i_to_wd = {}
+    counter = 0
+    num_wds = []
+    num_lbls = []
+    for example in data:
+        wds,lbls = example
+        wd_i = []
+        for wd in wds:
+            if not wd in wd_to_i:
+                wd_to_i[wd] = counter
+                i_to_wd[counter] = wd
+                counter += 1
+            wd_i.append(wd_to_i[wd])
+        num_wds.append(torch.tensor(wd_i,dtype=torch.long))
+        num_lbls.append(torch.tensor(lbls,dtype=torch.long))
+    return num_wds,num_lbls,wd_to_i,i_to_wd
 
 
 class BatchWrapper:
-    def __init__(self, dl, x_var, y_vars):
-        self.dl, self.x_var, self.y_vars = dl, x_var, y_vars  # we pass in the list of attributes for x
+    def __init__(self,in_iter,x,y):
+        self.in_iter, self.x, self.y = in_iter,x,y
 
     def __iter__(self):
-        for batch in self.dl:
-            x = getattr(batch, self.x_var)  # we assume only one input in this wrapper
+        for batch in self.in_iter:
 
-            if self.y_vars is None:  # we will concatenate y into a single tensor
-                y = torch.cat([getattr(batch, feat).unsqueeze(1) for feat in self.y_vars], dim=1).float()
-            else:
-                y = torch.zeros((1))
+            x = getattr(batch, self.x)
+            y = getattr(batch, self.y)
 
-            yield (x, y)
+            yield (x,y)
 
     def __len__(self):
-        return len(self.dl)
+        return len(self.in_iter)
