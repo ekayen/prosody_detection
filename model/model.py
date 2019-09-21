@@ -7,10 +7,14 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 from utils import load_data,BatchWrapper,to_ints
 
+DEBUG = True
+PRINT_EVERY = 100
+
 # Hyperparameters
 BATCH_SIZE = 1
 NUM_EPOCHS = 20
 BIDIRECTIONAL = True
+
 
 #datafile = '../train_data/all_acc.conll'
 datafile = '../data/all_acc.txt'
@@ -79,28 +83,27 @@ class BiLSTM(nn.Module):
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
         embeds = self.embedding(sent)
-        print('embeds.shape',embeds.shape)
+        #print('embeds.shape',embeds.shape)
         lstm_out, hidden = self.lstm(embeds.view(self.seq_len,self.batch_size,-1), hidden)
-        print('lstm_out.shape',lstm_out.shape)
+        #print('lstm_out.shape',lstm_out.shape)
         tag_space = self.hidden2tag(lstm_out)
-        print('tag_space dims',tag_space.shape)
+        #print('tag_space dims',tag_space.shape)
         tag_scores = self.softmax(tag_space) #F.log_softmax(tag_space, dim=1)
-        print('tag_scores dims',tag_scores.shape)
+        #print('tag_scores dims',tag_scores.shape)
         #import pdb;pdb.set_trace()
         return tag_scores,hidden
 
     def init_hidden(self):
+
         if self.bidirectional:
             first_dim = self.lstm_layers*2
         else:
             first_dim = self.lstm_layers
+
         # Initialize hidden state with zeros
         h0 = torch.zeros(first_dim, self.batch_size, self.hidden_size).requires_grad_()
-        print('h0',h0.shape)
-
         # Initialize cell state
         c0 = torch.zeros(first_dim, self.batch_size, self.hidden_size).requires_grad_()
-        print('c0',c0.shape)
         return (h0,c0)
 
 model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=len(wd_to_i),tagset_size=2)
@@ -118,14 +121,12 @@ with torch.no_grad():
     print("labels dims",labels.shape)
 import pdb;pdb.set_trace()
 """
-
+loss = 0
 for epoch in range(NUM_EPOCHS):
     for i in range(len(X)):
-        i=5
 
         model.zero_grad()
         input,labels = X[i],Y[i]
-
 
         hidden = model.init_hidden()
 
@@ -134,6 +135,8 @@ for epoch in range(NUM_EPOCHS):
         loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
         loss.backward()
         optimizer.step()
+        if i % PRINT_EVERY == 0:
+            print("Loss: ",loss)
 
 
 with torch.no_grad():
