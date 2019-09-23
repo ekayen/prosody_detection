@@ -3,7 +3,8 @@ import pickle
 import torch
 import random
 
-def load_data(filename,shuffle=True):
+
+def load_data(filename,shuffle=True,debug=True):
     data = []
     if '.txt' in filename:
         with open(filename,'r') as f:
@@ -18,6 +19,8 @@ def load_data(filename,shuffle=True):
     else:
         print("File format not recognized.")
     if shuffle:
+        if debug:
+            random.seed(123)
         random.shuffle(data)
     return data
 

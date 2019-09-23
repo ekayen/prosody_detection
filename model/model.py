@@ -6,22 +6,25 @@ from torchtext import data,datasets
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 from utils import load_data,BatchWrapper,to_ints
+import numpy as np
+from seqeval.metrics import accuracy_score, classification_report,f1_score
 
 PRINT_DIMS = False
 PRINT_EVERY = 1000
+EVAL_EVERY = 2000
 
 # Hyperparameters
 BATCH_SIZE = 1
-NUM_EPOCHS = 10
+NUM_EPOCHS = 1
 BIDIRECTIONAL = True
 LEARNING_RATE = 0.01
 TRAIN_RATIO = 0.6
 DEV_RATIO = 0.2
 
 
-#datafile = '../train_data/all_acc.conll'
-#datafile = '../data/all_acc.txt'
-datafile = '../data/mac_morpho/all.txt'
+datafile = '../data/all_acc.txt'
+#datafile = '../data/mac_morpho/all.txt'
+modelfile = 'model.pt'
 
 # Use torchtext to numericalize the text and pad the seqs
 
@@ -88,7 +91,7 @@ class BiLSTM(nn.Module):
             self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size)
         else:
             self.hidden2tag = nn.Linear(hidden_size, tagset_size)
-        self.softmax = nn.LogSoftmax(dim=2) # TODO Check this
+        self.softmax = nn.Softmax(dim=2) # TODO Check this
 
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
@@ -101,8 +104,9 @@ class BiLSTM(nn.Module):
             print('lstm_out.shape',lstm_out.shape)
             print('tag_space dims',tag_space.shape)
             print('tag_scores dims',tag_scores.shape)
-            import pdb;pdb.set_trace()
+            #import pdb;pdb.set_trace()
         return tag_scores,hidden
+        #return tag_space, hidden
 
     def init_hidden(self):
 
@@ -133,6 +137,34 @@ with torch.no_grad():
 import pdb;pdb.set_trace()
 """
 
+# DEFINE EVAL FUNCTION
+
+Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
+
+def evaluate(X, y_true):
+
+    y_pred = []
+
+    with torch.no_grad():
+        for i in range(len(X)):
+            input, labels = X[i], Y[i]
+            if not (list(input.shape)[0] == 0):
+                hidden = model.init_hidden()
+                tag_scores, _ = model(input, hidden)
+                pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist()
+                if type(pred) is int:
+                    pred = [pred]
+                pred = [str(i) for i in pred]
+                y_pred.append(pred)
+
+    import pdb;pdb.set_trace()
+    print('Evaluation:')
+    print('F1:',f1_score(y_true, y_pred))
+    print('Acc',accuracy_score(y_true, y_pred))
+    print(classification_report(y_true, y_pred))
+
+# TRAINING
+
 total_loss = 0
 for epoch in range(NUM_EPOCHS):
     for i in range(len(X_train)):
@@ -144,26 +176,23 @@ for epoch in range(NUM_EPOCHS):
             hidden = model.init_hidden()
 
             tag_scores,_ = model(input,hidden)
-            #import pdb; pdb.set_trace()
+
+            #if not tag_scores.sum().data.item() == 0:
+            #    import pdb; pdb.set_trace()
             loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
             total_loss += loss
             loss.backward()
             optimizer.step()
-            if i % PRINT_EVERY == 0:
-                print("Loss: ",total_loss/i)
+            if i % PRINT_EVERY == 1:
+                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/i).item()))
+            if i % EVAL_EVERY == 1 and not i == 1:
+                evaluate(X_dev,Y_dev_str)
+        if i == 10000:
+            break
 
 import pdb;pdb.set_trace()
 
-# EVALUATION
-
-# Single example to check
-with torch.no_grad():
-    inputs = X_train[26]
-    tag_scores = model(inputs)
-    print(tag_scores[0])
-
-with torch.no_grad():
-    for i in range(len(X_dev)):
-        input,labels = X_dev[i],Y_dev[i]
+print('Final evaluation: ')
+evaluate(X_dev, Y_dev_str)
 
 
