@@ -1,8 +1,9 @@
 import numpy as np
 import pickle
 import torch
+import random
 
-def load_data(filename):
+def load_data(filename,shuffle=True):
     data = []
     if '.txt' in filename:
         with open(filename,'r') as f:
@@ -16,6 +17,8 @@ def load_data(filename):
             data = pickle.load(f)
     else:
         print("File format not recognized.")
+    if shuffle:
+        random.shuffle(data)
     return data
 
 def to_ints(data):

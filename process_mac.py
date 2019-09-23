@@ -21,7 +21,7 @@ for file in os.listdir(datapath):
             for line in lines:
                 try:
                     txt, lbl = line.split("_")
-                    if line.strip() == '._.':
+                    if line.strip() == '._.' and not line.strip() == '':
                         data.append((sent, tags))
                         sent = []
                         tags = []
