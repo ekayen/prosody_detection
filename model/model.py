@@ -70,7 +70,7 @@ Y_test = Y[dev_idx:]
 class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
     # OUTPUT = (hidden size, tagset_size),
-    # SOFTMAX over dimension 1 (I am not sure if this is right)
+    # SOFTMAX over dimension 2 (I am not sure if this is right)
     def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional = BIDIRECTIONAL):
 
         super(BiLSTM,self).__init__()
@@ -91,7 +91,7 @@ class BiLSTM(nn.Module):
             self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size)
         else:
             self.hidden2tag = nn.Linear(hidden_size, tagset_size)
-        self.softmax = nn.Softmax(dim=2) # TODO Check this
+        self.softmax = nn.Softmax(dim=2) # TODO Check this. It makes sense to me that it should be 2, but that means very little.
 
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
@@ -157,7 +157,6 @@ def evaluate(X, y_true):
                 pred = [str(i) for i in pred]
                 y_pred.append(pred)
 
-    import pdb;pdb.set_trace()
     print('Evaluation:')
     print('F1:',f1_score(y_true, y_pred))
     print('Acc',accuracy_score(y_true, y_pred))
@@ -177,8 +176,6 @@ for epoch in range(NUM_EPOCHS):
 
             tag_scores,_ = model(input,hidden)
 
-            #if not tag_scores.sum().data.item() == 0:
-            #    import pdb; pdb.set_trace()
             loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
             total_loss += loss
             loss.backward()
@@ -189,8 +186,6 @@ for epoch in range(NUM_EPOCHS):
                 evaluate(X_dev,Y_dev_str)
         if i == 10000:
             break
-
-import pdb;pdb.set_trace()
 
 print('Final evaluation: ')
 evaluate(X_dev, Y_dev_str)
