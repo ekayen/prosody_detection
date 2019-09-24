@@ -180,9 +180,8 @@ for epoch in range(NUM_EPOCHS):
                 print(loss)
             if i % PRINT_EVERY == 1:
                 print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving? I definitely need to not just divide by i once I do more than one epoch
-            #if i % EVAL_EVERY == 1:
-            #    import pdb;pdb.set_trace()
-            #    evaluate(X_dev,Y_dev_str)
+            if i % EVAL_EVERY == 1:
+                evaluate(X_dev,Y_dev_str)
 
 print('After training, train:')
 evaluate(X_train,Y_train_str)
