@@ -9,7 +9,7 @@ from utils import load_data,BatchWrapper,to_ints
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-PRINT_DIMS = True
+PRINT_DIMS = False
 PRINT_EVERY = 1000
 EVAL_EVERY = 2000
 
@@ -82,19 +82,11 @@ class BiLSTM(nn.Module):
         tag_space = self.hidden2tag(lstm_out)
         tag_scores = self.softmax(tag_space) #F.log_softmax(tag_space, dim=1)
         if PRINT_DIMS:
-
-            print(embeds)
             print('embeds.shape', embeds.shape)
-            print(lstm_out)
             print('lstm_out.shape', lstm_out.shape)
-            print(tag_space)
             print('tag_space dims',tag_space.shape)
-            print(tag_scores)
             print('tag_scores dims',tag_scores.shape)
-            print(hidden)
-            import pdb;pdb.set_trace()
         return tag_scores,hidden
-        #return tag_space, hidden
 
     def init_hidden(self):
 
@@ -178,8 +170,9 @@ for epoch in range(NUM_EPOCHS):
                 print('Instance number ',i)
                 print(model.seq_len,'tokens')
                 print(loss)
+                print("Epoch: %s Step: %s Loss: %s" % (epoch, i, (total_loss / (i + (epoch * len(X_train)))).item()))
             if i % PRINT_EVERY == 1:
-                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving? I definitely need to not just divide by i once I do more than one epoch
+                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving?
             if i % EVAL_EVERY == 1:
                 evaluate(X_dev,Y_dev_str)
 
