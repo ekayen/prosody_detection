@@ -15,57 +15,38 @@ EVAL_EVERY = 2000
 
 # Hyperparameters
 BATCH_SIZE = 1
-NUM_EPOCHS = 1
+NUM_EPOCHS = 20
 BIDIRECTIONAL = True
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.005
 TRAIN_RATIO = 0.6
 DEV_RATIO = 0.2
+VOCAB_SIZE = 4000 # TODO actually restrict to high-freq vocab items
+SOFTMAX_DIM = 2
 
 
 datafile = '../data/all_acc.txt'
 #datafile = '../data/mac_morpho/all.txt'
 modelfile = 'model.pt'
 
-# Use torchtext to numericalize the text and pad the seqs
 
-"""
-text = data.Field(lower=True,batch_first=True)
-labels = data.Field(is_target=True,batch_first=True)
-accents = datasets.SequenceTaggingDataset(
-    path='../train_data/all_acc.conll',
-    fields=[('text', text),
-            ('labels', labels)]
-)
-text.build_vocab(accents) #, min_freq=2)
-labels.build_vocab(accents)
-train_iter = data.BucketIterator(dataset=accents, batch_size=BATCH_SIZE,  sort_key=lambda x: len(x.text))
-train_iter = BatchWrapper(train_iter,'text','labels')
-
-batch = next(iter(train_iter))
-
-sent = batch[0][0:1,]
-sent = sent.tolist()[0]
-txt = [text.vocab.itos[i] for i in sent]
-lbl = batch[1][0:1,]
-lbl = lbl.tolist()[0]
-
-
-print("sanity check of one sentence:")
-print(txt,lbl)
-"""
+# LOAD THE DATA
 
 data = load_data(datafile,shuffle=True)
 
-X,Y,wd_to_i,i_to_wd = to_ints(data)
+train_idx = int(TRAIN_RATIO*len(data))
+dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(data))
 
-train_idx = int(TRAIN_RATIO*len(X))
-dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(X))
-X_train = X[:train_idx]
-Y_train = Y[:train_idx]
-X_dev = X[train_idx:dev_idx]
-Y_dev = Y[train_idx:dev_idx]
-X_test = X[dev_idx:]
-Y_test = Y[dev_idx:]
+train_data = data[:train_idx]
+dev_data = data[train_idx:dev_idx]
+test_data = data[dev_idx:]
+
+X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE) # TODO fix so that only train data ends up in vocab.
+X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
+X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
+
+#import pdb;pdb.set_trace()
+
+# BUILD THE MODEL
 
 class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
@@ -91,7 +72,7 @@ class BiLSTM(nn.Module):
             self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size)
         else:
             self.hidden2tag = nn.Linear(hidden_size, tagset_size)
-        self.softmax = nn.Softmax(dim=2) # TODO Check this. It makes sense to me that it should be 2, but that means very little.
+        self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
 
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
@@ -121,12 +102,108 @@ class BiLSTM(nn.Module):
         c0 = torch.zeros(first_dim, self.batch_size, self.hidden_size).requires_grad_()
         return (h0,c0)
 
-model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=len(wd_to_i),tagset_size=2)
+# INSTANTIATE THE MODEL
+
+model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+
+# DEFINE EVAL FUNCTION
+
+def evaluate(X, Y):
+
+    y_pred = []
+
+    with torch.no_grad():
+        for i in range(len(X)):
+            input = X[i]
+            #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
+            if not (list(input.shape)[0] == 0):
+                hidden = model.init_hidden()
+                tag_scores, _ = model(input, hidden)
+                pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
+                if type(pred) is int:
+                    pred = [pred]
+                pred = [str(j) for j in pred]
+                y_pred.append(pred)
+
+    #import pdb;pdb.set_trace()
+    print('Evaluation:')
+    print('F1:',f1_score(Y, y_pred))
+    print('Acc',accuracy_score(Y, y_pred))
+    print(classification_report(Y, y_pred))
+
+# Before training, evaluate
+print('Before training, train:')
+Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
+evaluate(X_train,Y_train_str)
+
+
+print('Before training, dev:')
+Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
+evaluate(X_dev,Y_dev_str)
+
+#import pdb;pdb.set_trace()
+
+# TRAIN
+
+total_loss = 0
+loss_divisor = 0
+for epoch in range(NUM_EPOCHS):
+    for i in range(len(X_train)):
+
+        model.zero_grad()
+        input,labels = X_train[i],Y_train[i]
+        input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
+        if not (list(input.shape)[0] == 0):
+
+            hidden = model.init_hidden()
+
+            tag_scores,_ = model(input,hidden)
+
+            loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
+            total_loss += loss
+            loss_divisor += model.seq_len
+            loss.backward()
+            optimizer.step()
+            if i in range(10):
+                print('Instance number ',i)
+                print(model.seq_len,'tokens')
+                print(loss)
+                print("Epoch: %s Step: %s Loss: %s" % (epoch, i, (total_loss / (i * (epoch + 1))).item()))
+            if i % PRINT_EVERY == 1:
+                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+epoch)).item())) # TODO could my loss calculation be deceiving? I definitely need to not just divide by i once I do more than one epoch
+            #if i % EVAL_EVERY == 1:
+            #    import pdb;pdb.set_trace()
+            #    evaluate(X_dev,Y_dev_str)
+        if i == 10000:
+            break
+
+print('After training, train:')
+evaluate(X_train,Y_train_str)
+
+
+print('After training, dev: ')
+evaluate(X_dev, Y_dev_str)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
 # One forward pass to test dims:
+# This would go right before the training loop
 with torch.no_grad():
     input,labels = X[5],Y[5]
     print('seq_len',X[5].shape)
@@ -137,57 +214,35 @@ with torch.no_grad():
 import pdb;pdb.set_trace()
 """
 
-# DEFINE EVAL FUNCTION
 
-Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
 
-def evaluate(X, y_true):
 
-    y_pred = []
+# Use torchtext to numericalize the text and pad the seqs
 
-    with torch.no_grad():
-        for i in range(len(X)):
-            input, labels = X[i], Y[i]
-            if not (list(input.shape)[0] == 0):
-                hidden = model.init_hidden()
-                tag_scores, _ = model(input, hidden)
-                pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist()
-                if type(pred) is int:
-                    pred = [pred]
-                pred = [str(i) for i in pred]
-                y_pred.append(pred)
+"""
+# This would go at the beginning, during the data loading step
+text = data.Field(lower=True,batch_first=True)
+labels = data.Field(is_target=True,batch_first=True)
+accents = datasets.SequenceTaggingDataset(
+    path='../train_data/all_acc.conll',
+    fields=[('text', text),
+            ('labels', labels)]
+)
+text.build_vocab(accents) #, min_freq=2)
+labels.build_vocab(accents)
+train_iter = data.BucketIterator(dataset=accents, batch_size=BATCH_SIZE,  sort_key=lambda x: len(x.text))
+train_iter = BatchWrapper(train_iter,'text','labels')
 
-    print('Evaluation:')
-    print('F1:',f1_score(y_true, y_pred))
-    print('Acc',accuracy_score(y_true, y_pred))
-    print(classification_report(y_true, y_pred))
+batch = next(iter(train_iter))
 
-# TRAINING
+sent = batch[0][0:1,]
+sent = sent.tolist()[0]
+txt = [text.vocab.itos[i] for i in sent]
+lbl = batch[1][0:1,]
+lbl = lbl.tolist()[0]
 
-total_loss = 0
-for epoch in range(NUM_EPOCHS):
-    for i in range(len(X_train)):
 
-        model.zero_grad()
-        input,labels = X_train[i],Y_train[i]
-        if not (list(input.shape)[0] == 0):
-
-            hidden = model.init_hidden()
-
-            tag_scores,_ = model(input,hidden)
-
-            loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
-            total_loss += loss
-            loss.backward()
-            optimizer.step()
-            if i % PRINT_EVERY == 1:
-                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/i).item()))
-            if i % EVAL_EVERY == 1 and not i == 1:
-                evaluate(X_dev,Y_dev_str)
-        if i == 10000:
-            break
-
-print('Final evaluation: ')
-evaluate(X_dev, Y_dev_str)
-
+print("sanity check of one sentence:")
+print(txt,lbl)
+"""
 
