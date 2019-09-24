@@ -9,13 +9,13 @@ from utils import load_data,BatchWrapper,to_ints
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-PRINT_DIMS = False
+PRINT_DIMS = True
 PRINT_EVERY = 1000
 EVAL_EVERY = 2000
 
 # Hyperparameters
 BATCH_SIZE = 1
-NUM_EPOCHS = 20
+NUM_EPOCHS = 3
 BIDIRECTIONAL = True
 LEARNING_RATE = 0.005
 TRAIN_RATIO = 0.6
@@ -52,7 +52,7 @@ class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
     # OUTPUT = (hidden size, tagset_size),
     # SOFTMAX over dimension 2 (I am not sure if this is right)
-    def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional = BIDIRECTIONAL):
+    def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional = True):
 
         super(BiLSTM,self).__init__()
 
@@ -76,16 +76,23 @@ class BiLSTM(nn.Module):
 
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
+        #import pdb;pdb.set_trace()
         embeds = self.embedding(sent)
         lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
         tag_space = self.hidden2tag(lstm_out)
         tag_scores = self.softmax(tag_space) #F.log_softmax(tag_space, dim=1)
         if PRINT_DIMS:
-            print('embeds.shape',embeds.shape)
-            print('lstm_out.shape',lstm_out.shape)
+
+            print(embeds)
+            print('embeds.shape', embeds.shape)
+            print(lstm_out)
+            print('lstm_out.shape', lstm_out.shape)
+            print(tag_space)
             print('tag_space dims',tag_space.shape)
+            print(tag_scores)
             print('tag_scores dims',tag_scores.shape)
-            #import pdb;pdb.set_trace()
+            print(hidden)
+            import pdb;pdb.set_trace()
         return tag_scores,hidden
         #return tag_space, hidden
 
@@ -104,7 +111,7 @@ class BiLSTM(nn.Module):
 
 # INSTANTIATE THE MODEL
 
-model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2)
+model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidirectional=BIDIRECTIONAL)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
@@ -137,19 +144,19 @@ def evaluate(X, Y):
 # Before training, evaluate
 print('Before training, train:')
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
-evaluate(X_train,Y_train_str)
+#evaluate(X_train,Y_train_str)
 
 
 print('Before training, dev:')
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
-evaluate(X_dev,Y_dev_str)
+#evaluate(X_dev,Y_dev_str)
 
 #import pdb;pdb.set_trace()
 
 # TRAIN
 
 total_loss = 0
-loss_divisor = 0
+#loss_divisor = 0
 for epoch in range(NUM_EPOCHS):
     for i in range(len(X_train)):
 
@@ -164,21 +171,18 @@ for epoch in range(NUM_EPOCHS):
 
             loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
             total_loss += loss
-            loss_divisor += model.seq_len
+#            loss_divisor += model.seq_len
             loss.backward()
             optimizer.step()
-            if i in range(10):
+            if i in range(10) and epoch==0:
                 print('Instance number ',i)
                 print(model.seq_len,'tokens')
                 print(loss)
-                print("Epoch: %s Step: %s Loss: %s" % (epoch, i, (total_loss / (i * (epoch + 1))).item()))
             if i % PRINT_EVERY == 1:
-                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+epoch)).item())) # TODO could my loss calculation be deceiving? I definitely need to not just divide by i once I do more than one epoch
+                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving? I definitely need to not just divide by i once I do more than one epoch
             #if i % EVAL_EVERY == 1:
             #    import pdb;pdb.set_trace()
             #    evaluate(X_dev,Y_dev_str)
-        if i == 10000:
-            break
 
 print('After training, train:')
 evaluate(X_train,Y_train_str)
