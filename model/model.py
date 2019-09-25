@@ -24,8 +24,8 @@ VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
 
 
-datafile = '../data/all_acc.txt'
-#datafile = '../data/mac_morpho/all.txt'
+#datafile = '../data/all_acc.txt'
+datafile = '../data/mac_morpho/all.txt'
 modelfile = 'model.pt'
 
 
@@ -44,7 +44,6 @@ X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE) # TODO fix so t
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
-#import pdb;pdb.set_trace()
 
 # BUILD THE MODEL
 
@@ -52,7 +51,7 @@ class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
     # OUTPUT = (hidden size, tagset_size),
     # SOFTMAX over dimension 2 (I am not sure if this is right)
-    def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional = True):
+    def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional=True, output_dim=1):
 
         super(BiLSTM,self).__init__()
 
@@ -63,28 +62,34 @@ class BiLSTM(nn.Module):
         self.batch_size = batch_size
         self.lstm_layers = lstm_layers
         self.bidirectional = bidirectional
+        self.output_dim = output_dim
 
         # layers:
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_size, bidirectional=self.bidirectional, num_layers=lstm_layers)
         if self.bidirectional:
-            self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
+            #self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
+            self.hidden2tag = nn.Linear(2 * hidden_size, output_dim)
         else:
-            self.hidden2tag = nn.Linear(hidden_size, tagset_size)
-        self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
+            #self.hidden2tag = nn.Linear(hidden_size, tagset_size)
+            self.hidden2tag = nn.Linear(hidden_size, output_dim)
+        #self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self,sent,hidden):
         self.seq_len = len(sent)# TODO change for real batching
-        #import pdb;pdb.set_trace()
+
         embeds = self.embedding(sent)
         lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
         tag_space = self.hidden2tag(lstm_out)
-        tag_scores = self.softmax(tag_space) #F.log_softmax(tag_space, dim=1)
+        #tag_scores = self.softmax(tag_space)
+        tag_scores = self.sigmoid(tag_space)
         if PRINT_DIMS:
             print('embeds.shape', embeds.shape)
             print('lstm_out.shape', lstm_out.shape)
             print('tag_space dims',tag_space.shape)
             print('tag_scores dims',tag_scores.shape)
+
         return tag_scores,hidden
 
     def init_hidden(self):
@@ -103,7 +108,8 @@ class BiLSTM(nn.Module):
 # INSTANTIATE THE MODEL
 
 model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidirectional=BIDIRECTIONAL)
-loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
+#loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
+loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 
@@ -120,34 +126,32 @@ def evaluate(X, Y,mdl):
             if not (list(input.shape)[0] == 0):
                 hidden = mdl.init_hidden()
                 tag_scores, _ = mdl(input, hidden)
-                pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
+                #pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
+                pred = np.where(tag_scores>0.5,1,0)
+                pred = np.squeeze(pred).tolist()
                 if type(pred) is int:
                     pred = [pred]
                 pred = [str(j) for j in pred]
                 y_pred.append(pred)
 
-    #import pdb;pdb.set_trace()
     print('Evaluation:')
     print('F1:',f1_score(Y, y_pred))
     print('Acc',accuracy_score(Y, y_pred))
     print(classification_report(Y, y_pred))
 
+Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
+Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
+"""
 # Before training, evaluate
 print('Before training, train:')
-Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
 evaluate(X_train,Y_train_str,model)
 
-
 print('Before training, dev:')
-Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
 evaluate(X_dev,Y_dev_str,model)
-
-#import pdb;pdb.set_trace()
+"""
 
 # TRAIN
-
-total_loss = 0
-#loss_divisor = 0
+recent_losses = []
 for epoch in range(NUM_EPOCHS):
     for i in range(len(X_train)):
 
@@ -159,20 +163,26 @@ for epoch in range(NUM_EPOCHS):
 
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
-            #import pdb;pdb.set_trace()
 
+            #loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
+            loss = loss_fn(tag_scores.view(len(labels)), labels.float())
+            recent_losses.append(loss.detach())
+            if len(recent_losses) > 50:
+                recent_losses = recent_losses[1:]
 
-
-            loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
-            total_loss += loss.detach()
-#            loss_divisor += model.seq_len
             loss.backward()
             optimizer.step()
 
+
             if i % PRINT_EVERY == 1:
-                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving?
-                #for name,param in model.named_parameters():
-                #    print(name,param)
+                avg_loss = sum(recent_losses)/len(recent_losses)
+                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,avg_loss.item())) # TODO could my loss calculation be deceiving?
+                """ 
+                # Print some weights to see if they move
+                for name,param in model.named_parameters():
+                    if name == 'lstm.weight_ih_l0':
+                        print(name,param)
+                """
             if i % EVAL_EVERY == 1:
                 evaluate(X_dev,Y_dev_str,model)
 

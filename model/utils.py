@@ -4,6 +4,7 @@ import torch
 import random
 import operator
 
+SEED = 123
 
 def load_data(filename,shuffle=True,debug=True):
     data = []
@@ -21,7 +22,7 @@ def load_data(filename,shuffle=True,debug=True):
         print("File format not recognized.")
     if shuffle:
         if debug:
-            random.seed(123)
+            random.seed(SEED)
         random.shuffle(data)
     return data
 
@@ -62,7 +63,7 @@ def to_ints(data,vocab_size,wd_to_i=None,i_to_wd=None): # TODO add UNK and PAD (
                 wd_i.append(wd_to_i['<UNK>'])
         num_wds.append(torch.tensor(wd_i,dtype=torch.long))
         num_lbls.append(torch.tensor(lbls,dtype=torch.long))
-    #import pdb;pdb.set_trace()
+
     return num_wds,num_lbls,wd_to_i,i_to_wd
 
 
