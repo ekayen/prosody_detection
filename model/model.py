@@ -17,10 +17,10 @@ EVAL_EVERY = 2000
 BATCH_SIZE = 1
 NUM_EPOCHS = 3
 BIDIRECTIONAL = True
-LEARNING_RATE = 0.005
+LEARNING_RATE = 0.001
 TRAIN_RATIO = 0.6
 DEV_RATIO = 0.2
-VOCAB_SIZE = 4000 # TODO actually restrict to high-freq vocab items
+VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
 
 
@@ -63,13 +63,12 @@ class BiLSTM(nn.Module):
         self.batch_size = batch_size
         self.lstm_layers = lstm_layers
         self.bidirectional = bidirectional
-        #self.seq_len = seq_len
 
         # layers:
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)  # Currently using one-hot instead of embeddings, but this is here for future
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_size, bidirectional=self.bidirectional, num_layers=lstm_layers)
         if self.bidirectional:
-            self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size)
+            self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
         else:
             self.hidden2tag = nn.Linear(hidden_size, tagset_size)
         self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
@@ -104,13 +103,13 @@ class BiLSTM(nn.Module):
 # INSTANTIATE THE MODEL
 
 model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidirectional=BIDIRECTIONAL)
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 
 # DEFINE EVAL FUNCTION
 
-def evaluate(X, Y):
+def evaluate(X, Y,mdl):
 
     y_pred = []
 
@@ -119,8 +118,8 @@ def evaluate(X, Y):
             input = X[i]
             #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
             if not (list(input.shape)[0] == 0):
-                hidden = model.init_hidden()
-                tag_scores, _ = model(input, hidden)
+                hidden = mdl.init_hidden()
+                tag_scores, _ = mdl(input, hidden)
                 pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
                 if type(pred) is int:
                     pred = [pred]
@@ -136,12 +135,12 @@ def evaluate(X, Y):
 # Before training, evaluate
 print('Before training, train:')
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
-#evaluate(X_train,Y_train_str)
+evaluate(X_train,Y_train_str,model)
 
 
 print('Before training, dev:')
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
-#evaluate(X_dev,Y_dev_str)
+evaluate(X_dev,Y_dev_str,model)
 
 #import pdb;pdb.set_trace()
 
@@ -152,36 +151,37 @@ total_loss = 0
 for epoch in range(NUM_EPOCHS):
     for i in range(len(X_train)):
 
-        model.zero_grad()
         input,labels = X_train[i],Y_train[i]
         input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
         if not (list(input.shape)[0] == 0):
 
-            hidden = model.init_hidden()
+            model.zero_grad()
 
+            hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
+            #import pdb;pdb.set_trace()
+
+
 
             loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
-            total_loss += loss
+            total_loss += loss.detach()
 #            loss_divisor += model.seq_len
             loss.backward()
             optimizer.step()
-            if i in range(10) and epoch==0:
-                print('Instance number ',i)
-                print(model.seq_len,'tokens')
-                print(loss)
-                print("Epoch: %s Step: %s Loss: %s" % (epoch, i, (total_loss / (i + (epoch * len(X_train)))).item()))
+
             if i % PRINT_EVERY == 1:
                 print("Epoch: %s Step: %s Loss: %s"%(epoch,i,(total_loss/(i+(epoch*len(X_train)))).item())) # TODO could my loss calculation be deceiving?
+                #for name,param in model.named_parameters():
+                #    print(name,param)
             if i % EVAL_EVERY == 1:
-                evaluate(X_dev,Y_dev_str)
+                evaluate(X_dev,Y_dev_str,model)
 
 print('After training, train:')
-evaluate(X_train,Y_train_str)
+evaluate(X_train,Y_train_str,model)
 
 
 print('After training, dev: ')
-evaluate(X_dev, Y_dev_str)
+evaluate(X_dev, Y_dev_str,model)
 
 
 
