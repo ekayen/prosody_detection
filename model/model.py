@@ -11,9 +11,9 @@ from utils import load_data,BatchWrapper,to_ints
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-PRINT_DIMS = True
-PRINT_EVERY = 1000
-EVAL_EVERY = 2000
+PRINT_DIMS = False
+PRINT_EVERY = 50
+EVAL_EVERY = 50
 
 # Hyperparameters
 BATCH_SIZE = 16
@@ -54,21 +54,23 @@ def make_batches(X,Y,batch_size):
     end = batch_size
     batched_X = []
     batched_Y = []
+    """
     X0 = X[start:end]
     Y0 = Y[start:end]
     X0 = pad_sequence(X0)
     Y0 = pad_sequence(Y0)
     batched_X.append(X0)
     batched_Y.append(Y0)
+    """
     while end < len(X):
-        start = end
-        end = end + batch_size
         X0 = X[start:end]
         Y0 = Y[start:end]
         X0 = pad_sequence(X0)
         Y0 = pad_sequence(Y0)
         batched_X.append(X0)
         batched_Y.append(Y0)
+        start = end
+        end = end + batch_size
     return(batched_X,batched_Y)
 
 
@@ -158,12 +160,13 @@ optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 
 def evaluate(X, Y,mdl):
-    print("EVAL================================================================================================")
+    print("EVAL=================================================================================================")
     y_pred = []
     with torch.no_grad():
         for i in range(len(X)):
             #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
-            #input = X[i] # TODO figure out why this was working at all ................
+            input = X[i]
+
             if not (list(input.shape)[0] == 0):
                 hidden = mdl.init_hidden()
                 tag_scores, _ = mdl(input, hidden)
@@ -179,6 +182,7 @@ def evaluate(X, Y,mdl):
                 y_pred += pred
                 # TODO do I need to unpad these?
     print('Evaluation:')
+    import pdb;pdb.set_trace()
     print('F1:',f1_score(Y, y_pred))
     print('Acc',accuracy_score(Y, y_pred))
     print(classification_report(Y, y_pred))
@@ -238,8 +242,8 @@ for epoch in range(NUM_EPOCHS):
                         print(name,param)
                 """
             if i % EVAL_EVERY == 1:
-                evaluate(X_dev,Y_dev_str,model)
-                #evaluate(X_dev_batches, Y_dev_batches_str, model)
+                #evaluate(X_dev,Y_dev_str,model)
+                evaluate(X_dev_batches, Y_dev_str, model)
 
 
 """
