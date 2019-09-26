@@ -11,7 +11,7 @@ from utils import load_data,BatchWrapper,to_ints
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-PRINT_DIMS = False #True
+PRINT_DIMS = True
 PRINT_EVERY = 1000
 EVAL_EVERY = 2000
 
@@ -47,6 +47,7 @@ X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 
+
 def make_batches(X,Y,batch_size):
     counter = 0
     start = 0
@@ -62,7 +63,8 @@ def make_batches(X,Y,batch_size):
     while end < len(X):
         start = end
         end = end + batch_size
-        max_len = max([len(x) for x in X0])
+        X0 = X[start:end]
+        Y0 = Y[start:end]
         X0 = pad_sequence(X0)
         Y0 = pad_sequence(Y0)
         batched_X.append(X0)
@@ -72,6 +74,9 @@ def make_batches(X,Y,batch_size):
 
 
 X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE)
+X_dev_batches,Y_dev_batches = make_batches(X_dev,Y_dev,BATCH_SIZE)
+X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE)
+
 """
 for i,instance in enumerate(X_train):
     if instance.sum().item() == 0:
@@ -111,13 +116,10 @@ class BiLSTM(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self,sent,hidden): # TODO figure out batching
-        import pdb;pdb.set_trace()
         self.seq_len = sent.shape[0]
-        embeds = self.embedding(sent.view(self.seq_len,self.batch_size))
-        #import pdb;pdb.set_trace()
-        #embeds = self.embedding(sent)
-#        import pdb;pdb.set_trace()
-        lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
+        embeds = self.embedding(sent)#.view(self.seq_len,self.batch_size))
+        #lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
+        lstm_out, hidden = self.lstm(embeds, hidden)
         tag_space = self.hidden2tag(lstm_out)
         #tag_scores = self.softmax(tag_space)
         tag_scores = self.sigmoid(tag_space)
@@ -151,34 +153,43 @@ loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 
+
 # DEFINE EVAL FUNCTION
 
+
 def evaluate(X, Y,mdl):
-
+    print("EVAL================================================================================================")
     y_pred = []
-
     with torch.no_grad():
         for i in range(len(X)):
-            input = X[i]
             #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
+            #input = X[i] # TODO figure out why this was working at all ................
             if not (list(input.shape)[0] == 0):
                 hidden = mdl.init_hidden()
                 tag_scores, _ = mdl(input, hidden)
                 #pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
-                pred = np.where(tag_scores>0.5,1,0)
+
+                pred = torch.transpose(tag_scores,0,1)
+                pred = np.where(pred>0.5,1,0)
                 pred = np.squeeze(pred).tolist()
                 if type(pred) is int:
                     pred = [pred]
-                pred = [str(j) for j in pred]
-                y_pred.append(pred)
+                pred = [[str(j) for j in i] for i in pred]
 
+                y_pred += pred
+                # TODO do I need to unpad these?
     print('Evaluation:')
     print('F1:',f1_score(Y, y_pred))
     print('Acc',accuracy_score(Y, y_pred))
     print(classification_report(Y, y_pred))
 
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
+#Y_train_batches_str = [[[str(i) for i in inst] for inst in batch.numpy()] for batch in Y_train_batches]
+
+
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
+#Y_dev_batches_str = [[[str(i) for i in inst] for inst in batch.numpy()] for batch in Y_dev_batches]
+
 
 """
 # Before training, evaluate on train data:
@@ -193,6 +204,7 @@ evaluate(X_dev,Y_dev_str,model)
 recent_losses = []
 for epoch in range(NUM_EPOCHS):
     #for i in range(len(X_train)):
+    print("TRAIN================================================================================================")
     for i in range(len(X_train_batches)):
 
         #input,labels = X_train[i],Y_train[i]
@@ -202,7 +214,6 @@ for epoch in range(NUM_EPOCHS):
 
             model.zero_grad()
 
-            #import pdb;pdb.set_trace()
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
 
@@ -228,7 +239,10 @@ for epoch in range(NUM_EPOCHS):
                 """
             if i % EVAL_EVERY == 1:
                 evaluate(X_dev,Y_dev_str,model)
+                #evaluate(X_dev_batches, Y_dev_batches_str, model)
 
+
+"""
 print('After training, train:')
 evaluate(X_train,Y_train_str,model)
 
@@ -236,7 +250,7 @@ evaluate(X_train,Y_train_str,model)
 print('After training, dev: ')
 evaluate(X_dev, Y_dev_str,model)
 
-
+"""
 
 
 
