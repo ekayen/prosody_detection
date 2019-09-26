@@ -2,6 +2,8 @@
 # Build model
 from torch import nn
 import torch
+torch.manual_seed(0)
+
 from torchtext import data,datasets
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
@@ -9,23 +11,23 @@ from utils import load_data,BatchWrapper,to_ints
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-PRINT_DIMS = False
+PRINT_DIMS = False #True
 PRINT_EVERY = 1000
 EVAL_EVERY = 2000
 
 # Hyperparameters
-BATCH_SIZE = 1
+BATCH_SIZE = 16
 NUM_EPOCHS = 3
 BIDIRECTIONAL = True
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 TRAIN_RATIO = 0.6
 DEV_RATIO = 0.2
 VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
 
 
-#datafile = '../data/all_acc.txt'
-datafile = '../data/mac_morpho/all.txt'
+datafile = '../data/all_acc.txt'
+#datafile = '../data/mac_morpho/all.txt'
 modelfile = 'model.pt'
 
 
@@ -44,6 +46,38 @@ X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE) # TODO fix so t
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
+
+def make_batches(X,Y,batch_size):
+    counter = 0
+    start = 0
+    end = batch_size
+    batched_X = []
+    batched_Y = []
+    X0 = X[start:end]
+    Y0 = Y[start:end]
+    X0 = pad_sequence(X0)
+    Y0 = pad_sequence(Y0)
+    batched_X.append(X0)
+    batched_Y.append(Y0)
+    while end < len(X):
+        start = end
+        end = end + batch_size
+        max_len = max([len(x) for x in X0])
+        X0 = pad_sequence(X0)
+        Y0 = pad_sequence(Y0)
+        batched_X.append(X0)
+        batched_Y.append(Y0)
+    return(batched_X,batched_Y)
+
+
+
+X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE)
+"""
+for i,instance in enumerate(X_train):
+    if instance.sum().item() == 0:
+        print(i, instance)
+        import pdb;pdb.set_trace()
+"""
 
 # BUILD THE MODEL
 
@@ -76,33 +110,37 @@ class BiLSTM(nn.Module):
         #self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self,sent,hidden):
-        self.seq_len = len(sent)# TODO change for real batching
-
-        embeds = self.embedding(sent)
+    def forward(self,sent,hidden): # TODO figure out batching
+        import pdb;pdb.set_trace()
+        self.seq_len = sent.shape[0]
+        embeds = self.embedding(sent.view(self.seq_len,self.batch_size))
+        #import pdb;pdb.set_trace()
+        #embeds = self.embedding(sent)
+#        import pdb;pdb.set_trace()
         lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
         tag_space = self.hidden2tag(lstm_out)
         #tag_scores = self.softmax(tag_space)
         tag_scores = self.sigmoid(tag_space)
         if PRINT_DIMS:
+            print('sent.shape',sent.shape)
             print('embeds.shape', embeds.shape)
             print('lstm_out.shape', lstm_out.shape)
             print('tag_space dims',tag_space.shape)
             print('tag_scores dims',tag_scores.shape)
+            print('===============================================')
 
         return tag_scores,hidden
 
     def init_hidden(self):
 
         if self.bidirectional:
-            first_dim = self.lstm_layers*2
+            # Initialize hidden state with zeros
+            h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()
+            c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()
         else:
-            first_dim = self.lstm_layers
+            h0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()
+            c0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()
 
-        # Initialize hidden state with zeros
-        h0 = torch.zeros(first_dim, self.batch_size, self.hidden_size).requires_grad_()
-        # Initialize cell state
-        c0 = torch.zeros(first_dim, self.batch_size, self.hidden_size).requires_grad_()
         return (h0,c0)
 
 # INSTANTIATE THE MODEL
@@ -141,31 +179,36 @@ def evaluate(X, Y,mdl):
 
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
+
 """
-# Before training, evaluate
+# Before training, evaluate on train data:
 print('Before training, train:')
 evaluate(X_train,Y_train_str,model)
 
-print('Before training, dev:')
+print('Before training, evaluate on dev data:')
 evaluate(X_dev,Y_dev_str,model)
 """
 
 # TRAIN
 recent_losses = []
 for epoch in range(NUM_EPOCHS):
-    for i in range(len(X_train)):
+    #for i in range(len(X_train)):
+    for i in range(len(X_train_batches)):
 
-        input,labels = X_train[i],Y_train[i]
-        input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
+        #input,labels = X_train[i],Y_train[i]
+        input, labels = X_train_batches[i], Y_train_batches[i]
+
         if not (list(input.shape)[0] == 0):
 
             model.zero_grad()
 
+            #import pdb;pdb.set_trace()
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
 
+            #import pdb;  pdb.set_trace()
             #loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
-            loss = loss_fn(tag_scores.view(len(labels)), labels.float())
+            loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
                 recent_losses = recent_losses[1:]
@@ -200,55 +243,4 @@ evaluate(X_dev, Y_dev_str,model)
 
 
 
-
-
-
-
-
-
-
-"""
-# One forward pass to test dims:
-# This would go right before the training loop
-with torch.no_grad():
-    input,labels = X[5],Y[5]
-    print('seq_len',X[5].shape)
-    hidden = model.init_hidden()
-    print("hidden0: ", hidden[0].shape)
-    tag_scores = model(input,hidden)
-    print("labels dims",labels.shape)
-import pdb;pdb.set_trace()
-"""
-
-
-
-
-# Use torchtext to numericalize the text and pad the seqs
-
-"""
-# This would go at the beginning, during the data loading step
-text = data.Field(lower=True,batch_first=True)
-labels = data.Field(is_target=True,batch_first=True)
-accents = datasets.SequenceTaggingDataset(
-    path='../train_data/all_acc.conll',
-    fields=[('text', text),
-            ('labels', labels)]
-)
-text.build_vocab(accents) #, min_freq=2)
-labels.build_vocab(accents)
-train_iter = data.BucketIterator(dataset=accents, batch_size=BATCH_SIZE,  sort_key=lambda x: len(x.text))
-train_iter = BatchWrapper(train_iter,'text','labels')
-
-batch = next(iter(train_iter))
-
-sent = batch[0][0:1,]
-sent = sent.tolist()[0]
-txt = [text.vocab.itos[i] for i in sent]
-lbl = batch[1][0:1,]
-lbl = lbl.tolist()[0]
-
-
-print("sanity check of one sentence:")
-print(txt,lbl)
-"""
 

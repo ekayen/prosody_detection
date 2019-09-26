@@ -32,10 +32,10 @@ def to_ints(data,vocab_size,wd_to_i=None,i_to_wd=None): # TODO add UNK and PAD (
     num_lbls = []
 
     if not wd_to_i:
-        wd_to_i = {'<UNK>': 0,
-                   '<PAD>': 1}
-        i_to_wd = {0: '<UNK>',
-                   1: '<PAD>'}
+        wd_to_i = {'<PAD>': 1,
+                   '<UNK>': 0}
+        i_to_wd = {1: '<PAD>',
+                   0: '<UNK>'}
         wd_counts = {}
         for example in data:
             wds,lbls = example
