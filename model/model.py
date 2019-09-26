@@ -47,7 +47,6 @@ X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 
-
 def make_batches(X,Y,batch_size):
     counter = 0
     start = 0
@@ -78,6 +77,8 @@ def make_batches(X,Y,batch_size):
 X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE)
 X_dev_batches,Y_dev_batches = make_batches(X_dev,Y_dev,BATCH_SIZE)
 X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE)
+
+
 
 """
 for i,instance in enumerate(X_train):
@@ -154,10 +155,25 @@ model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidir
 loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+"""
+def find_end_idx(input,pad_char=0):
+    idx = []
+    input = torch.transpose(input,0,1).numpy().tolist()
+    for seq in input:
+        if pad_char in seq:
+            idx.append(seq.index(pad_char))
+        else:
+            idx.append(len(input))
+    return idx
 
-
+def unpad_seqs(input,output):
+    indices = find_end_idx(input)
+    tmp = []
+    for i,out in enumerate(output):
+        tmp.append(out[:indices[i]])
+    return tmp
+"""
 # DEFINE EVAL FUNCTION
-
 
 def evaluate(X, Y,mdl):
     print("EVAL=================================================================================================")
@@ -172,17 +188,22 @@ def evaluate(X, Y,mdl):
                 tag_scores, _ = mdl(input, hidden)
                 #pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
 
-                pred = torch.transpose(tag_scores,0,1)
-                pred = np.where(pred>0.5,1,0)
-                pred = np.squeeze(pred).tolist()
+                #pred = torch.transpose(tag_scores,0,1)
+                pred = np.where(tag_scores>0.5,1,0)
+                pred = np.squeeze(pred)
+                #pred = pred.tolist()
                 if type(pred) is int:
                     pred = [pred]
-                pred = [[str(j) for j in i] for i in pred]
+                #pred = [[str(j) for j in i] for i in pred]
 
-                y_pred += pred
-                # TODO do I need to unpad these?
+                #y_pred += pred
+                y_pred.append(pred)
     print('Evaluation:')
-    import pdb;pdb.set_trace()
+    Y = np.concatenate([y.flatten() for y in Y]).tolist()
+    y_pred = np.concatenate([y.flatten() for y in y_pred]).tolist()
+    Y = [str(y) for y in Y]
+    y_pred = [str(y) for y in y_pred]
+
     print('F1:',f1_score(Y, y_pred))
     print('Acc',accuracy_score(Y, y_pred))
     print(classification_report(Y, y_pred))
@@ -243,7 +264,7 @@ for epoch in range(NUM_EPOCHS):
                 """
             if i % EVAL_EVERY == 1:
                 #evaluate(X_dev,Y_dev_str,model)
-                evaluate(X_dev_batches, Y_dev_str, model)
+                evaluate(X_dev_batches, Y_dev_batches, model)
 
 
 """
