@@ -15,6 +15,8 @@ PRINT_DIMS = False
 PRINT_EVERY = 50
 EVAL_EVERY = 50
 
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+
 # Hyperparameters
 BATCH_SIZE = 16
 NUM_EPOCHS = 3
@@ -53,19 +55,11 @@ def make_batches(X,Y,batch_size):
     end = batch_size
     batched_X = []
     batched_Y = []
-    """
-    X0 = X[start:end]
-    Y0 = Y[start:end]
-    X0 = pad_sequence(X0)
-    Y0 = pad_sequence(Y0)
-    batched_X.append(X0)
-    batched_Y.append(Y0)
-    """
     while end < len(X):
         X0 = X[start:end]
         Y0 = Y[start:end]
-        X0 = pad_sequence(X0)
-        Y0 = pad_sequence(Y0)
+        X0 = pad_sequence(X0).to(device)
+        Y0 = pad_sequence(Y0).to(device)
         batched_X.append(X0)
         batched_Y.append(Y0)
         start = end
@@ -140,11 +134,11 @@ class BiLSTM(nn.Module):
 
         if self.bidirectional:
             # Initialize hidden state with zeros
-            h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()
-            c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()
+            h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_().to(device)
         else:
-            h0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()
-            c0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()
+            h0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_().to(device)
 
         return (h0,c0)
 
@@ -155,6 +149,7 @@ model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidir
 loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+model.to(device)
 """
 def find_end_idx(input,pad_char=0):
     idx = []
