@@ -4,7 +4,6 @@ from torch import nn
 import torch
 torch.manual_seed(0)
 
-from torchtext import data,datasets
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
 from utils import load_data,BatchWrapper,to_ints
@@ -15,7 +14,7 @@ PRINT_DIMS = False
 PRINT_EVERY = 50
 EVAL_EVERY = 50
 
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
 BATCH_SIZE = 16
@@ -130,15 +129,16 @@ class BiLSTM(nn.Module):
 
         return tag_scores,hidden
 
-    def init_hidden(self):
-
+    def init_hidden(self,batch_size=None):
+        if not batch_size:
+            batch_size = self.batch_size
         if self.bidirectional:
             # Initialize hidden state with zeros
-            h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_().to(device)
-            c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_().to(device)
+            h0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_().to(device)
         else:
-            h0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_().to(device)
-            c0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_().to(device)
+            h0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_().to(device)
 
         return (h0,c0)
 
@@ -177,27 +177,31 @@ def evaluate(X, Y,mdl):
         for i in range(len(X)):
             #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
             input = X[i]
+            eval_batch_size = 1
 
             if not (list(input.shape)[0] == 0):
-                hidden = mdl.init_hidden()
-                tag_scores, _ = mdl(input, hidden)
+                hidden = mdl.init_hidden(eval_batch_size)
+                tag_scores, _ = mdl(input.view(len(input),eval_batch_size), hidden)
+
                 #pred = np.squeeze(np.argmax(tag_scores, axis=-1)).tolist() # TODO could this be wrong? Almost certainly yes.
 
-                #pred = torch.transpose(tag_scores,0,1)
-                pred = np.where(tag_scores>0.5,1,0)
+                pred = tag_scores.cpu()
+                pred = np.where(pred>0.5,1,0)
                 pred = np.squeeze(pred)
-                #pred = pred.tolist()
+                pred = pred.tolist()
                 if type(pred) is int:
                     pred = [pred]
                 #pred = [[str(j) for j in i] for i in pred]
+                pred = [str(j) for j in pred]
 
                 #y_pred += pred
                 y_pred.append(pred)
     print('Evaluation:')
-    Y = np.concatenate([y.flatten() for y in Y]).tolist()
-    y_pred = np.concatenate([y.flatten() for y in y_pred]).tolist()
-    Y = [str(y) for y in Y]
-    y_pred = [str(y) for y in y_pred]
+    #import pdb;pdb.set_trace()
+    #Y = np.concatenate([y.cpu().flatten() for y in Y]).tolist()
+    #y_pred = np.concatenate([y.flatten() for y in y_pred]).tolist()
+    #Y = [str(y) for y in Y]
+    #y_pred = [str(y) for y in y_pred]
 
     print('F1:',f1_score(Y, y_pred))
     print('Acc',accuracy_score(Y, y_pred))
@@ -258,8 +262,8 @@ for epoch in range(NUM_EPOCHS):
                         print(name,param)
                 """
             if i % EVAL_EVERY == 1:
-                #evaluate(X_dev,Y_dev_str,model)
-                evaluate(X_dev_batches, Y_dev_batches, model)
+                evaluate(X_dev,Y_dev_str,model)
+                #evaluate(X_dev_batches, Y_dev_batches, model)
 
 
 """
