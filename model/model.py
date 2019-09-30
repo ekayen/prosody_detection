@@ -1,35 +1,41 @@
 # Get words in one-hot format
 # Build model
+import pickle
+import os
 from torch import nn
 import torch
 torch.manual_seed(0)
 
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pad_sequence
-from utils import load_data,BatchWrapper,to_ints
+
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
 PRINT_DIMS = False
 PRINT_EVERY = 50
 EVAL_EVERY = 50
+TRAIN_RATIO = 0.6
+DEV_RATIO = 0.2
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
 BATCH_SIZE = 16
-NUM_EPOCHS = 3
+NUM_EPOCHS = 15
+NUM_LAYERS = 2
 BIDIRECTIONAL = True
 LEARNING_RATE = 0.0001
-TRAIN_RATIO = 0.6
-DEV_RATIO = 0.2
 VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
-
+EMBEDDING_DIM = 100
+HIDDEN_SIZE = 128
+DROPOUT = 0.5
 
 datafile = '../data/all_acc.txt'
-#datafile = '../data/mac_morpho/all.txt'
 modelfile = 'model.pt'
+#glove_path = '../data/emb/glove.6B.50d.txt'
+glove_path = '../data/emb/glove.6B.100d.txt'
 
 
 # LOAD THE DATA
@@ -43,50 +49,65 @@ train_data = data[:train_idx]
 dev_data = data[train_idx:dev_idx]
 test_data = data[dev_idx:]
 
-X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE) # TODO fix so that only train data ends up in vocab.
+X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE)
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 
-def make_batches(X,Y,batch_size):
-    counter = 0
-    start = 0
-    end = batch_size
-    batched_X = []
-    batched_Y = []
-    while end < len(X):
-        X0 = X[start:end]
-        Y0 = Y[start:end]
-        X0 = pad_sequence(X0).to(device)
-        Y0 = pad_sequence(Y0).to(device)
-        batched_X.append(X0)
-        batched_Y.append(Y0)
-        start = end
-        end = end + batch_size
-    return(batched_X,batched_Y)
+# LOAD VECTORS
 
 
 
-X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE)
-X_dev_batches,Y_dev_batches = make_batches(X_dev,Y_dev,BATCH_SIZE)
-X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE)
+# BATCH DATA
 
+X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE,device)
+X_dev_batches,Y_dev_batches = make_batches(X_dev,Y_dev,BATCH_SIZE,device)
+X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE,device)
 
-
-"""
-for i,instance in enumerate(X_train):
-    if instance.sum().item() == 0:
-        print(i, instance)
-        import pdb;pdb.set_trace()
-"""
 
 # BUILD THE MODEL
+
+
+vec_dict_pkl = '../data/emb/50d-dict.pkl'
+if os.path.exists(vec_dict_pkl):
+    with open(vec_dict_pkl,'rb') as f:
+        i_to_vec = pickle.load(f)
+else:
+    i_to_vec = load_vectors(glove_path, wd_to_i)
+    with open(vec_dict_pkl, 'wb') as f:
+        pickle.dump(i_to_vec, f)
+
+
+
+
+words_found = 0
+weights_matrix = np.zeros((VOCAB_SIZE+2, EMBEDDING_DIM))
+for i in i_to_wd:
+    try:
+        weights_matrix[i] = i_to_vec[i]
+        words_found += 1
+    except:
+        weights_matrix[i] = np.random.normal(scale=0.6, size=(EMBEDDING_DIM, ))
+
+weights_matrix = torch.tensor(weights_matrix)
+
+
 
 class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
     # OUTPUT = (hidden size, tagset_size),
     # SOFTMAX over dimension 2 (I am not sure if this is right)
-    def __init__(self, batch_size, vocab_size, tagset_size, embedding_dim=100, hidden_size=128, lstm_layers=1, bidirectional=True, output_dim=1):
+    def __init__(self,
+                 batch_size,
+                 vocab_size,
+                 tagset_size,
+                 embedding_dim=100,
+                 hidden_size=128,
+                 lstm_layers=2,
+                 bidirectional=True,
+                 output_dim=1,
+                 dropout=0.5,
+                 nontrainable = False):
 
         super(BiLSTM,self).__init__()
 
@@ -101,6 +122,10 @@ class BiLSTM(nn.Module):
 
         # layers:
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        emb_layer = nn.Embedding(vocab_size, embedding_dim)
+        emb_layer.load_state_dict({'weight': weights_matrix})
+        if nontrainable:
+            emb_layer.weight.requires_grad = False
         self.lstm = nn.LSTM(embedding_dim, hidden_size, bidirectional=self.bidirectional, num_layers=lstm_layers)
         if self.bidirectional:
             #self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
@@ -144,30 +169,20 @@ class BiLSTM(nn.Module):
 
 # INSTANTIATE THE MODEL
 
-model = BiLSTM(batch_size=BATCH_SIZE,vocab_size=VOCAB_SIZE+2,tagset_size=2,bidirectional=BIDIRECTIONAL)
+model = BiLSTM(batch_size=BATCH_SIZE,
+               vocab_size=VOCAB_SIZE+2,
+               tagset_size=2,
+               bidirectional=BIDIRECTIONAL,
+               lstm_layers=NUM_LAYERS,
+               embedding_dim=EMBEDDING_DIM,
+               hidden_size=HIDDEN_SIZE,
+               dropout=DROPOUT)
 #loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
 loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 model.to(device)
-"""
-def find_end_idx(input,pad_char=0):
-    idx = []
-    input = torch.transpose(input,0,1).numpy().tolist()
-    for seq in input:
-        if pad_char in seq:
-            idx.append(seq.index(pad_char))
-        else:
-            idx.append(len(input))
-    return idx
 
-def unpad_seqs(input,output):
-    indices = find_end_idx(input)
-    tmp = []
-    for i,out in enumerate(output):
-        tmp.append(out[:indices[i]])
-    return tmp
-"""
 # DEFINE EVAL FUNCTION
 
 def evaluate(X, Y,mdl):
@@ -176,7 +191,7 @@ def evaluate(X, Y,mdl):
     with torch.no_grad():
         for i in range(len(X)):
             #input = torch.tensor([i if i in i_to_wd else wd_to_i['<UNK>'] for i in input])
-            input = X[i]
+            input = X[i].to(device)
             eval_batch_size = 1
 
             if not (list(input.shape)[0] == 0):
@@ -223,6 +238,24 @@ evaluate(X_train,Y_train_str,model)
 print('Before training, evaluate on dev data:')
 evaluate(X_dev,Y_dev_str,model)
 """
+"""
+def majority_baseline(X,Y):
+    preds = []
+    for x in X:
+        tmp = np.zeros(x.shape)
+        #tmp = np.random.randint(2,size=x.shape[0])
+        tmp.tolist()
+        tmp = [str(int(i)) for i in tmp]
+        preds.append(tmp)
+    print("Majority baseline:")
+    print('F1:',f1_score(Y, preds))
+    print('Acc',accuracy_score(Y, preds))
+    print(classification_report(Y, preds))
+
+majority_baseline(X_dev,Y_dev_str)
+
+import pdb;pdb.set_trace()
+"""
 
 # TRAIN
 recent_losses = []
@@ -241,7 +274,6 @@ for epoch in range(NUM_EPOCHS):
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
 
-            #import pdb;  pdb.set_trace()
             #loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
@@ -266,7 +298,8 @@ for epoch in range(NUM_EPOCHS):
                 #evaluate(X_dev_batches, Y_dev_batches, model)
 
 
-"""
+print("==============================================")
+print("==============================================")
 print('After training, train:')
 evaluate(X_train,Y_train_str,model)
 
@@ -274,7 +307,7 @@ evaluate(X_train,Y_train_str,model)
 print('After training, dev: ')
 evaluate(X_dev, Y_dev_str,model)
 
-"""
+
 
 
 

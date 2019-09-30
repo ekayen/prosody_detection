@@ -3,6 +3,7 @@ import pickle
 import torch
 import random
 import operator
+from torch.nn.utils.rnn import pad_sequence
 
 SEED = 123
 
@@ -81,3 +82,31 @@ class BatchWrapper:
 
     def __len__(self):
         return len(self.in_iter)
+
+def load_vectors(vector_file,wd_to_idx):
+    vec_dict = {}
+    with open(vector_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            word = line[0]
+            if word in wd_to_idx:
+                wd_idx = wd_to_idx[word]
+                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
+    return vec_dict
+
+def make_batches(X,Y,batch_size,device):
+    counter = 0
+    start = 0
+    end = batch_size
+    batched_X = []
+    batched_Y = []
+    while end < len(X):
+        X0 = X[start:end]
+        Y0 = Y[start:end]
+        X0 = pad_sequence(X0).to(device)
+        Y0 = pad_sequence(Y0).to(device)
+        batched_X.append(X0)
+        batched_Y.append(Y0)
+        start = end
+        end = end + batch_size
+    return(batched_X,batched_Y)
