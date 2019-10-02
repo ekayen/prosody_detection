@@ -21,7 +21,7 @@ DEV_RATIO = 0.2
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 NUM_EPOCHS = 15
 NUM_LAYERS = 2
 BIDIRECTIONAL = True
@@ -31,6 +31,7 @@ SOFTMAX_DIM = 2
 EMBEDDING_DIM = 100
 HIDDEN_SIZE = 128
 DROPOUT = 0.5
+USE_PRETRAINED = False
 
 datafile = '../data/all_acc.txt'
 modelfile = 'model.pt'
@@ -67,29 +68,26 @@ X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE,device)
 
 # BUILD THE MODEL
 
+if USE_PRETRAINED:
+    vec_dict_pkl = '../data/emb/50d-dict.pkl'
+    if os.path.exists(vec_dict_pkl):
+        with open(vec_dict_pkl,'rb') as f:
+            i_to_vec = pickle.load(f)
+    else:
+        i_to_vec = load_vectors(glove_path, wd_to_i)
+        with open(vec_dict_pkl, 'wb') as f:
+            pickle.dump(i_to_vec, f)
 
-vec_dict_pkl = '../data/emb/50d-dict.pkl'
-if os.path.exists(vec_dict_pkl):
-    with open(vec_dict_pkl,'rb') as f:
-        i_to_vec = pickle.load(f)
-else:
-    i_to_vec = load_vectors(glove_path, wd_to_i)
-    with open(vec_dict_pkl, 'wb') as f:
-        pickle.dump(i_to_vec, f)
+    words_found = 0
+    weights_matrix = np.zeros((VOCAB_SIZE+2, EMBEDDING_DIM))
+    for i in i_to_wd:
+        try:
+            weights_matrix[i] = i_to_vec[i]
+            words_found += 1
+        except:
+            weights_matrix[i] = np.random.normal(scale=0.6, size=(EMBEDDING_DIM, ))
 
-
-
-
-words_found = 0
-weights_matrix = np.zeros((VOCAB_SIZE+2, EMBEDDING_DIM))
-for i in i_to_wd:
-    try:
-        weights_matrix[i] = i_to_vec[i]
-        words_found += 1
-    except:
-        weights_matrix[i] = np.random.normal(scale=0.6, size=(EMBEDDING_DIM, ))
-
-weights_matrix = torch.tensor(weights_matrix)
+    weights_matrix = torch.tensor(weights_matrix)
 
 
 
@@ -107,6 +105,7 @@ class BiLSTM(nn.Module):
                  bidirectional=True,
                  output_dim=1,
                  dropout=0.5,
+                 use_pretrained=False,
                  nontrainable = False):
 
         super(BiLSTM,self).__init__()
@@ -123,9 +122,10 @@ class BiLSTM(nn.Module):
         # layers:
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         emb_layer = nn.Embedding(vocab_size, embedding_dim)
-        emb_layer.load_state_dict({'weight': weights_matrix})
-        if nontrainable:
-            emb_layer.weight.requires_grad = False
+        if use_pretrained:
+            emb_layer.load_state_dict({'weight': weights_matrix})
+            if nontrainable:
+                emb_layer.weight.requires_grad = False
         self.lstm = nn.LSTM(embedding_dim, hidden_size, bidirectional=self.bidirectional, num_layers=lstm_layers)
         if self.bidirectional:
             #self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
@@ -176,6 +176,7 @@ model = BiLSTM(batch_size=BATCH_SIZE,
                lstm_layers=NUM_LAYERS,
                embedding_dim=EMBEDDING_DIM,
                hidden_size=HIDDEN_SIZE,
+               use_pretrained=USE_PRETRAINED,
                dropout=DROPOUT)
 #loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
 loss_fn = nn.BCELoss()
