@@ -4,6 +4,8 @@ import pickle
 import os
 from torch import nn
 import torch
+import pandas as pd
+import matplotlib.pyplot as plt
 torch.manual_seed(0)
 
 import torch.nn.functional as F
@@ -14,34 +16,39 @@ from seqeval.metrics import accuracy_score, classification_report,f1_score
 
 PRINT_DIMS = False
 PRINT_EVERY = 50
-EVAL_EVERY = 50
+EVAL_EVERY = 100
 TRAIN_RATIO = 0.6
 DEV_RATIO = 0.2
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 NUM_EPOCHS = 15
 NUM_LAYERS = 2
 BIDIRECTIONAL = True
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.001
 VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
 EMBEDDING_DIM = 100
 HIDDEN_SIZE = 128
 DROPOUT = 0.5
 USE_PRETRAINED = False
+MAX_LEN = 80
 
 datafile = '../data/all_acc.txt'
-modelfile = 'model.pt'
 #glove_path = '../data/emb/glove.6B.50d.txt'
 glove_path = '../data/emb/glove.6B.100d.txt'
 
+import sys
+
+model_name = sys.argv[1]
+results_file = 'results/{}.txt'.format(model_name)
+model_file = '{}.pt'.format(model_name)
 
 # LOAD THE DATA
 
-data = load_data(datafile,shuffle=True)
+data = load_data(datafile,shuffle=True,max_len=MAX_LEN)
 
 train_idx = int(TRAIN_RATIO*len(data))
 dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(data))
@@ -59,11 +66,6 @@ X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 
 
-# BATCH DATA
-
-X_train_batches,Y_train_batches = make_batches(X_train,Y_train,BATCH_SIZE,device)
-X_dev_batches,Y_dev_batches = make_batches(X_dev,Y_dev,BATCH_SIZE,device)
-X_test_batches,Y_test_batches = make_batches(X_test,Y_test,BATCH_SIZE,device)
 
 
 # BUILD THE MODEL
@@ -219,9 +221,13 @@ def evaluate(X, Y,mdl):
     #Y = [str(y) for y in Y]
     #y_pred = [str(y) for y in y_pred]
 
-    print('F1:',f1_score(Y, y_pred))
-    print('Acc',accuracy_score(Y, y_pred))
-    print(classification_report(Y, y_pred))
+    f1 = f1_score(Y, y_pred)
+    acc = accuracy_score(Y, y_pred)
+    clss = classification_report(Y, y_pred)
+    print('F1:',f1)
+    print('Acc',acc)
+    print(clss)
+    return(f1,acc,clss)
 
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
 #Y_train_batches_str = [[[str(i) for i in inst] for inst in batch.numpy()] for batch in Y_train_batches]
@@ -258,10 +264,19 @@ majority_baseline(X_dev,Y_dev_str)
 import pdb;pdb.set_trace()
 """
 
+train_losses = []
+train_accs = []
+dev_accs = []
+
 # TRAIN
 recent_losses = []
+
+timestep = 0
+timesteps = []
 for epoch in range(NUM_EPOCHS):
-    #for i in range(len(X_train)):
+    # BATCH DATA
+    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, BATCH_SIZE, device)
+
     print("TRAIN================================================================================================")
     for i in range(len(X_train_batches)):
 
@@ -270,6 +285,7 @@ for epoch in range(NUM_EPOCHS):
 
         if not (list(input.shape)[0] == 0):
 
+            timestep += 1
             model.zero_grad()
 
             hidden = model.init_hidden()
@@ -295,9 +311,37 @@ for epoch in range(NUM_EPOCHS):
                         print(name,param)
                 """
             if i % EVAL_EVERY == 1:
-                evaluate(X_dev,Y_dev_str,model)
-                #evaluate(X_dev_batches, Y_dev_batches, model)
+                #    evaluate(X_dev,Y_dev_str,model)
+                train_loss = (sum(recent_losses)/len(recent_losses)).item()
+                train_losses.append(train_loss)
+                _, train_acc, _ = evaluate(X_train, Y_train_str, model)
+                train_accs.append(train_acc)
+                _, dev_acc, _ = evaluate(X_dev, Y_dev_str, model)
+                dev_accs.append(dev_acc)
+                timesteps.append(timestep)
 
+train_losses = pd.Series(train_losses)
+train_accs = pd.Series(train_accs)
+dev_accs = pd.Series(dev_accs)
+train_steps = pd.Series(timesteps)
+
+df = pd.DataFrame(dict(train_steps=train_steps,
+                       train_losses=train_losses,
+                       train_accs=train_accs,
+                       dev_accs=dev_accs))
+
+with open("tmp.pkl",'wb') as f:
+    pickle.dump(df,f)
+
+ax = plt.gca()
+df.plot(kind='line',x='train_steps',y='train_losses',ax=ax)
+df.plot(kind='line',x='train_steps',y='train_accs', color='red', ax=ax)
+df.plot(kind='line',x='train_steps',y='dev_accs', color='green', ax=ax)
+
+
+plt.savefig('results/{}.png'.format(model_name))
+plt.show()
+df.to_csv('results/{}.tsv'.format(model_name),sep='\t')
 
 print("==============================================")
 print("==============================================")

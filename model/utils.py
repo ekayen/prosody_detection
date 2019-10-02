@@ -7,14 +7,18 @@ from torch.nn.utils.rnn import pad_sequence
 
 SEED = 123
 
-def load_data(filename,shuffle=True,debug=True):
+def load_data(filename,shuffle=True,debug=True,max_len=None):
     data = []
     if '.txt' in filename:
         with open(filename,'r') as f:
             for line in f.readlines():
                 tokens,labels = line.split('\t')
                 tokens = [tok.strip() for tok in tokens.split()]
-                labels = np.array([int(i) for i in labels.split()],dtype=np.int32)
+                labels = [int(i) for i in labels.split()]
+                if max_len:
+                    tokens = tokens[:max_len]
+                    labels = labels[:max_len]
+                labels = np.array(labels,dtype=np.int32)
                 data.append((tokens,labels))
     elif '.pickle' in filename:
         with open(filename,'rb') as f:
@@ -94,7 +98,14 @@ def load_vectors(vector_file,wd_to_idx):
                 vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
     return vec_dict
 
+def shuffle_input_output(X,Y):
+    data = list(zip(X,Y))
+    random.shuffle(data)
+    X,Y = zip(*data)
+    return(X,Y)
+
 def make_batches(X,Y,batch_size,device):
+    X,Y = shuffle_input_output(X,Y)
     counter = 0
     start = 0
     end = batch_size
