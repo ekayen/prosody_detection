@@ -23,7 +23,7 @@ DEV_RATIO = 0.2
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
-BATCH_SIZE = 16
+BATCH_SIZE = 64
 NUM_EPOCHS = 15
 NUM_LAYERS = 2
 BIDIRECTIONAL = True
@@ -120,6 +120,7 @@ class BiLSTM(nn.Module):
         self.lstm_layers = lstm_layers
         self.bidirectional = bidirectional
         self.output_dim = output_dim
+        self.dropout = dropout
 
         # layers:
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
@@ -128,7 +129,11 @@ class BiLSTM(nn.Module):
             emb_layer.load_state_dict({'weight': weights_matrix})
             if nontrainable:
                 emb_layer.weight.requires_grad = False
-        self.lstm = nn.LSTM(embedding_dim, hidden_size, bidirectional=self.bidirectional, num_layers=lstm_layers)
+        self.lstm = nn.LSTM(embedding_dim,
+                            hidden_size,
+                            bidirectional=self.bidirectional,
+                            num_layers=lstm_layers,
+                            dropout=self.dropout)
         if self.bidirectional:
             #self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
             self.hidden2tag = nn.Linear(2 * hidden_size, output_dim)

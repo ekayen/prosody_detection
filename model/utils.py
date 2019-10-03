@@ -31,6 +31,31 @@ def load_data(filename,shuffle=True,debug=True,max_len=None):
         random.shuffle(data)
     return data
 
+
+def load_libri_data(filename,shuffle=True,debug=True,max_len=None):
+    data = []
+    if '.txt' in filename:
+        with open(filename,'r') as f:
+            for line in f.readlines():
+                tokens,labels = line.split('\t')
+                tokens = [tok.strip() for tok in tokens.split()]
+                labels = [int(i) for i in labels.split()]
+                if max_len:
+                    tokens = tokens[:max_len]
+                    labels = labels[:max_len]
+                labels = np.array(labels,dtype=np.int32)
+                data.append((tokens,labels))
+    elif '.pickle' in filename:
+        with open(filename,'rb') as f:
+            data = pickle.load(f)
+    else:
+        print("File format not recognized.")
+    if shuffle:
+        if debug:
+            random.seed(SEED)
+        random.shuffle(data)
+    return data
+
 def to_ints(data,vocab_size,wd_to_i=None,i_to_wd=None): # TODO add UNK and PAD (figure out what the pytorch defaults for these are, if any)
 
     num_wds = []
