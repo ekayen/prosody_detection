@@ -24,17 +24,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Hyperparameters
 BATCH_SIZE = 64
-NUM_EPOCHS = 15
-NUM_LAYERS = 2
 BIDIRECTIONAL = True
 LEARNING_RATE = 0.001
 SOFTMAX_DIM = 2
 EMBEDDING_DIM = 100
 HIDDEN_SIZE = 128
-DROPOUT = 0.5
 USE_PRETRAINED = False
 MAX_LEN = 80
-DATASOURCE = 'LIBRI'
+DATASOURCE = 'SWBDNXT'
 
 
 datafile = '../data/all_acc.txt'
@@ -52,6 +49,9 @@ model_file = '{}.pt'.format(model_name)
 if DATASOURCE == 'SWBDNXT':
 
     VOCAB_SIZE = 4000
+    NUM_EPOCHS = 15
+    NUM_LAYERS = 2
+    DROPOUT = 0.5
 
     data = load_data(datafile,shuffle=True,max_len=MAX_LEN)
 
@@ -66,11 +66,17 @@ if DATASOURCE == 'SWBDNXT':
 elif DATASOURCE == 'LIBRI':
 
     VOCAB_SIZE = 35000
+    NUM_EPOCHS = 5
+    NUM_LAYERS = 3
+    DROPOUT = 0.2
 
     libritrain = '../data/libri/train_360.txt'
     libridev = '../data/libri/dev.txt'
     train_data = load_libri_data(libritrain,shuffle=True,max_len=MAX_LEN)
     dev_data = load_libri_data(libridev,shuffle=True,max_len=MAX_LEN)
+
+else:
+    print("NO DATA SOURCE GIVEN")
 
 X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE)
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
