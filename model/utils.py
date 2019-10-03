@@ -1,8 +1,10 @@
 import numpy as np
+import pandas as pd
 import pickle
 import torch
 import random
 import operator
+import string
 from torch.nn.utils.rnn import pad_sequence
 
 SEED = 123
@@ -32,24 +34,30 @@ def load_data(filename,shuffle=True,debug=True,max_len=None):
     return data
 
 
+
 def load_libri_data(filename,shuffle=True,debug=True,max_len=None):
+    HEADER = '<file>'
+    NON_LABELED = '\tNA\t'
+    FINAL_PUNC = '.?!'
     data = []
-    if '.txt' in filename:
-        with open(filename,'r') as f:
-            for line in f.readlines():
-                tokens,labels = line.split('\t')
-                tokens = [tok.strip() for tok in tokens.split()]
-                labels = [int(i) for i in labels.split()]
-                if max_len:
-                    tokens = tokens[:max_len]
-                    labels = labels[:max_len]
-                labels = np.array(labels,dtype=np.int32)
-                data.append((tokens,labels))
-    elif '.pickle' in filename:
-        with open(filename,'rb') as f:
-            data = pickle.load(f)
-    else:
-        print("File format not recognized.")
+    lengths = []
+    with open(filename,'r') as f:
+        words = []
+        labels = []
+        for line in f.readlines():
+            if not HEADER in line:
+                word,label,_,_,_ = line.split('\t')
+                if word in FINAL_PUNC:
+                    lengths.append(len(words))
+                    data.append((words,labels))
+                    words = []
+                    labels = []
+                elif not NON_LABELED in line:
+                    words.append(word.lower())
+                    if label == '0':
+                        labels.append(0)
+                    else:
+                        labels.append(1)
     if shuffle:
         if debug:
             random.seed(SEED)
@@ -76,6 +84,7 @@ def to_ints(data,vocab_size,wd_to_i=None,i_to_wd=None): # TODO add UNK and PAD (
                 else:
                     wd_counts[wd] += 1
         wds_by_freq = sorted(wd_counts.items(), key=operator.itemgetter(1), reverse=True)
+        print('Raw vocab: ',len(wds_by_freq))
         top_wds = [i[0] for i in wds_by_freq[:vocab_size]]
         counter = 2
         for wd in top_wds:
@@ -146,3 +155,15 @@ def make_batches(X,Y,batch_size,device):
         start = end
         end = end + batch_size
     return(batched_X,batched_Y)
+
+
+def main():
+    libri_file = '../data/libri/train_360.txt'
+    ld,lengths = load_libri_data(libri_file)
+    import matplotlib.pyplot as plt
+    plt.hist(lengths,bins=50,range=(0,100))
+    plt.show()
+    import pdb;pdb.set_trace()
+
+if __name__=='__main__':
+    main()

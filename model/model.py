@@ -10,7 +10,7 @@ torch.manual_seed(0)
 
 import torch.nn.functional as F
 
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data
 import numpy as np
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
@@ -28,13 +28,14 @@ NUM_EPOCHS = 15
 NUM_LAYERS = 2
 BIDIRECTIONAL = True
 LEARNING_RATE = 0.001
-VOCAB_SIZE = 4000
 SOFTMAX_DIM = 2
 EMBEDDING_DIM = 100
 HIDDEN_SIZE = 128
 DROPOUT = 0.5
 USE_PRETRAINED = False
 MAX_LEN = 80
+DATASOURCE = 'LIBRI'
+
 
 datafile = '../data/all_acc.txt'
 #glove_path = '../data/emb/glove.6B.50d.txt'
@@ -48,19 +49,32 @@ model_file = '{}.pt'.format(model_name)
 
 # LOAD THE DATA
 
-data = load_data(datafile,shuffle=True,max_len=MAX_LEN)
+if DATASOURCE == 'SWBDNXT':
 
-train_idx = int(TRAIN_RATIO*len(data))
-dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(data))
+    VOCAB_SIZE = 4000
 
-train_data = data[:train_idx]
-dev_data = data[train_idx:dev_idx]
-test_data = data[dev_idx:]
+    data = load_data(datafile,shuffle=True,max_len=MAX_LEN)
+
+    train_idx = int(TRAIN_RATIO*len(data))
+    dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(data))
+
+    train_data = data[:train_idx]
+    dev_data = data[train_idx:dev_idx]
+    test_data = data[dev_idx:]
+
+
+elif DATASOURCE == 'LIBRI':
+
+    VOCAB_SIZE = 35000
+
+    libritrain = '../data/libri/train_360.txt'
+    libridev = '../data/libri/dev.txt'
+    train_data = load_libri_data(libritrain,shuffle=True,max_len=MAX_LEN)
+    dev_data = load_libri_data(libridev,shuffle=True,max_len=MAX_LEN)
 
 X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE)
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
-X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
-
+#X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 # LOAD VECTORS
 
@@ -319,8 +333,11 @@ for epoch in range(NUM_EPOCHS):
                 #    evaluate(X_dev,Y_dev_str,model)
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
-                _, train_acc, _ = evaluate(X_train, Y_train_str, model)
-                train_accs.append(train_acc)
+                if DATASOURCE == 'SWBDNXT':
+                    _,train_acc,_ = evaluate(X_train, Y_train_str, model)
+                    train_accs.append(train_acc)
+                else:
+                    train_accs.append(0)
                 _, dev_acc, _ = evaluate(X_dev, Y_dev_str, model)
                 dev_accs.append(dev_acc)
                 timesteps.append(timestep)
