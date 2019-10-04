@@ -49,7 +49,7 @@ model_file = '{}.pt'.format(model_name)
 if DATASOURCE == 'SWBDNXT':
 
     VOCAB_SIZE = 4000
-    NUM_EPOCHS = 15
+    NUM_EPOCHS = 8
     NUM_LAYERS = 2
     DROPOUT = 0.5
 
@@ -85,8 +85,10 @@ X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 # LOAD VECTORS
 
 
-
-
+"""
+with open('idx.pkl','wb') as f:
+    pickle.dump((wd_to_i,i_to_wd),f)
+"""
 
 # BUILD THE MODEL
 
@@ -213,7 +215,7 @@ model.to(device)
 
 # DEFINE EVAL FUNCTION
 
-def evaluate(X, Y,mdl):
+def evaluate(X, Y,mdl,to_file=False):
     print("EVAL=================================================================================================")
     y_pred = []
     with torch.no_grad():
@@ -245,6 +247,13 @@ def evaluate(X, Y,mdl):
     #y_pred = np.concatenate([y.flatten() for y in y_pred]).tolist()
     #Y = [str(y) for y in Y]
     #y_pred = [str(y) for y in y_pred]
+    if to_file:
+        with open('Y_true.pkl','wb') as f:
+            pickle.dump(Y,f)
+        with open('Y_pred.pkl','wb') as f:
+            pickle.dump(y_pred,f)
+        with open('X.pkl','wb') as f:
+            pickle.dump(X,f)
 
     f1 = f1_score(Y, y_pred)
     acc = accuracy_score(Y, y_pred)
@@ -378,7 +387,7 @@ evaluate(X_train,Y_train_str,model)
 
 
 print('After training, dev: ')
-evaluate(X_dev, Y_dev_str,model)
+evaluate(X_dev, Y_dev_str,model)#,True)
 
 
 
