@@ -1,89 +1,83 @@
-# Get words in one-hot format
-# Build model
 import pickle
 import os
 from torch import nn
 import torch
 import pandas as pd
-import matplotlib.pyplot as plt
-torch.manual_seed(0)
-
-import torch.nn.functional as F
-
+import yaml
 from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results
 from evaluate import evaluate
 import numpy as np
+import sys
 
-PRINT_DIMS = False
-PRINT_EVERY = 50
-EVAL_EVERY = 100
-TRAIN_RATIO = 0.6
-DEV_RATIO = 0.2
+
+if len(sys.argv) < 2:
+    config = 'conf/swbd.yaml'
+else:
+    config = sys.argv[1]
+
+with open(config,'r') as f:
+    cfg = yaml.load(f,yaml.FullLoader)
+torch.manual_seed(0)
+
+
+print_dims = cfg['print_dims']
+print_every = int(cfg['print_every'])
+eval_every = int(cfg['eval_every'])
+train_ratio = float(cfg['train_ratio'])
+dev_ratio = float(cfg['dev_ratio'])
+
+# hyperparameters
+batch_size = int(cfg['batch_size'])
+bidirectional = cfg['bidirectional']
+learning_rate = float(cfg['learning_rate'])
+embedding_dim = int(cfg['embedding_dim'])
+hidden_size = int(cfg['hidden_size'])
+use_pretrained = cfg['use_pretrained']
+max_len = int(cfg['max_len'])
+datasource = cfg['datasource']
+vocab_size = int(cfg['vocab_size'])
+num_epochs = int(cfg['num_epochs'])
+num_layers = int(cfg['num_layers'])
+dropout = float(cfg['dropout'])
+
+# Filenames
+datafile = cfg['datafile']
+glove_path = cfg['glove_path']
+model_name = cfg['model_name']
+results_path = cfg['results_path']
+results_file = '{}/{}.txt'.format(results_path,model_name)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# Hyperparameters
-BATCH_SIZE = 64
-BIDIRECTIONAL = True
-LEARNING_RATE = 0.001
-SOFTMAX_DIM = 2
-EMBEDDING_DIM = 100
-HIDDEN_SIZE = 128
-USE_PRETRAINED = False
-MAX_LEN = 80
-DATASOURCE = 'SWBDNXT'
-
-
-datafile = '../data/all_acc.txt'
-#glove_path = '../data/emb/glove.6B.50d.txt'
-glove_path = '../data/emb/glove.6B.100d.txt'
-
-import sys
-
-model_name = sys.argv[1]
-results_file = 'results/{}.txt'.format(model_name)
-model_file = '{}.pt'.format(model_name)
-
 # LOAD THE DATA
 
-if DATASOURCE == 'SWBDNXT':
+if datasource == 'SWBDNXT':
 
-    VOCAB_SIZE = 4000
-    NUM_EPOCHS = 8
-    NUM_LAYERS = 2
-    DROPOUT = 0.5
+    data = load_data(datafile,shuffle=True,max_len=max_len)
 
-    data = load_data(datafile,shuffle=True,max_len=MAX_LEN)
-
-    train_idx = int(TRAIN_RATIO*len(data))
-    dev_idx = int((TRAIN_RATIO+DEV_RATIO)*len(data))
+    train_idx = int(train_ratio*len(data))
+    dev_idx = int((train_ratio+dev_ratio)*len(data))
 
     train_data = data[:train_idx]
     dev_data = data[train_idx:dev_idx]
     test_data = data[dev_idx:]
 
-
-elif DATASOURCE == 'LIBRI':
-
-    VOCAB_SIZE = 35000
-    NUM_EPOCHS = 5
-    NUM_LAYERS = 3
-    DROPOUT = 0.2
+elif datasource == 'LIBRI':
 
     libritrain = '../data/libri/train_360.txt'
     libridev = '../data/libri/dev.txt'
-    train_data = load_libri_data(libritrain,shuffle=True,max_len=MAX_LEN)
-    dev_data = load_libri_data(libridev,shuffle=True,max_len=MAX_LEN)
+    train_data = load_libri_data(libritrain,shuffle=True,max_len=max_len)
+    dev_data = load_libri_data(libridev,shuffle=True,max_len=max_len)
 
 else:
     print("NO DATA SOURCE GIVEN")
 
-X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE)
-X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
+X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,vocab_size)
+X_dev,Y_dev,_,_ = to_ints(dev_data,vocab_size,wd_to_i,i_to_wd)
 
 # LOAD VECTORS
 
-if USE_PRETRAINED:
+if use_pretrained:
     vec_dict_pkl = '../data/emb/50d-dict.pkl'
     if os.path.exists(vec_dict_pkl):
         with open(vec_dict_pkl,'rb') as f:
@@ -94,13 +88,13 @@ if USE_PRETRAINED:
             pickle.dump(i_to_vec, f)
 
     words_found = 0
-    weights_matrix = np.zeros((VOCAB_SIZE+2, EMBEDDING_DIM))
+    weights_matrix = np.zeros((vocab_size+2, embedding_dim))
     for i in i_to_wd:
         try:
             weights_matrix[i] = i_to_vec[i]
             words_found += 1
         except:
-            weights_matrix[i] = np.random.normal(scale=0.6, size=(EMBEDDING_DIM, ))
+            weights_matrix[i] = np.random.normal(scale=0.6, size=(embedding_dim, ))
 
     weights_matrix = torch.tensor(weights_matrix)
 
@@ -160,7 +154,7 @@ class BiLSTM(nn.Module):
         lstm_out, hidden = self.lstm(embeds, hidden)
         tag_space = self.hidden2tag(lstm_out)
         tag_scores = self.sigmoid(tag_space)
-        if PRINT_DIMS:
+        if print_dims:
             print('sent.shape',sent.shape)
             print('embeds.shape', embeds.shape)
             print('lstm_out.shape', lstm_out.shape)
@@ -185,18 +179,18 @@ class BiLSTM(nn.Module):
 
 # INSTANTIATE THE MODEL
 
-model = BiLSTM(batch_size=BATCH_SIZE,
-               vocab_size=VOCAB_SIZE+2,
+model = BiLSTM(batch_size=batch_size,
+               vocab_size=vocab_size+2,
                tagset_size=2,
-               bidirectional=BIDIRECTIONAL,
-               lstm_layers=NUM_LAYERS,
-               embedding_dim=EMBEDDING_DIM,
-               hidden_size=HIDDEN_SIZE,
-               use_pretrained=USE_PRETRAINED,
-               dropout=DROPOUT)
+               bidirectional=bidirectional,
+               lstm_layers=num_layers,
+               embedding_dim=embedding_dim,
+               hidden_size=hidden_size,
+               use_pretrained=use_pretrained,
+               dropout=dropout)
 
 loss_fn = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 model.to(device)
 
@@ -214,9 +208,9 @@ train_losses = []
 train_accs = []
 dev_accs = []
 
-for epoch in range(NUM_EPOCHS):
+for epoch in range(num_epochs):
     # BATCH DATA
-    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, BATCH_SIZE, device)
+    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, batch_size, device)
 
     print("TRAIN================================================================================================")
     for i in range(len(X_train_batches)):
@@ -240,14 +234,14 @@ for epoch in range(NUM_EPOCHS):
             optimizer.step()
 
 
-            if i % PRINT_EVERY == 1:
+            if i % print_every == 1:
                 avg_loss = sum(recent_losses)/len(recent_losses)
                 print("Epoch: %s Step: %s Loss: %s"%(epoch,i,avg_loss.item())) # TODO could my loss calculation be deceiving?
 
-            if i % EVAL_EVERY == 1:
+            if i % eval_every == 1:
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
-                if DATASOURCE == 'SWBDNXT':
+                if datasource == 'SWBDNXT':
                     _,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
                     train_accs.append(train_acc)
                 else: # Don't do train acc every time for bigger datasets than SWBDNXT

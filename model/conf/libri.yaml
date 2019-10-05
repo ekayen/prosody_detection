@@ -1,0 +1,23 @@
+print_dims: false
+print_every: 50
+eval_every: 100
+train_ratio: 0.6
+dev_ratio: 0.2
+
+batch_size: 64
+bidirectional: true
+learning_rate: 0.001
+embedding_dim: 100
+hidden_size: 128
+use_pretrained: false
+max_len: 80
+datasource: 'LIBRI'
+vocab_size: 35000
+num_epochs: 5
+num_layers: 3
+dropout: 0.2
+
+datafile: '../data/all_acc.txt'
+glove_path: '../data/emb/glove.6B.100d.txt'
+model_name: 'l2-b64-d5-e10-v4000-lr001'
+results_path: 'results'
