@@ -10,7 +10,7 @@ torch.manual_seed(0)
 
 import torch.nn.functional as F
 
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results
 from evaluate import evaluate
 import numpy as np
 
@@ -80,17 +80,8 @@ else:
 
 X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,VOCAB_SIZE)
 X_dev,Y_dev,_,_ = to_ints(dev_data,VOCAB_SIZE,wd_to_i,i_to_wd)
-#X_test,Y_test,_,_ = to_ints(test_data,VOCAB_SIZE,wd_to_i,i_to_wd)
 
 # LOAD VECTORS
-
-
-"""
-with open('idx.pkl','wb') as f:
-    pickle.dump((wd_to_i,i_to_wd),f)
-"""
-
-# BUILD THE MODEL
 
 if USE_PRETRAINED:
     vec_dict_pkl = '../data/emb/50d-dict.pkl'
@@ -114,6 +105,7 @@ if USE_PRETRAINED:
     weights_matrix = torch.tensor(weights_matrix)
 
 
+# BUILD THE MODEL
 
 class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
@@ -157,21 +149,16 @@ class BiLSTM(nn.Module):
                             num_layers=lstm_layers,
                             dropout=self.dropout)
         if self.bidirectional:
-            #self.hidden2tag = nn.Linear(2 * hidden_size, tagset_size) # TODO change this to 1, rather than 2
             self.hidden2tag = nn.Linear(2 * hidden_size, output_dim)
         else:
-            #self.hidden2tag = nn.Linear(hidden_size, tagset_size)
             self.hidden2tag = nn.Linear(hidden_size, output_dim)
-        #self.softmax = nn.Softmax(dim=SOFTMAX_DIM)
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self,sent,hidden): # TODO figure out batching
+    def forward(self,sent,hidden):
         self.seq_len = sent.shape[0]
-        embeds = self.embedding(sent)#.view(self.seq_len,self.batch_size))
-        #lstm_out, hidden = self.lstm(embeds.view(self.seq_len, self.batch_size, -1), hidden)
+        embeds = self.embedding(sent)
         lstm_out, hidden = self.lstm(embeds, hidden)
         tag_space = self.hidden2tag(lstm_out)
-        #tag_scores = self.softmax(tag_space)
         tag_scores = self.sigmoid(tag_space)
         if PRINT_DIMS:
             print('sent.shape',sent.shape)
@@ -207,59 +194,26 @@ model = BiLSTM(batch_size=BATCH_SIZE,
                hidden_size=HIDDEN_SIZE,
                use_pretrained=USE_PRETRAINED,
                dropout=DROPOUT)
-#loss_fn = nn.CrossEntropyLoss() # TODO change to binary crossentropy loss (maybe)
+
 loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 model.to(device)
 
-# DEFINE EVAL FUNCTION
-
-
+# Process data to work with eval library
 Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
-#Y_train_batches_str = [[[str(i) for i in inst] for inst in batch.numpy()] for batch in Y_train_batches]
-
-
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
-#Y_dev_batches_str = [[[str(i) for i in inst] for inst in batch.numpy()] for batch in Y_dev_batches]
 
 
-"""
-# Before training, evaluate on train data:
-print('Before training, train:')
-evaluate(X_train,Y_train_str,model)
-
-print('Before training, evaluate on dev data:')
-evaluate(X_dev,Y_dev_str,model)
-"""
-"""
-def majority_baseline(X,Y):
-    preds = []
-    for x in X:
-        tmp = np.zeros(x.shape)
-        #tmp = np.random.randint(2,size=x.shape[0])
-        tmp.tolist()
-        tmp = [str(int(i)) for i in tmp]
-        preds.append(tmp)
-    print("Majority baseline:")
-    print('F1:',f1_score(Y, preds))
-    print('Acc',accuracy_score(Y, preds))
-    print(classification_report(Y, preds))
-
-majority_baseline(X_dev,Y_dev_str)
-
-import pdb;pdb.set_trace()
-"""
+# TRAIN
+recent_losses = []
+timestep = 0
+timesteps = []
 
 train_losses = []
 train_accs = []
 dev_accs = []
 
-# TRAIN
-recent_losses = []
-
-timestep = 0
-timesteps = []
 for epoch in range(NUM_EPOCHS):
     # BATCH DATA
     X_train_batches, Y_train_batches = make_batches(X_train, Y_train, BATCH_SIZE, device)
@@ -267,7 +221,6 @@ for epoch in range(NUM_EPOCHS):
     print("TRAIN================================================================================================")
     for i in range(len(X_train_batches)):
 
-        #input,labels = X_train[i],Y_train[i]
         input, labels = X_train_batches[i], Y_train_batches[i]
 
         if not (list(input.shape)[0] == 0):
@@ -278,7 +231,6 @@ for epoch in range(NUM_EPOCHS):
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
 
-            #loss = loss_fn(tag_scores.view(model.seq_len,-1),labels)
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
@@ -291,20 +243,14 @@ for epoch in range(NUM_EPOCHS):
             if i % PRINT_EVERY == 1:
                 avg_loss = sum(recent_losses)/len(recent_losses)
                 print("Epoch: %s Step: %s Loss: %s"%(epoch,i,avg_loss.item())) # TODO could my loss calculation be deceiving?
-                """ 
-                # Print some weights to see if they move
-                for name,param in model.named_parameters():
-                    if name == 'lstm.weight_ih_l0':
-                        print(name,param)
-                """
+
             if i % EVAL_EVERY == 1:
-                #    evaluate(X_dev,Y_dev_str,model)
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
                 if DATASOURCE == 'SWBDNXT':
                     _,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
                     train_accs.append(train_acc)
-                else:
+                else: # Don't do train acc every time for bigger datasets than SWBDNXT
                     train_accs.append(0)
                 _, dev_acc, _ = evaluate(X_dev, Y_dev_str, model,device)
                 dev_accs.append(dev_acc)
@@ -315,23 +261,8 @@ train_accs = pd.Series(train_accs)
 dev_accs = pd.Series(dev_accs)
 train_steps = pd.Series(timesteps)
 
-df = pd.DataFrame(dict(train_steps=train_steps,
-                       train_losses=train_losses,
-                       train_accs=train_accs,
-                       dev_accs=dev_accs))
 
-with open("tmp.pkl",'wb') as f:
-    pickle.dump(df,f)
-
-ax = plt.gca()
-df.plot(kind='line',x='train_steps',y='train_losses',ax=ax)
-df.plot(kind='line',x='train_steps',y='train_accs', color='red', ax=ax)
-df.plot(kind='line',x='train_steps',y='dev_accs', color='green', ax=ax)
-
-
-plt.savefig('results/{}.png'.format(model_name))
-plt.show()
-df.to_csv('results/{}.tsv'.format(model_name),sep='\t')
+plot_results(train_losses,train_accs,dev_accs,train_steps,model_name)
 
 print("==============================================")
 print("==============================================")

@@ -6,6 +6,8 @@ import random
 import operator
 import string
 from torch.nn.utils.rnn import pad_sequence
+import matplotlib.pyplot as plt
+from seqeval.metrics import accuracy_score, classification_report,f1_score
 
 SEED = 123
 
@@ -156,6 +158,38 @@ def make_batches(X,Y,batch_size,device):
         end = end + batch_size
     return(batched_X,batched_Y)
 
+
+def majority_baseline(X,Y):
+    preds = []
+    for x in X:
+        tmp = np.zeros(x.shape)
+        #tmp = np.random.randint(2,size=x.shape[0])
+        tmp.tolist()
+        tmp = [str(int(i)) for i in tmp]
+        preds.append(tmp)
+    print("Majority baseline:")
+    print('F1:',f1_score(Y, preds))
+    print('Acc',accuracy_score(Y, preds))
+    print(classification_report(Y, preds))
+
+
+def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
+    df = pd.DataFrame(dict(train_steps=train_steps,
+                           train_losses=train_losses,
+                           train_accs=train_accs,
+                           dev_accs=dev_accs))
+
+    with open("tmp.pkl", 'wb') as f:
+        pickle.dump(df, f)
+
+    ax = plt.gca()
+    df.plot(kind='line', x='train_steps', y='train_losses', ax=ax)
+    df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
+    df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
+
+    plt.savefig('results/{}.png'.format(model_name))
+    plt.show()
+    df.to_csv('results/{}.tsv'.format(model_name), sep='\t')
 
 def main():
     libri_file = '../data/libri/train_360.txt'
