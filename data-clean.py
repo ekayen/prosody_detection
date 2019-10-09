@@ -62,9 +62,8 @@ accent_dict = {'nuclear':1,
                'plain':0,
                'pre-nuclear':0}
 
-
-
 dialog_nums = list(set([f.split('.')[0] for f in os.listdir(os.path.join(data_dir,'accent'))]))
+dialog_nums = sorted(dialog_nums)
 
 if NUC_ONLY:
     dialog_nums_tmp = []
@@ -75,13 +74,15 @@ if NUC_ONLY:
                 dialog_nums_tmp.append(dial)
     dialog_nums=dialog_nums_tmp
 
+print(users)
 
 for dialog_num in dialog_nums:
-    #print('processing ',dialog_num,'...')
 
     turn_files = [os.path.join(data_dir,'turns','.'.join([dialog_num,user,'turns','xml'])) for user in users]
     acc_files = [os.path.join(data_dir,'accent','.'.join([dialog_num,user,'accents','xml'])) for user in users]
     wd_files = [os.path.join(data_dir,'phonwords','.'.join([dialog_num,user,'phonwords','xml'])) for user in users]
+
+
 
     words = []
     ids = []
@@ -130,12 +131,15 @@ for dialog_num in dialog_nums:
                     id_to_acc[acc_id] = 1
 
     # ### Make np array of accents
-
+    # Words has two elements, one for each speaker
     words = (np.array(words[0]), np.array(words[1]))
     times = (np.array(times[0]), np.array(times[1]))
 
     accents = (np.zeros(words[0].shape,dtype=np.int32),np.zeros(words[1].shape,dtype=np.int32))
 
+    print(words[0].shape,words[1].shape)
+
+    # Iterate over speakers
     for i in (0,1):
         for j in range(words[i].shape[0]):
             id_num = ids[i][j]
@@ -144,6 +148,7 @@ for dialog_num in dialog_nums:
             else:
                 accents[i][j] = 0
 
+    #import pdb;pdb.set_trace()
 
     # ### Iterate through turns, writing the final form out turn by turn
 
@@ -152,6 +157,7 @@ for dialog_num in dialog_nums:
     turns = turns0 + turns1
     turns.sort()
     turns = dict(turns)
+
 
     for num in turns:
         speaker = turns[num][2]
