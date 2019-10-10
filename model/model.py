@@ -261,11 +261,11 @@ plot_results(train_losses,train_accs,dev_accs,train_steps,model_name)
 print("==============================================")
 print("==============================================")
 print('After training, train:')
-evaluate(X_train,Y_train_str,model)
+evaluate(X_train,Y_train_str,model,device)
 
 
 print('After training, dev: ')
-evaluate(X_dev, Y_dev_str,model)#,True)
+evaluate(X_dev, Y_dev_str,model,device)#,True)
 
 
 
