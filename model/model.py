@@ -241,7 +241,7 @@ for epoch in range(num_epochs):
             if i % eval_every == 1:
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
-                if datasource == 'SWBDNXT':
+                if not datasource == 'LIBRI':
                     _,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
                     train_accs.append(train_acc)
                 else: # Don't do train acc every time for bigger datasets than SWBDNXT
@@ -257,6 +257,7 @@ train_steps = pd.Series(timesteps)
 
 
 plot_results(train_losses,train_accs,dev_accs,train_steps,model_name)
+
 
 print("==============================================")
 print("==============================================")
