@@ -36,7 +36,8 @@ mispron_dict = {
     '[shrip/shrimp]': 'shrimp',
 }
 
-NUC_ONLY = True # if true, only consider nuclear accents; if false, consider all accents
+NUC_ONLY = False
+# if true, only consider nuclear accents; if false, consider all accents
 if NUC_ONLY:
     out_pickle = 'data/nuc_only.pickle'
     out_txt = 'data/nuc_only.txt'

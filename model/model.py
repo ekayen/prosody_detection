@@ -51,7 +51,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # LOAD THE DATA
 
-if datasource == 'SWBDNXT':
+if datasource == 'SWBDNXT' or datasource == 'SWBDNXT_UTT':
 
     data = load_data(datafile,shuffle=True,max_len=max_len)
 
