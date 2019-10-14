@@ -1,4 +1,4 @@
-print_dims: false
+print_dims: False
 print_every: 50
 eval_every: 100
 train_ratio: 0.6
@@ -20,4 +20,4 @@ dropout: 0.5
 datafile: '../data/all_acc.txt'
 glove_path: '../data/emb/glove.6B.100d.txt'
 model_name: 'l2-b64-d5-e10-v4000-lr001'
-results_path: 'results'
+results_path: 'turn_utt_investigation'

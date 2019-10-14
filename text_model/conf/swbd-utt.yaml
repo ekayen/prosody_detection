@@ -12,12 +12,12 @@ hidden_size: 128
 use_pretrained: false
 max_len: 80
 datasource: 'SWBDNXT_UTT'
-vocab_size: 100
+vocab_size: 1
 num_epochs: 10
 num_layers: 2
 dropout: 0.5
 
 datafile: '../data/utterances_text_only.txt'
 glove_path: '../data/emb/glove.6B.100d.txt'
-model_name: 'utt-l2-b64-d5-e10-v100-lr001'
-results_path: 'results'
+model_name: 'utt-l2-b64-d5-e10-v1-lr001'
+results_path: 'turn_utt_investigation'
