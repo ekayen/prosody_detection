@@ -28,12 +28,12 @@ labels_data = '../data/utterances_labels.pkl'
 train_per = 0.6
 dev_per = 0.2
 
-dataloader_params = {'batch_size': 1,
+dataloader_params = {'batch_size': 32,
                      'shuffle': True,
                      'num_workers': 6}
 epochs = 1
 pad_len = 750
-
+learning_rate = 0.001
 
 class SpeechEncoder(nn.Module):
     def __init__(self,
@@ -133,12 +133,13 @@ class SpeechEncoder(nn.Module):
 
 
 
-model = SpeechEncoder(seq_len=pad_len,batch_size=dataloader_params['batch_size'],lstm_layers=3,num_classes=2)
 
 with open(labels_data,'rb') as f:
     labels_dict = pickle.load(f)
 with open(speech_data,'rb') as f:
     feat_dict = pickle.load(f)
+
+
 
 all_ids = list(labels_dict.keys())
 random.shuffle(all_ids)
@@ -152,11 +153,28 @@ devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
 
 traingen = data.DataLoader(trainset, **dataloader_params)
 
+
+model = SpeechEncoder(seq_len=pad_len,
+                      batch_size=dataloader_params['batch_size'],
+                      lstm_layers=3,
+                      #num_classes=2
+                      num_classes=1
+                      )
+criterion = nn.BCELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
 for epoch in range(epochs):
     for batch, labels in traingen:
+        model.zero_grad()
         hidden = model.init_hidden()
-        model(batch,hidden)
-        break
+        output,_ = model(batch,hidden)
+        print('output shape: ',output.shape)
+        print('labels shape: ',labels.shape)
+        loss = criterion(output.squeeze(),labels.float()) # TODO make labels into onehot repr
+        loss.backward()
+        optimizer.step()
+        import pdb;pdb.set_trace()
+
 
 process = psutil.Process(os.getpid())
 print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
