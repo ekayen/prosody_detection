@@ -32,7 +32,7 @@ dataloader_params = {'batch_size': 1,
                      'shuffle': True,
                      'num_workers': 6}
 epochs = 1
-pad_len = 1000
+pad_len = 750
 
 
 class SpeechEncoder(nn.Module):
@@ -71,21 +71,28 @@ class SpeechEncoder(nn.Module):
                                   nn.ReLU(inplace=True)
                                   )
 
+        """
+        # This is what deepspeech does, but to me it seems like the input size to the LSTM should be the number of channels, not the time dim
+
         rnn_input_size = self.seq_len
         rnn_input_size = math.ceil((rnn_input_size - self.kernel1[0] + 2 * self.padding[0]) / (self.stride1[0]))
         rnn_input_size = math.ceil((rnn_input_size - self.kernel2[0] + 2 * self.padding[0]) / (self.stride2[0]))
         print('RNN input size',rnn_input_size)
+        """
+        rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
         self.lstm = nn.LSTM(input_size=rnn_input_size,
-                            batch_first=True,
+                            #batch_first=True,
                             hidden_size=self.hidden_size,
                             num_layers=self.lstm_layers,
                             bidirectional=self.bidirectional)
 
-        """
+
         fully_connected = nn.Sequential(
-            nn.BatchNorm1d(rnn_hidden_size),
-            nn.Linear(rnn_hidden_size, self.num_classes, bias=False)
+            nn.BatchNorm1d(self.batch_size), # TODO figure out the actual desired size here
+            nn.Linear(hidden_size*2, self.num_classes, bias=False)
         )
+        self.fc = fully_connected
+        """
         self.fc = nn.Sequential(
             SequenceWise(fully_connected),
         )
@@ -96,9 +103,13 @@ class SpeechEncoder(nn.Module):
         print('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         print('Dims after conv: ',x.shape)
-        print('Dims going into lstm: ',x.view(x.shape[0],x.shape[1],x.shape[2]).shape)
-        x = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
-        return x
+        x = x.view(x.shape[0],x.shape[1],x.shape[2]).transpose(1,2).transpose(0,1)
+        print('Dims going into lstm: ',x.shape)
+        x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
+        print('Dims after lstm:', x.shape)
+        x = self.fc(x)
+        print('Dims after fc:', x.shape)
+        return x,hidden
 
     def init_hidden(self):
         h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
