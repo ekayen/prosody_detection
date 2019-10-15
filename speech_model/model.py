@@ -72,7 +72,7 @@ class SpeechEncoder(nn.Module):
                                   )
 
         """
-        # This is what deepspeech does, but to me it seems like the input size to the LSTM should be the number of channels, not the time dim
+        # This is what that implementation of deepspeech does, but to me it seems like the input size to the LSTM should be the number of channels, not the time dim
 
         rnn_input_size = self.seq_len
         rnn_input_size = math.ceil((rnn_input_size - self.kernel1[0] + 2 * self.padding[0]) / (self.stride1[0]))
@@ -86,34 +86,46 @@ class SpeechEncoder(nn.Module):
                             num_layers=self.lstm_layers,
                             bidirectional=self.bidirectional)
 
+        self.mp = nn.MaxPool1d(self.seq_len,stride=self.seq_len)
 
         fully_connected = nn.Sequential(
-            nn.BatchNorm1d(self.batch_size), # TODO figure out the actual desired size here
+            nn.BatchNorm1d(self.batch_size),
             nn.Linear(hidden_size*2, self.num_classes, bias=False)
         )
         self.fc = fully_connected
+
         """
         self.fc = nn.Sequential(
             SequenceWise(fully_connected),
         )
-        self.inference_softmax = nn.Softmax()
         """
+        self.inference_softmax = nn.Softmax(dim=-1)
 
     def forward(self,x,hidden):
         print('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         print('Dims after conv: ',x.shape)
-        x = x.view(x.shape[0],x.shape[1],x.shape[2]).transpose(1,2).transpose(0,1)
+        x = x.view(x.shape[0],x.shape[1],x.shape[2]).transpose(1,2).transpose(0,1).contiguous()
         print('Dims going into lstm: ',x.shape)
         x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
         print('Dims after lstm:', x.shape)
-        x = self.fc(x)
+        x = torch.max(x,dim=0).values
+        print('Dims after maxpool:', x.shape)
+        x = self.fc(x.view(1,self.batch_size,self.hidden_size*2))
         print('Dims after fc:', x.shape)
+        x = self.inference_softmax(x)
+        print('Dims after softmax:', x.shape)
+        print(x)
         return x,hidden
 
     def init_hidden(self):
-        h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
-        c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
+        if self.bidirectional:
+            h0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
+            c0 = torch.zeros(self.lstm_layers*2, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
+        else:
+            h0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
+            c0 = torch.zeros(self.lstm_layers, self.batch_size, self.hidden_size).requires_grad_()#.to(device)
+
         return (h0,c0)
 
 
