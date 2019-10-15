@@ -199,6 +199,8 @@ Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
 Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
 
 
+
+
 # TRAIN
 recent_losses = []
 timestep = 0
@@ -207,6 +209,17 @@ timesteps = []
 train_losses = []
 train_accs = []
 dev_accs = []
+
+# Add pre-training stats to output:
+train_losses.append(0)
+if not datasource == 'LIBRI':
+    _, train_acc, _ = evaluate(X_train, Y_train_str, model, device)
+    train_accs.append(train_acc)
+else:  # Don't do train acc every time for bigger datasets than SWBDNXT
+    train_accs.append(0)
+_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device)
+dev_accs.append(dev_acc)
+timesteps.append(0)
 
 for epoch in range(num_epochs):
     # BATCH DATA
