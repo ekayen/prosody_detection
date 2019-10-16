@@ -86,8 +86,6 @@ class SpeechEncoder(nn.Module):
                             num_layers=self.lstm_layers,
                             bidirectional=self.bidirectional)
 
-        self.mp = nn.MaxPool1d(self.seq_len,stride=self.seq_len)
-
         fully_connected = nn.Sequential(
             nn.BatchNorm1d(self.batch_size),
             nn.Linear(hidden_size*2, self.num_classes, bias=False)
@@ -109,8 +107,9 @@ class SpeechEncoder(nn.Module):
         print('Dims going into lstm: ',x.shape)
         x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
         print('Dims after lstm:', x.shape)
-        x = torch.max(x,dim=0).values
-        print('Dims after maxpool:', x.shape)
+        #x = torch.max(x,dim=0).values # MAXPOOL OVER TIME DIM
+        x = x[-1,:,:] # TAKE LAST TIMESTEP
+        print('Dims after compression:', x.shape)
         x = self.fc(x.view(1,self.batch_size,self.hidden_size*2))
         print('Dims after fc:', x.shape)
         x = self.inference_softmax(x)
@@ -157,23 +156,22 @@ traingen = data.DataLoader(trainset, **dataloader_params)
 model = SpeechEncoder(seq_len=pad_len,
                       batch_size=dataloader_params['batch_size'],
                       lstm_layers=3,
-                      #num_classes=2
-                      num_classes=1
-                      )
+                      num_classes=2)
+                      #num_classes=1)
+
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 for epoch in range(epochs):
-    for batch, labels in traingen:
+    for batch, labels in traingen: # TODO to generalize past binary classification, maybe change labels into one-hot
         model.zero_grad()
         hidden = model.init_hidden()
         output,_ = model(batch,hidden)
         print('output shape: ',output.shape)
         print('labels shape: ',labels.shape)
-        loss = criterion(output.squeeze(),labels.float()) # TODO make labels into onehot repr
+        loss = criterion(output[:,:,1:].squeeze(),labels.float()) # TODO make labels into onehot repr
         loss.backward()
         optimizer.step()
-        import pdb;pdb.set_trace()
 
 
 process = psutil.Process(os.getpid())
