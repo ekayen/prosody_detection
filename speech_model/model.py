@@ -23,7 +23,8 @@ random.seed(0)
 import numpy as np
 
 text_data = '../data/utterances.txt'
-speech_data = '../data/utterances_feats.pkl'
+#speech_data = '../data/utterances_feats.pkl'
+speech_data = '../data/cmvn_tensors.pkl'
 labels_data = '../data/utterances_labels.pkl'
 
 train_per = 0.6
@@ -32,7 +33,7 @@ print_every = 10
 eval_every = 100
 VERBOSE = False
 
-train_params = {'batch_size': 16,
+train_params = {'batch_size': 8,
                      'shuffle': True,
                      'num_workers': 6}
 
@@ -40,7 +41,7 @@ eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
 epochs = 1
-pad_len = 750
+pad_len = 200
 learning_rate = 0.001
 
 class SpeechEncoder(nn.Module):
@@ -72,11 +73,11 @@ class SpeechEncoder(nn.Module):
         self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.hidden_channels),
-                                  nn.ReLU(inplace=True), # TODO figure out if inplace is correct
+                                  nn.Hardtanh(inplace=True),
                                   nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.out_channels),
-                                  nn.ReLU(inplace=True)
+                                  nn.Hardtanh(inplace=True)
                                   )
 
         """
@@ -87,6 +88,9 @@ class SpeechEncoder(nn.Module):
         rnn_input_size = math.ceil((rnn_input_size - self.kernel2[0] + 2 * self.padding[0]) / (self.stride2[0]))
         print('RNN input size',rnn_input_size)
         """
+
+
+        # RNN VERSION:
         rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
         self.lstm = nn.LSTM(input_size=rnn_input_size,
                             #batch_first=True,
@@ -94,25 +98,39 @@ class SpeechEncoder(nn.Module):
                             num_layers=self.lstm_layers,
                             bidirectional=self.bidirectional)
 
-        # TODO figure out how to set the dim of batch norm layer so it works without prespecified batch size, or
-        # TODO figure out how to turn it off at eval time
-
-        # TODO OR actually maybe not? Taking batch norm out seems to have made the different examples in a batch decouple from each other, which is desirable
-
         if self.bidirectional:
             self.lin_input_size = self.hidden_size * 2
         else:
             self.lin_input_size = self.hidden_size
 
+        self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+
+        """
+        # TODO figure out how to set the dim of batch norm layer so it works without prespecified batch size, or
+        # TODO figure out how to turn it off at eval time
+
+        # TODO OR actually maybe not? Taking batch norm out seems to have made the different examples in a batch decouple from each other, which is desirable
+
         fully_connected = nn.Sequential(
             nn.BatchNorm1d(self.batch_size),
             nn.Linear(self.lin_input_size, self.num_classes, bias=False)
         )
-
         self.bn = nn.BatchNorm1d(self.batch_size)
-        #self.fc = fully_connected
-        self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
-        self.sigmoid = nn.Sigmoid()
+        
+        """
+
+        # NO RNN VERSION:
+        self.maxpool = nn.MaxPool1d(2)
+        self.intermediate_fc_size = 300
+        self.cnn_output_size = math.floor((self.seq_len - self.kernel1[0] + self.padding[0]*2)/self.stride1[0]) + 1
+        self.cnn_output_size = math.floor((self.cnn_output_size - self.kernel2[0] + self.padding[0]*2)/self.stride2[0]) + 1
+        self.cnn_output_size = int(((self.cnn_output_size)*self.out_channels)/2)
+        self.fc1_no_rnn = nn.Linear(self.cnn_output_size, self.intermediate_fc_size)
+        self.relu = nn.ReLU()
+        self.fc2_no_rnn = nn.Linear(self.intermediate_fc_size,self.num_classes,bias=False)
+
         """
         self.fc = nn.Sequential(
             SequenceWise(fully_connected),
@@ -131,14 +149,33 @@ class SpeechEncoder(nn.Module):
         #x = torch.max(x,dim=0).values # MAXPOOL OVER TIME DIM
         x = x[-1,:,:] # TAKE LAST TIMESTEP
         if VERBOSE: print('Dims after compression:', x.shape)
-        #if x.shape[0] > 1: # TODO fix this again
-        #    x = self.bn(x)
         x = self.fc(x.view(1,x.shape[0],self.lin_input_size))
         if VERBOSE: print('Dims after fc:', x.shape)
         x = self.sigmoid(x)
         if VERBOSE: print('Dims after sigmoid',x.shape)
         x = self.inference_softmax(x)
         if VERBOSE: print('Dims after softmax:', x.shape)
+        return x,hidden
+
+    def forward_no_rnn(self,x,hidden):
+        if VERBOSE: print('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
+        x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
+        if VERBOSE: print('Dims after conv: ',x.shape)
+        x = self.maxpool(x.view(x.shape[0],x.shape[1],x.shape[2]))
+        if VERBOSE: print('Dims after pooling: ',x.shape)
+        x = self.fc1_no_rnn(x.view(x.shape[0],x.shape[1]*x.shape[2]))
+        x = self.relu(x)
+        import pdb;pdb.set_trace()
+        if VERBOSE: print('Dims after fc1:', x.shape)
+        x = self.fc2_no_rnn(x)
+        import pdb;pdb.set_trace()
+        if VERBOSE: print('Dims after fc2:', x.shape)
+        x = self.sigmoid(x)
+        import pdb;pdb.set_trace()
+        if VERBOSE: print('Dims after sigmoid',x.shape)
+        #x = self.inference_softmax(x)
+        if VERBOSE: print('Dims after softmax:', x.shape)
+        import pdb;pdb.set_trace()
         return x,hidden
 
     def init_hidden(self,batch_size):
@@ -206,7 +243,7 @@ def evaluate(dataset,dataloader_params):
     acc = true_pos_pred/total_pred
     print('Accuracy: ',acc)
 
-evaluate(devset,eval_params)
+#evaluate(devset,eval_params)
 
 print('done')
 
@@ -220,9 +257,13 @@ for epoch in range(epochs):
             print('output shape: ',output.shape)
             print('labels shape: ',labels.shape)
             print('output: ',output[:,:,1:].squeeze())
+            #print('output: ', output[:,1:].squeeze())
             print('true labels: ',labels.float())
-        loss = criterion(output[:,:,1:].squeeze(),labels.float()) # TODO make labels into onehot repr
+        #print('output: ', output[:, 1:].squeeze())
+        loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
+        #loss = criterion(output[:, 1:].squeeze(), labels.float())  # No RNN
         loss.backward()
+        #import pdb;pdb.set_trace()
         optimizer.step()
         recent_losses.append(loss.detach())
         if len(recent_losses) > 50:
@@ -230,10 +271,10 @@ for epoch in range(epochs):
 
         if timestep % print_every == 1:
             print('Train loss: ',sum(recent_losses)/len(recent_losses))
-        if timestep % eval_every == 1:
+            process = psutil.Process(os.getpid())
+            print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+        if timestep % eval_every == 1 and not timestep==1:
             evaluate(devset,eval_params)
-        process = psutil.Process(os.getpid())
-        print('Memory usage at timestep ',timestep,':', process.memory_info().rss / 1000000000, 'GB')
         timestep += 1
         #import pdb;pdb.set_trace()
 
