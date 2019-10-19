@@ -1,5 +1,5 @@
 """
-Based on https://github.com/SeanNaren/deepspeech.pytorch/blob/master/model.py
+Based very lightly on https://github.com/SeanNaren/deepspeech.pytorch/blob/master/model.py
 by Sean Naren
 
 Directly copied functions noted.
@@ -13,8 +13,9 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset
+from utils import UttDataset,plot_grad_flow
 from evaluate import evaluate
+import matplotlib.pyplot as plt
 import random
 random.seed(0)
 
@@ -39,6 +40,7 @@ eval_params = {'batch_size': 1,
 epochs = 1
 pad_len = 200
 learning_rate = 0.001
+LSTM_LAYERS = 1
 
 class SpeechEncoder(nn.Module):
     def __init__(self,
@@ -177,7 +179,7 @@ print('Building model ...')
 
 model = SpeechEncoder(seq_len=pad_len,
                       batch_size=train_params['batch_size'],
-                      lstm_layers=3,
+                      lstm_layers=LSTM_LAYERS,
                       bidirectional=False,
                       num_classes=2)
                       #num_classes=1)
@@ -191,8 +193,7 @@ print('done')
 
 print('Baseline eval....')
 
-
-evaluate(devset,eval_params,model)
+#evaluate(devset,eval_params,model)
 
 print('done')
 
@@ -212,6 +213,7 @@ for epoch in range(epochs):
         loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
         #loss = criterion(output[:, 1:].squeeze(), labels.float())  # No RNN
         loss.backward()
+        plot_grad_flow(model.named_parameters())
         #import pdb;pdb.set_trace()
         optimizer.step()
         recent_losses.append(loss.detach())
@@ -222,6 +224,7 @@ for epoch in range(epochs):
             print('Train loss: ',sum(recent_losses)/len(recent_losses))
             process = psutil.Process(os.getpid())
             print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+            plt.show()
         if timestep % eval_every == 1 and not timestep==1:
             evaluate(devset,eval_params,model)
         timestep += 1
