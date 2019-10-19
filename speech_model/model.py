@@ -7,20 +7,16 @@ Directly copied functions noted.
 Modified by: Elizabeth Nielsen
 """
 
-import pandas as pd
 import pickle
 from torch import nn
-import torch.nn.functional as F
 from torch.utils import data
 import torch
 import psutil
 import os
-import time
 from utils import UttDataset
-import math
+from evaluate import evaluate
 import random
 random.seed(0)
-import numpy as np
 
 text_data = '../data/utterances.txt'
 #speech_data = '../data/utterances_feats.pkl'
@@ -119,19 +115,6 @@ class SpeechEncoder(nn.Module):
         )
         self.bn = nn.BatchNorm1d(self.batch_size)
         
-        """
-
-        # NO RNN VERSION:
-        self.maxpool = nn.MaxPool1d(2)
-        self.intermediate_fc_size = 300
-        self.cnn_output_size = math.floor((self.seq_len - self.kernel1[0] + self.padding[0]*2)/self.stride1[0]) + 1
-        self.cnn_output_size = math.floor((self.cnn_output_size - self.kernel2[0] + self.padding[0]*2)/self.stride2[0]) + 1
-        self.cnn_output_size = int(((self.cnn_output_size)*self.out_channels)/2)
-        self.fc1_no_rnn = nn.Linear(self.cnn_output_size, self.intermediate_fc_size)
-        self.relu = nn.ReLU()
-        self.fc2_no_rnn = nn.Linear(self.intermediate_fc_size,self.num_classes,bias=False)
-
-        """
         self.fc = nn.Sequential(
             SequenceWise(fully_connected),
         )
@@ -157,26 +140,6 @@ class SpeechEncoder(nn.Module):
         if VERBOSE: print('Dims after softmax:', x.shape)
         return x,hidden
 
-    def forward_no_rnn(self,x,hidden):
-        if VERBOSE: print('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
-        x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
-        if VERBOSE: print('Dims after conv: ',x.shape)
-        x = self.maxpool(x.view(x.shape[0],x.shape[1],x.shape[2]))
-        if VERBOSE: print('Dims after pooling: ',x.shape)
-        x = self.fc1_no_rnn(x.view(x.shape[0],x.shape[1]*x.shape[2]))
-        x = self.relu(x)
-        import pdb;pdb.set_trace()
-        if VERBOSE: print('Dims after fc1:', x.shape)
-        x = self.fc2_no_rnn(x)
-        import pdb;pdb.set_trace()
-        if VERBOSE: print('Dims after fc2:', x.shape)
-        x = self.sigmoid(x)
-        import pdb;pdb.set_trace()
-        if VERBOSE: print('Dims after sigmoid',x.shape)
-        #x = self.inference_softmax(x)
-        if VERBOSE: print('Dims after softmax:', x.shape)
-        import pdb;pdb.set_trace()
-        return x,hidden
 
     def init_hidden(self,batch_size):
         if self.bidirectional:
@@ -228,22 +191,8 @@ print('done')
 
 print('Baseline eval....')
 
-def evaluate(dataset,dataloader_params):
-    true_pos_pred = 0
-    total_pred = 0
-    dataloader = data.DataLoader(dataset, **dataloader_params)
-    with torch.no_grad():
-        for x,y in dataloader:
-            hidden = model.init_hidden(dataloader_params['batch_size'])
-            output,_ = model(x,hidden)
-            output = np.argmax(output)
-            total_pred += 1
-            if output.item() == y.item():
-                true_pos_pred += 1
-    acc = true_pos_pred/total_pred
-    print('Accuracy: ',acc)
 
-#evaluate(devset,eval_params)
+evaluate(devset,eval_params,model)
 
 print('done')
 
@@ -274,7 +223,7 @@ for epoch in range(epochs):
             process = psutil.Process(os.getpid())
             print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
         if timestep % eval_every == 1 and not timestep==1:
-            evaluate(devset,eval_params)
+            evaluate(devset,eval_params,model)
         timestep += 1
         #import pdb;pdb.set_trace()
 
