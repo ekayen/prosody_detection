@@ -237,6 +237,8 @@ for epoch in range(num_epochs):
 
             hidden = model.init_hidden()
             tag_scores,_ = model(input,hidden)
+            #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
+            #print('true:',labels)
 
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
