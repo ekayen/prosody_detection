@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
+"""
+Loads CMVN-ed features, which are in a text file, not a binary file.
+Takes ~1 gazillion years to run.
+Should be done in one stage, but the commented part was writing the features as strings,
+not tensors of floats, so I redid the dictionary in the uncommented part,
+rather than redoing the first part altogether (cf. gazillion years).
 
+"""
 
 import numpy as np
 import pickle
@@ -25,6 +32,8 @@ key = ''
 tmp = []
 counter = 0
 """
+# Load features into a dictionary. Accidentally make empty dictionary entries for 
+# the keys you meant to remove. Also accidentally write the features as strings rather than tensors of float32
 with open(filepath,'r') as f:
     for line in f:
         print('key:',key)
@@ -45,6 +54,10 @@ with open(filepath,'r') as f:
         counter += 1
         
 """
+
+# Having screwed up the first part, reload the dictionary,
+# dump the irrelevant keys, and write the features as tensors of float32
+
 with open('cmvn_dict.pkl','wb') as f:
     pickle.dump(cmvn_dict,f)
 
