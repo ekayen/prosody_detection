@@ -3,12 +3,27 @@ from torch.utils import data
 import torch.nn.functional as F
 import random
 import matplotlib.pyplot as plt
+import pickle
+import pandas as pd
 
 
 random.seed(0)
 torch.manual_seed(123)
 
+class SynthDataset(data.Dataset):
+    def __init__(self, list_ids, utt_dict,label_dict):
+        self.list_ids = list_ids
+        self.utt_dict = utt_dict
+        self.label_dict = label_dict
 
+    def __len__(self):
+        return len(self.list_ids)
+
+    def __getitem__(self, index):
+        id = self.list_ids[index]
+        X = self.utt_dict[id]
+        y = self.label_dict[id]
+        return X, y
 
 class UttDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict,pad_len):
@@ -35,6 +50,7 @@ class UttDataset(data.Dataset):
         y = self.label_dict[id]
         return X, y
 
+
 def plot_grad_flow(named_parameters):
     '''
     From user RoshanRone here:
@@ -54,18 +70,21 @@ def plot_grad_flow(named_parameters):
     plt.ylabel("average gradient")
     plt.title("Gradient flow")
     plt.grid(True)
-"""
-def test_pad_left(arr,pad_len):
-    if arr.shape[0] < pad_len:
-        dff = pad_len - arr.shape[0]
-        arr = F.pad(arr,pad=(0,0,dff,0),mode='constant')
-    else:
-        arr = arr[arr.shape[0]-pad_len:]
-    return arr
 
+def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
+    df = pd.DataFrame(dict(train_steps=train_steps,
+                           train_losses=train_losses,
+                           train_accs=train_accs,
+                           dev_accs=dev_accs))
 
-arr = np.arange(144).reshape(12,12)
-arr = torch.tensor(arr)
-arr1 = test_pad_left(arr,30)
-arr2 = test_pad_left(arr,10)
-"""
+    with open("tmp.pkl", 'wb') as f:
+        pickle.dump(df, f)
+
+    ax = plt.gca()
+    df.plot(kind='line', x='train_steps', y='train_losses', ax=ax)
+    df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
+    df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
+
+    plt.savefig('synth_results/{}.png'.format(model_name))
+    plt.show()
+    df.to_csv('synth_results/{}.tsv'.format(model_name), sep='\t')
