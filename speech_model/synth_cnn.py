@@ -23,20 +23,21 @@ from evaluate import evaluate,logit_evaluate
 
 
 text_data = '../data/utterances.txt'
+#speech_data = '../data/utterances_feats.pkl'
+#speech_data = '../data/cmvn_tensors.pkl'
+#speech_data = '../data/skewed_cmvn.pkl'
 speech_data = '../data/synth_int_feats.pkl'
 labels_data = '../data/synth_int_labels.pkl'
+#labels_data = '../data/utterances_labels.pkl'
 
 train_per = 0.6
 dev_per = 0.2
 print_every = 1000
 eval_every = None
-
 VERBOSE = False
 STEPTHRU = False
-LSTM_LAYERS = 1
 
-
-model_name = 'cnn_rnn'
+model_name = 'cnn_fc'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -48,6 +49,7 @@ eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
 epochs = 1
+pad_len = 700
 learning_rate = 0.001
 
 class SpeechEncoder(nn.Module):
@@ -88,44 +90,41 @@ class SpeechEncoder(nn.Module):
                                   nn.Hardtanh(inplace=True)
                                   )
 
-        rnn_input_size = self.out_channels  # This is what I think the input size of the LSTM should be -- channels, not time dim
-        self.lstm = nn.LSTM(input_size=rnn_input_size,
-                            # batch_first=True,
-                            hidden_size=self.hidden_size,
-                            num_layers=self.lstm_layers,
-                            bidirectional=self.bidirectional)
+        # NO RNN VERSION:
+        self.maxpool = nn.MaxPool1d(2)
+        self.cnn_output_size = math.floor((self.seq_len - self.kernel2[0] + self.padding[0]*2)/self.stride2[0]) + 1
+        self.cnn_output_size = int((math.floor(self.cnn_output_size/2)))
+        self.cnn_output_size = self.cnn_output_size*self.out_channels
 
-        if self.bidirectional:
-            self.lin_input_size = self.hidden_size * 2
-        else:
-            self.lin_input_size = self.hidden_size
 
-        self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
+        self.fc1_out = 350
+
+        self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)
+        self.fc2 = nn.Linear(self.fc1_out,self.num_classes)
+
+        self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
         self.inference_softmax = nn.Softmax(dim=-1)
 
     def forward(self,x,hidden):
         if VERBOSE: print('Input dims: ', x.shape)
-        if VERBOSE: print('Reshaped input dims: ', x.view(self.batch_size, self.in_channels, x.shape[1], 1).shape)
+        if VERBOSE: print('Reshaped input dims: ', x.view(1, 1, x.shape[1], 1).shape)
         x = self.conv(x.view(1, 1, x.shape[1], 1))
         if VERBOSE: print('Dims after conv: ',x.shape)
-        x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous()
-        if VERBOSE: print('Dims going into lstm: ', x.shape)
-        x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
-        if VERBOSE: print('Dims after lstm:', x.shape)
-        #x = x[-1,:,:] # TAKE LAST TIMESTEP
-        x,_ = torch.max(x,dim=0)
-        x = x.view(1, x.shape[0], self.lin_input_size)
-        if VERBOSE: print('Dims after slicing or maxpooling:',x.shape)
-        x = self.fc(x)
-        if VERBOSE: print('Dims after fc:', x.shape)
+        x = self.maxpool(x.view(x.shape[0],x.shape[1],x.shape[2]))
+        if VERBOSE: print('Dims after pooling: ', x.shape)
+        x = self.fc1(x.view(x.shape[0],x.shape[1]*x.shape[2]))
+        x = self.relu(x)
+        if VERBOSE: print('Dims after fc1:', x.shape)
+        if STEPTHRU: import pdb;pdb.set_trace()
+        x = self.fc2(x)
         #x = self.sigmoid(x)
+        if VERBOSE: print('Dims after fc2:', x.shape)
+        if STEPTHRU: import pdb;pdb.set_trace()
         if VERBOSE: print('Dims after sigmoid',x.shape)
         #x = self.inference_softmax(x)
         if VERBOSE: print('Dims after softmax:', x.shape)
-        if VERBOSE: ('Final output:',x)
-        if VERBOSE: ('---------------------------------------------')
-        #import pdb;pdb.set_trace()
+        if STEPTHRU: import pdb;pdb.set_trace()
         return x,hidden
 
     def init_hidden(self,batch_size):
@@ -169,10 +168,8 @@ model = SpeechEncoder(seq_len=seq_len,
                       batch_size=train_params['batch_size'],
                       lstm_layers=3,
                       bidirectional=False,
-                      hidden_size=32,
+                      #num_classes=2)
                       num_classes=1)
-                      #num_classes=1)
-
 
 model.to(device)
 
@@ -213,14 +210,14 @@ for epoch in range(epochs):
             print('true labels: ',labels.float())
         #print('output: ', output[:,1:].squeeze())
 
-        """
-        pred_labels = np.where(np.array(output.cpu().detach()[:,:,1:].squeeze())>0.5,1,0)
+        pred_labels = np.where(np.array(output.cpu().detach()[:,1:].squeeze())>0.5,1,0)
         pred_ones += np.sum(pred_labels)
         num_preds += labels.shape[0]
         curr_pred_ones += pred_ones
         curr_preds += num_preds
-        """
 
+
+        #loss = criterion(output[:, 1:].squeeze(), labels.float())  # No RNN
         loss = criterion(output.view(1), labels.float())  # No RNN
         loss.backward()
         plot_grad_flow(model.named_parameters())
@@ -243,10 +240,12 @@ for epoch in range(epochs):
             curr_preds = 0
             # plt.show()
             plt_acc.append(logit_evaluate(devset, eval_params, model, device))
+
         if eval_every:
             if timestep % eval_every == 1:
                 logit_evaluate(devset, eval_params, model, device)
         timestep += 1
+
 
 print('done')
 
