@@ -17,12 +17,14 @@ from utils import UttDataset,plot_grad_flow
 from evaluate import evaluate
 import matplotlib.pyplot as plt
 import random
-random.seed(0)
+import numpy as np
+random.seed(123)
 
 text_data = '../data/utterances.txt'
-#speech_data = '../data/utterances_feats.pkl'
 speech_data = '../data/cmvn_tensors.pkl'
 labels_data = '../data/utterances_labels.pkl'
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 train_per = 0.6
 dev_per = 0.2
@@ -38,7 +40,7 @@ eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
 epochs = 1
-pad_len = 200
+pad_len = 700
 learning_rate = 0.001
 LSTM_LAYERS = 1
 
@@ -71,10 +73,12 @@ class SpeechEncoder(nn.Module):
         self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.hidden_channels),
+                                  #nn.LeakyReLU(inplace=True),
                                   nn.Hardtanh(inplace=True),
                                   nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.out_channels),
+                                  #nn.LeakyReLU(inplace=True)
                                   nn.Hardtanh(inplace=True)
                                   )
 
@@ -131,7 +135,6 @@ class SpeechEncoder(nn.Module):
         if VERBOSE: print('Dims going into lstm: ',x.shape)
         x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
         if VERBOSE: print('Dims after lstm:', x.shape)
-        #x = torch.max(x,dim=0).values # MAXPOOL OVER TIME DIM
         x = x[-1,:,:] # TAKE LAST TIMESTEP
         if VERBOSE: print('Dims after compression:', x.shape)
         x = self.fc(x.view(1,x.shape[0],self.lin_input_size))
@@ -145,11 +148,11 @@ class SpeechEncoder(nn.Module):
 
     def init_hidden(self,batch_size):
         if self.bidirectional:
-            h0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_()#.to(device)
-            c0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_()#.to(device)
+            h0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers*2, batch_size, self.hidden_size).requires_grad_().to(device)
         else:
-            h0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_()#.to(device)
-            c0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_()#.to(device)
+            h0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_().to(device)
+            c0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_().to(device)
 
         return (h0,c0)
 
@@ -162,7 +165,8 @@ with open(labels_data,'rb') as f:
 with open(speech_data,'rb') as f:
     feat_dict = pickle.load(f)
 
-all_ids = list(labels_dict.keys())
+#all_ids = list(labels_dict.keys())
+all_ids = list(feat_dict.keys())
 random.shuffle(all_ids)
 
 train_ids = all_ids[:int(len(all_ids)*train_per)]
@@ -184,6 +188,8 @@ model = SpeechEncoder(seq_len=pad_len,
                       num_classes=2)
                       #num_classes=1)
 
+model.to(device)
+
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 recent_losses = []
@@ -193,13 +199,19 @@ print('done')
 
 print('Baseline eval....')
 
-#evaluate(devset,eval_params,model)
+evaluate(devset,eval_params,model,device)
 
 print('done')
+
+pred_ones = 0
+num_preds = 0
+curr_pred_ones = 0
+curr_preds = 0
 
 print('Training model ...')
 for epoch in range(epochs):
     for batch, labels in traingen: # TODO to generalize past binary classification, maybe change labels into one-hot
+        batch,labels = batch.to(device),labels.to(device)
         model.zero_grad()
         hidden = model.init_hidden(train_params['batch_size'])
         output,_ = model(batch,hidden)
@@ -209,24 +221,34 @@ for epoch in range(epochs):
             print('output: ',output[:,:,1:].squeeze())
             #print('output: ', output[:,1:].squeeze())
             print('true labels: ',labels.float())
-        #print('output: ', output[:, 1:].squeeze())
+        #print('output: ', output[:, :, 1:].squeeze())
+
+        pred_labels = np.where(np.array(output.detach()[:,:,1:].squeeze())>0.5,1,0)
+        pred_ones += np.sum(pred_labels)
+        num_preds += labels.shape[0]
+        curr_pred_ones += pred_ones
+        curr_preds += num_preds
+
         loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
-        #loss = criterion(output[:, 1:].squeeze(), labels.float())  # No RNN
         loss.backward()
         plot_grad_flow(model.named_parameters())
-        #import pdb;pdb.set_trace()
         optimizer.step()
         recent_losses.append(loss.detach())
+
         if len(recent_losses) > 50:
             recent_losses = recent_losses[1:]
 
         if timestep % print_every == 1:
             print('Train loss: ',sum(recent_losses)/len(recent_losses))
             process = psutil.Process(os.getpid())
-            print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
-            plt.show()
+            #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+            #print('Percent of guesses to this point that are one:',pred_ones/num_preds)
+            #print('Percent of guesses since last report that are one:',curr_pred_ones/curr_preds)
+            curr_pred_ones = 0
+            curr_preds = 0
+            #plt.show()
         if timestep % eval_every == 1 and not timestep==1:
-            evaluate(devset,eval_params,model)
+            evaluate(devset,eval_params,model,device)
         timestep += 1
         #import pdb;pdb.set_trace()
 
