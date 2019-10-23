@@ -13,12 +13,14 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow
-from evaluate import evaluate
+from utils import UttDataset,plot_grad_flow,plot_results
+from evaluate import evaluate,logit_evaluate
 import matplotlib.pyplot as plt
 import random
 import numpy as np
 random.seed(123)
+
+model_name = 'full_model'
 
 text_data = '../data/utterances.txt'
 speech_data = '../data/cmvn_tensors.pkl'
@@ -28,8 +30,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 train_per = 0.6
 dev_per = 0.2
-print_every = 10
-eval_every = 100
+print_every = 500
+eval_every = None
 VERBOSE = False
 
 train_params = {'batch_size': 8,
@@ -39,7 +41,7 @@ train_params = {'batch_size': 8,
 eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
-epochs = 1
+epochs = 30
 pad_len = 700
 learning_rate = 0.001
 LSTM_LAYERS = 1
@@ -137,12 +139,12 @@ class SpeechEncoder(nn.Module):
         if VERBOSE: print('Dims after lstm:', x.shape)
         x = x[-1,:,:] # TAKE LAST TIMESTEP
         if VERBOSE: print('Dims after compression:', x.shape)
-        x = self.fc(x.view(1,x.shape[0],self.lin_input_size))
+        x = self.fc(x.view(1, x.shape[0], self.lin_input_size))
         if VERBOSE: print('Dims after fc:', x.shape)
-        x = self.sigmoid(x)
-        if VERBOSE: print('Dims after sigmoid',x.shape)
-        x = self.inference_softmax(x)
-        if VERBOSE: print('Dims after softmax:', x.shape)
+        #x = self.sigmoid(x)
+        #if VERBOSE: print('Dims after sigmoid',x.shape)
+        #x = self.inference_softmax(x)
+        #if VERBOSE: print('Dims after softmax:', x.shape)
         return x,hidden
 
 
@@ -185,12 +187,11 @@ model = SpeechEncoder(seq_len=pad_len,
                       batch_size=train_params['batch_size'],
                       lstm_layers=LSTM_LAYERS,
                       bidirectional=False,
-                      num_classes=2)
-                      #num_classes=1)
+                      num_classes=1)
 
 model.to(device)
 
-criterion = nn.BCELoss()
+criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 recent_losses = []
 timestep = 0
@@ -199,9 +200,14 @@ print('done')
 
 print('Baseline eval....')
 
-evaluate(devset,eval_params,model,device)
+logit_evaluate(devset,eval_params,model,device)
 
 print('done')
+
+plt_time = []
+plt_losses = []
+plt_acc = []
+plt_dummy = []
 
 pred_ones = 0
 num_preds = 0
@@ -210,49 +216,65 @@ curr_preds = 0
 
 print('Training model ...')
 for epoch in range(epochs):
-    for batch, labels in traingen: # TODO to generalize past binary classification, maybe change labels into one-hot
+    for batch, labels in traingen:
         batch,labels = batch.to(device),labels.to(device)
-        model.zero_grad()
-        hidden = model.init_hidden(train_params['batch_size'])
-        output,_ = model(batch,hidden)
-        if VERBOSE:
-            print('output shape: ',output.shape)
-            print('labels shape: ',labels.shape)
-            print('output: ',output[:,:,1:].squeeze())
-            #print('output: ', output[:,1:].squeeze())
-            print('true labels: ',labels.float())
-        #print('output: ', output[:, :, 1:].squeeze())
+        if not batch.shape[0] < train_params['batch_size']:
+            model.zero_grad()
+            hidden = model.init_hidden(train_params['batch_size'])
+            output,_ = model(batch,hidden)
+            if VERBOSE:
+                print('output shape: ',output.shape)
+                print('labels shape: ',labels.shape)
+                print('output: ',output.view(1))
+                #print('output: ', output[:,1:].squeeze())
+                print('true labels: ',labels.float())
+            #print('output: ', output[:, :, 1:].squeeze())
+            #import pdb;pdb.set_trace()
+            pred_labels = np.where(np.array(output.cpu().detach().view(train_params['batch_size']))>0.5,1,0)
+            pred_ones += np.sum(pred_labels)
+            num_preds += labels.shape[0]
+            curr_pred_ones += pred_ones
+            curr_preds += num_preds
 
-        pred_labels = np.where(np.array(output.detach()[:,:,1:].squeeze())>0.5,1,0)
-        pred_ones += np.sum(pred_labels)
-        num_preds += labels.shape[0]
-        curr_pred_ones += pred_ones
-        curr_preds += num_preds
+            #loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
 
-        loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
-        loss.backward()
-        plot_grad_flow(model.named_parameters())
-        optimizer.step()
-        recent_losses.append(loss.detach())
+            loss = criterion(output.view(train_params['batch_size']), labels.float())  # With RNN
+            loss.backward()
+            plot_grad_flow(model.named_parameters())
+            optimizer.step()
+            recent_losses.append(loss.detach())
 
-        if len(recent_losses) > 50:
-            recent_losses = recent_losses[1:]
+            if len(recent_losses) > 50:
+                recent_losses = recent_losses[1:]
 
-        if timestep % print_every == 1:
-            print('Train loss: ',sum(recent_losses)/len(recent_losses))
-            process = psutil.Process(os.getpid())
-            #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
-            #print('Percent of guesses to this point that are one:',pred_ones/num_preds)
-            #print('Percent of guesses since last report that are one:',curr_pred_ones/curr_preds)
-            curr_pred_ones = 0
-            curr_preds = 0
-            #plt.show()
-        if timestep % eval_every == 1 and not timestep==1:
-            evaluate(devset,eval_params,model,device)
-        timestep += 1
-        #import pdb;pdb.set_trace()
+            if timestep % print_every == 1:
+                plt_time.append(timestep)
+                train_loss = (sum(recent_losses)/len(recent_losses)).item()
+                print('Train loss at',timestep,': ',train_loss)
+                process = psutil.Process(os.getpid())
+                #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+                #print('Percent of guesses to this point that are one:',pred_ones/num_preds)
+                #print('Percent of guesses since last report that are one:',curr_pred_ones/curr_preds)
+                curr_pred_ones = 0
+                curr_preds = 0
+                plt_losses.append(train_loss)
+                plt_dummy.append(0)
+                #plt.show()
+                plt_acc.append(logit_evaluate(devset,eval_params,model,device))
+            if eval_every:
+                if timestep % eval_every == 1 and not timestep==1:
+                    logit_evaluate(devset,eval_params,model,device)
+            timestep += 1
+            #import pdb;pdb.set_trace()
+        else:
+            print('Batch of size',batch.shape,'rejected')
+            print('Last batch:')
+            print(batch)
 
 print('done')
 
 process = psutil.Process(os.getpid())
 print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
+
+plot_results(plt_losses, plt_dummy, plt_acc, plt_time,model_name)
+
