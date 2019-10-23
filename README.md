@@ -14,7 +14,16 @@ Things I'm not going to change:
 
 ## Models
 
-Sequence labelling -- LSTM-CRF is popular, but it's a char+word level model, and I don't think I want this thing doing char level. It also presumably takes more data cause it's heftier._1
-(Here's a library, in case: https://arxiv.org/pdf/1806.05626.pdf)
+#### Speech model 
 
-For a baseline, would prefer to do a bland bilstm (keras tutorial for sanity: https://machinelearningmastery.com/develop-bidirectional-lstm-sequence-classification-python-keras/)
+`model.py` is a CNN+RNN setup. 
+
+`cnn_model.py` is the CNN with pooling and a fully-connected layer. 
+
+The models prefixed with 'synth' are made to deal with the 1d synthetic data instead of the full MFCCs.
+
+Currently all configuration is done inside the model file itself. No commandline args or config files needed.
+
+#### Text model
+
+`model.py` is a BiLSTM that performs binary token-level labeling. Config files are found in the corresponding subdir.
