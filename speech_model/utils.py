@@ -85,6 +85,6 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
     df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
     df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
 
-    plt.savefig('synth_results/{}.png'.format(model_name))
+    plt.savefig('results/{}.png'.format(model_name))
     plt.show()
-    df.to_csv('synth_results/{}.tsv'.format(model_name), sep='\t')
+    df.to_csv('results/{}.tsv'.format(model_name), sep='\t')

@@ -7,25 +7,25 @@ Directly copied functions noted.
 Modified by: Elizabeth Nielsen
 """
 
-import pandas as pd
+import matplotlib.pyplot as plt
 import pickle
 from torch import nn
-import torch.nn.functional as F
 from torch.utils import data
 import torch
 import psutil
 import os
-import time
-from utils import UttDataset
+from utils import UttDataset,plot_grad_flow
 import math
 import random
-random.seed(0)
+import numpy as np
+random.seed(123)
 from evaluate import evaluate
 
 
 text_data = '../data/utterances.txt'
 #speech_data = '../data/utterances_feats.pkl'
-speech_data = '../data/cmvn_tensors.pkl'
+#speech_data = '../data/cmvn_tensors.pkl'
+speech_data = '../data/skewed_cmvn.pkl'
 labels_data = '../data/utterances_labels.pkl'
 
 train_per = 0.6
@@ -43,7 +43,7 @@ eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
 epochs = 1
-pad_len = 200
+pad_len = 700
 learning_rate = 0.001
 
 class SpeechEncoder(nn.Module):
@@ -84,13 +84,16 @@ class SpeechEncoder(nn.Module):
 
         # NO RNN VERSION:
         self.maxpool = nn.MaxPool1d(2)
-        self.intermediate_fc_size = 300
         self.cnn_output_size = math.floor((self.seq_len - self.kernel1[0] + self.padding[0]*2)/self.stride1[0]) + 1
         self.cnn_output_size = math.floor((self.cnn_output_size - self.kernel2[0] + self.padding[0]*2)/self.stride2[0]) + 1
-        self.cnn_output_size = int(((self.cnn_output_size)*self.out_channels)/2)
-        self.fc1_no_rnn = nn.Linear(self.cnn_output_size, self.intermediate_fc_size)
+        self.cnn_output_size = int(((math.floor(self.cnn_output_size/2)*self.out_channels)))
+
+        self.fc1_out = 1600
+
+        self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)
+        self.fc2 = nn.Linear(self.fc1_out,self.num_classes)
+
         self.relu = nn.ReLU()
-        self.fc2_no_rnn = nn.Linear(self.intermediate_fc_size,self.num_classes,bias=False)
         self.sigmoid = nn.Sigmoid()
         self.inference_softmax = nn.Softmax(dim=-1)
 
@@ -99,18 +102,18 @@ class SpeechEncoder(nn.Module):
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         if VERBOSE: print('Dims after conv: ',x.shape)
         x = self.maxpool(x.view(x.shape[0],x.shape[1],x.shape[2]))
-        if VERBOSE: print('Dims after pooling: ',x.shape)
-        x = self.fc1_no_rnn(x.view(x.shape[0],x.shape[1]*x.shape[2]))
+        if VERBOSE: print('Dims after pooling: ', x.shape)
+        x = self.fc1(x.view(x.shape[0],x.shape[1]*x.shape[2]))
         x = self.relu(x)
-        if STEPTHRU: import pdb;pdb.set_trace()
         if VERBOSE: print('Dims after fc1:', x.shape)
-        x = self.fc2_no_rnn(x)
         if STEPTHRU: import pdb;pdb.set_trace()
+        x = self.fc2(x)
         if VERBOSE: print('Dims after fc2:', x.shape)
+        if STEPTHRU: import pdb;pdb.set_trace()
         x = self.sigmoid(x)
         if STEPTHRU: import pdb;pdb.set_trace()
         if VERBOSE: print('Dims after sigmoid',x.shape)
-        #x = self.inference_softmax(x)
+        x = self.inference_softmax(x)
         if VERBOSE: print('Dims after softmax:', x.shape)
         if STEPTHRU: import pdb;pdb.set_trace()
         return x,hidden
@@ -134,7 +137,8 @@ with open(labels_data,'rb') as f:
 with open(speech_data,'rb') as f:
     feat_dict = pickle.load(f)
 
-all_ids = list(labels_dict.keys())
+#all_ids = list(labels_dict.keys())
+all_ids = list(feat_dict.keys())
 random.shuffle(all_ids)
 
 train_ids = all_ids[:int(len(all_ids)*train_per)]
@@ -169,6 +173,11 @@ print('Baseline eval....')
 
 print('done')
 
+pred_ones = 0
+num_preds = 0
+curr_pred_ones = 0
+curr_preds = 0
+
 print('Training model ...')
 for epoch in range(epochs):
     for batch, labels in traingen: # TODO to generalize past binary classification, maybe change labels into one-hot
@@ -180,8 +189,18 @@ for epoch in range(epochs):
             print('labels shape: ',labels.shape)
             print('output: ', output[:,1:].squeeze())
             print('true labels: ',labels.float())
+        #print('output: ', output[:,1:].squeeze())
+
+        pred_labels = np.where(np.array(output.detach()[:,1:].squeeze())>0.5,1,0)
+        pred_ones += np.sum(pred_labels)
+        num_preds += labels.shape[0]
+        curr_pred_ones += pred_ones
+        curr_preds += num_preds
+
+
         loss = criterion(output[:, 1:].squeeze(), labels.float())  # No RNN
         loss.backward()
+        plot_grad_flow(model.named_parameters())
         optimizer.step()
         recent_losses.append(loss.detach())
         if len(recent_losses) > 50:
@@ -190,7 +209,12 @@ for epoch in range(epochs):
         if timestep % print_every == 1:
             print('Train loss: ',sum(recent_losses)/len(recent_losses))
             process = psutil.Process(os.getpid())
-            print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+            #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
+            print('Percent of guesses to this point that are one:',pred_ones/num_preds)
+            print('Percent of guesses since last report that are one:',curr_pred_ones/curr_preds)
+            curr_pred_ones = 0
+            curr_preds = 0
+            plt.show()
         if timestep % eval_every == 1 and not timestep==1:
             evaluate(devset,eval_params,model)
         timestep += 1
