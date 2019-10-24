@@ -13,8 +13,8 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results
-from evaluate import evaluate,logit_evaluate
+from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId
+from evaluate import evaluate,logit_evaluate,logit_evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
 import numpy as np
@@ -33,6 +33,7 @@ dev_per = 0.2
 print_every = 500
 eval_every = None
 VERBOSE = False
+LENGTH_ANALYSIS = False
 
 train_params = {'batch_size': 8,
                      'shuffle': True,
@@ -175,8 +176,14 @@ train_ids = all_ids[:int(len(all_ids)*train_per)]
 dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_per))]
 test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
 
+
 trainset = UttDataset(train_ids,feat_dict,labels_dict,pad_len)
-devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
+if LENGTH_ANALYSIS:
+    devset = UttDatasetWithId(dev_ids, feat_dict, labels_dict, pad_len)
+else:
+    devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
+
+
 
 traingen = data.DataLoader(trainset, **train_params)
 
@@ -200,7 +207,13 @@ print('done')
 
 print('Baseline eval....')
 
-logit_evaluate(devset,eval_params,model,device)
+baseline_with_len(devset,eval_params)
+
+
+if LENGTH_ANALYSIS:
+    logit_evaluate_lengths(devset, eval_params, model, device)
+else:
+    logit_evaluate(devset, eval_params, model, device)
 
 print('done')
 
@@ -216,7 +229,7 @@ curr_preds = 0
 
 print('Training model ...')
 for epoch in range(epochs):
-    for batch, labels in traingen:
+    for batch,labels in traingen:
         batch,labels = batch.to(device),labels.to(device)
         if not batch.shape[0] < train_params['batch_size']:
             model.zero_grad()
@@ -225,18 +238,15 @@ for epoch in range(epochs):
             if VERBOSE:
                 print('output shape: ',output.shape)
                 print('labels shape: ',labels.shape)
-                print('output: ',output.view(1))
-                #print('output: ', output[:,1:].squeeze())
+                print('output: ',output.cpu().detach().squeeze())
                 print('true labels: ',labels.float())
-            #print('output: ', output[:, :, 1:].squeeze())
+            #print('output: ', output.cpu().detach().squeeze())
             #import pdb;pdb.set_trace()
             pred_labels = np.where(np.array(output.cpu().detach().view(train_params['batch_size']))>0.5,1,0)
             pred_ones += np.sum(pred_labels)
             num_preds += labels.shape[0]
             curr_pred_ones += pred_ones
             curr_preds += num_preds
-
-            #loss = criterion(output[:,:,1:].squeeze(),labels.float()) # With RNN
 
             loss = criterion(output.view(train_params['batch_size']), labels.float())  # With RNN
             loss.backward()
@@ -260,7 +270,10 @@ for epoch in range(epochs):
                 plt_losses.append(train_loss)
                 plt_dummy.append(0)
                 #plt.show()
-                plt_acc.append(logit_evaluate(devset,eval_params,model,device))
+                if LENGTH_ANALYSIS:
+                    plt_acc.append(logit_evaluate_lengths(devset, eval_params, model, device))
+                else:
+                    plt_acc.append(logit_evaluate(devset, eval_params, model, device))
             if eval_every:
                 if timestep % eval_every == 1 and not timestep==1:
                     logit_evaluate(devset,eval_params,model,device)

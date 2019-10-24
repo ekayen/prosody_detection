@@ -50,6 +50,14 @@ class UttDataset(data.Dataset):
         y = self.label_dict[id]
         return X, y
 
+class UttDatasetWithId(UttDataset):
+    def __getitem__(self, index):
+        id = self.list_ids[index]
+        X = self.pad_left(self.utt_dict[id])
+        # X = self.utt_dict[id]
+        y = self.label_dict[id]
+        return id, X, y
+
 
 def plot_grad_flow(named_parameters):
     '''
