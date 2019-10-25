@@ -20,7 +20,7 @@ import random
 import numpy as np
 random.seed(123)
 
-model_name = 'full_model'
+model_name = 'full_model_relu'
 
 text_data = '../data/utterances.txt'
 speech_data = '../data/cmvn_tensors.pkl'
@@ -76,23 +76,13 @@ class SpeechEncoder(nn.Module):
         self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.hidden_channels),
-                                  #nn.LeakyReLU(inplace=True),
-                                  nn.Hardtanh(inplace=True),
+                                  nn.ReLU(inplace=True),
                                   nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.out_channels),
-                                  #nn.LeakyReLU(inplace=True)
-                                  nn.Hardtanh(inplace=True)
+                                  nn.ReLU(inplace=True)
                                   )
 
-        """
-        # This is what that implementation of deepspeech does, but to me it seems like the input size to the LSTM should be the number of channels, not the time dim
-
-        rnn_input_size = self.seq_len
-        rnn_input_size = math.ceil((rnn_input_size - self.kernel1[0] + 2 * self.padding[0]) / (self.stride1[0]))
-        rnn_input_size = math.ceil((rnn_input_size - self.kernel2[0] + 2 * self.padding[0]) / (self.stride2[0]))
-        print('RNN input size',rnn_input_size)
-        """
 
 
         # RNN VERSION:
@@ -112,22 +102,6 @@ class SpeechEncoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
 
-        """
-        # TODO figure out how to set the dim of batch norm layer so it works without prespecified batch size, or
-        # TODO figure out how to turn it off at eval time
-
-        # TODO OR actually maybe not? Taking batch norm out seems to have made the different examples in a batch decouple from each other, which is desirable
-
-        fully_connected = nn.Sequential(
-            nn.BatchNorm1d(self.batch_size),
-            nn.Linear(self.lin_input_size, self.num_classes, bias=False)
-        )
-        self.bn = nn.BatchNorm1d(self.batch_size)
-        
-        self.fc = nn.Sequential(
-            SequenceWise(fully_connected),
-        )
-        """
         self.inference_softmax = nn.Softmax(dim=-1)
 
     def forward(self,x,hidden):
@@ -138,14 +112,11 @@ class SpeechEncoder(nn.Module):
         if VERBOSE: print('Dims going into lstm: ',x.shape)
         x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
         if VERBOSE: print('Dims after lstm:', x.shape)
-        x = x[-1,:,:] # TAKE LAST TIMESTEP
+        #x = x[-1,:,:] # TAKE LAST TIMESTEP
+        x = torch.mean(x,0)
         if VERBOSE: print('Dims after compression:', x.shape)
         x = self.fc(x.view(1, x.shape[0], self.lin_input_size))
         if VERBOSE: print('Dims after fc:', x.shape)
-        #x = self.sigmoid(x)
-        #if VERBOSE: print('Dims after sigmoid',x.shape)
-        #x = self.inference_softmax(x)
-        #if VERBOSE: print('Dims after softmax:', x.shape)
         return x,hidden
 
 
@@ -207,10 +178,8 @@ print('done')
 
 print('Baseline eval....')
 
-baseline_with_len(devset,eval_params)
-
-
 if LENGTH_ANALYSIS:
+    baseline_with_len(devset, eval_params)
     logit_evaluate_lengths(devset, eval_params, model, device)
 else:
     logit_evaluate(devset, eval_params, model, device)
@@ -220,12 +189,8 @@ print('done')
 plt_time = []
 plt_losses = []
 plt_acc = []
-plt_dummy = []
+plt_train_acc = []
 
-pred_ones = 0
-num_preds = 0
-curr_pred_ones = 0
-curr_preds = 0
 
 print('Training model ...')
 for epoch in range(epochs):
@@ -242,11 +207,6 @@ for epoch in range(epochs):
                 print('true labels: ',labels.float())
             #print('output: ', output.cpu().detach().squeeze())
             #import pdb;pdb.set_trace()
-            pred_labels = np.where(np.array(output.cpu().detach().view(train_params['batch_size']))>0.5,1,0)
-            pred_ones += np.sum(pred_labels)
-            num_preds += labels.shape[0]
-            curr_pred_ones += pred_ones
-            curr_preds += num_preds
 
             loss = criterion(output.view(train_params['batch_size']), labels.float())  # With RNN
             loss.backward()
@@ -263,17 +223,15 @@ for epoch in range(epochs):
                 print('Train loss at',timestep,': ',train_loss)
                 process = psutil.Process(os.getpid())
                 #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
-                #print('Percent of guesses to this point that are one:',pred_ones/num_preds)
-                #print('Percent of guesses since last report that are one:',curr_pred_ones/curr_preds)
-                curr_pred_ones = 0
-                curr_preds = 0
+
                 plt_losses.append(train_loss)
-                plt_dummy.append(0)
                 #plt.show()
                 if LENGTH_ANALYSIS:
                     plt_acc.append(logit_evaluate_lengths(devset, eval_params, model, device))
+                    plt_train_acc.append(logit_evaluate_lengths(trainset, eval_params, model, device))
                 else:
                     plt_acc.append(logit_evaluate(devset, eval_params, model, device))
+                    plt_train_acc.append(logit_evaluate(trainset, eval_params, model, device))
             if eval_every:
                 if timestep % eval_every == 1 and not timestep==1:
                     logit_evaluate(devset,eval_params,model,device)
@@ -289,5 +247,5 @@ print('done')
 process = psutil.Process(os.getpid())
 print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
-plot_results(plt_losses, plt_dummy, plt_acc, plt_time,model_name)
+plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,model_name)
 
