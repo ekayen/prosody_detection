@@ -158,6 +158,33 @@ def make_batches(X,Y,batch_size,device):
         end = end + batch_size
     return(batched_X,batched_Y)
 
+def make_single_labels(Y):
+    batch_size = len(Y)
+    out_labels = []
+    for tens in Y:
+        out_labels.append(tens[-1:])
+    return torch.cat(out_labels).view(1,batch_size)
+
+def make_nonseq_batches(X,Y,batch_size,device):
+    X,Y = shuffle_input_output(X,Y)
+    counter = 0
+    start = 0
+    end = batch_size
+    batched_X = []
+    batched_Y = []
+    while end < len(X):
+        X0 = X[start:end]
+        Y0 = Y[start:end]
+        X0 = pad_sequence(X0).to(device)
+        Y0 = make_single_labels(Y0).to(device)
+        batched_X.append(X0)
+        batched_Y.append(Y0)
+        start = end
+        end = end + batch_size
+    return(batched_X,batched_Y)
+
+#def last_label(labels):
+
 
 def majority_baseline(X,Y):
     preds = []

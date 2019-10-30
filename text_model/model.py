@@ -5,13 +5,13 @@ import torch
 import pandas as pd
 import yaml
 from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results
-from evaluate import evaluate
+from evaluate import evaluate,last_only_evaluate
 import numpy as np
 import sys
 
 
 if len(sys.argv) < 2:
-    config = 'conf/swbd.yaml'
+    config = 'conf/swbd-utt.yaml'
 else:
     config = sys.argv[1]
 
@@ -213,11 +213,13 @@ dev_accs = []
 # Add pre-training stats to output:
 train_losses.append(0)
 if not datasource == 'LIBRI':
-    _, train_acc, _ = evaluate(X_train, Y_train_str, model, device)
+    #_, train_acc, _ = evaluate(X_train, Y_train_str, model, device)
+    train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
     train_accs.append(train_acc)
 else:  # Don't do train acc every time for bigger datasets than SWBDNXT
     train_accs.append(0)
-_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device)
+#_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device)
+dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
 dev_accs.append(dev_acc)
 timesteps.append(0)
 
@@ -239,7 +241,6 @@ for epoch in range(num_epochs):
             tag_scores,_ = model(input,hidden)
             #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
             #print('true:',labels)
-
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
@@ -257,11 +258,12 @@ for epoch in range(num_epochs):
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
                 if not datasource == 'LIBRI':
-                    _,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
+                    #_,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
+                    train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
                     train_accs.append(train_acc)
                 else: # Don't do train acc every time for bigger datasets than SWBDNXT
                     train_accs.append(0)
-                _, dev_acc, _ = evaluate(X_dev, Y_dev_str, model,device)
+                dev_acc = last_only_evaluate(X_dev, Y_dev_str, model,device)
                 dev_accs.append(dev_acc)
                 timesteps.append(timestep)
 
@@ -277,11 +279,11 @@ plot_results(train_losses,train_accs,dev_accs,train_steps,model_name)
 print("==============================================")
 print("==============================================")
 print('After training, train:')
-evaluate(X_train,Y_train_str,model,device)
+last_only_evaluate(X_train,Y_train_str,model,device)
 
 
 print('After training, dev: ')
-evaluate(X_dev, Y_dev_str,model,device)#,True)
+last_only_evaluate(X_dev, Y_dev_str,model,device)#,True)
 
 
 

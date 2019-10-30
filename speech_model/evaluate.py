@@ -6,6 +6,7 @@ import pandas as pd
 from random import randint
 
 def logit_evaluate(dataset,dataloader_params,model,device,recurrent=True):
+    model.eval()
     true_pos_pred = 0
     total_pred = 0
     dataloader = data.DataLoader(dataset, **dataloader_params)
@@ -53,6 +54,7 @@ def baseline_with_len(dataset,dataloader_params,utterance_file='../data/utteranc
     print('Baseline performance with length considered:',acc)
 
 def logit_evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):
+    model.eval()
     true_pos_pred = 0
     total_pred = 0
     dataloader = data.DataLoader(dataset, **dataloader_params)
@@ -107,6 +109,7 @@ def logit_evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True
 
 
 def evaluate(dataset,dataloader_params,model,device,recurrent=True):
+    model.eval()
     true_pos_pred = 0
     total_pred = 0
     dataloader = data.DataLoader(dataset, **dataloader_params)

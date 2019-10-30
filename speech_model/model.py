@@ -20,13 +20,15 @@ import random
 import numpy as np
 random.seed(123)
 
-model_name = 'full_model_relu'
+model_name = 'full_model_hardtanh_last_d5_l2_b32_e50'
 
 text_data = '../data/utterances.txt'
 speech_data = '../data/cmvn_tensors.pkl'
 labels_data = '../data/utterances_labels.pkl'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+dropout = 0.5
 
 train_per = 0.6
 dev_per = 0.2
@@ -35,17 +37,17 @@ eval_every = None
 VERBOSE = False
 LENGTH_ANALYSIS = False
 
-train_params = {'batch_size': 8,
+train_params = {'batch_size': 32,
                      'shuffle': True,
                      'num_workers': 6}
 
 eval_params = {'batch_size': 1,
                           'shuffle': True,
                           'num_workers': 6}
-epochs = 30
+epochs = 50
 pad_len = 700
 learning_rate = 0.001
-LSTM_LAYERS = 1
+LSTM_LAYERS = 2
 
 class SpeechEncoder(nn.Module):
     def __init__(self,
@@ -54,7 +56,8 @@ class SpeechEncoder(nn.Module):
                  hidden_size=512,
                  bidirectional=True,
                  lstm_layers=3,
-                 num_classes=2):
+                 num_classes=2,
+                 dropout=None):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -62,6 +65,7 @@ class SpeechEncoder(nn.Module):
         self.bidirectional = bidirectional
         self.lstm_layers = lstm_layers
         self.num_classes = num_classes
+        self.dropout = dropout
 
         self.feat_dim = 16
         self.in_channels = 1
@@ -76,13 +80,14 @@ class SpeechEncoder(nn.Module):
         self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.hidden_channels),
-                                  nn.ReLU(inplace=True),
+                                  #nn.ReLU(inplace=True),
+                                  nn.Hardtanh(inplace=True),
                                   nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
                                             padding=self.padding),
                                   nn.BatchNorm2d(self.out_channels),
-                                  nn.ReLU(inplace=True)
+                                  #nn.ReLU(inplace=True)
+                                  nn.Hardtanh(inplace=True)
                                   )
-
 
 
         # RNN VERSION:
@@ -91,7 +96,8 @@ class SpeechEncoder(nn.Module):
                             #batch_first=True,
                             hidden_size=self.hidden_size,
                             num_layers=self.lstm_layers,
-                            bidirectional=self.bidirectional)
+                            bidirectional=self.bidirectional,
+                            dropout=self.dropout)
 
         if self.bidirectional:
             self.lin_input_size = self.hidden_size * 2
@@ -99,10 +105,6 @@ class SpeechEncoder(nn.Module):
             self.lin_input_size = self.hidden_size
 
         self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
-        self.sigmoid = nn.Sigmoid()
-
-
-        self.inference_softmax = nn.Softmax(dim=-1)
 
     def forward(self,x,hidden):
         if VERBOSE: ('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
@@ -112,13 +114,12 @@ class SpeechEncoder(nn.Module):
         if VERBOSE: print('Dims going into lstm: ',x.shape)
         x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
         if VERBOSE: print('Dims after lstm:', x.shape)
-        #x = x[-1,:,:] # TAKE LAST TIMESTEP
-        x = torch.mean(x,0)
+        x = x[-1,:,:] # TAKE LAST TIMESTEP
+        #x = torch.mean(x,0)
         if VERBOSE: print('Dims after compression:', x.shape)
         x = self.fc(x.view(1, x.shape[0], self.lin_input_size))
         if VERBOSE: print('Dims after fc:', x.shape)
         return x,hidden
-
 
     def init_hidden(self,batch_size):
         if self.bidirectional:
@@ -165,7 +166,8 @@ model = SpeechEncoder(seq_len=pad_len,
                       batch_size=train_params['batch_size'],
                       lstm_layers=LSTM_LAYERS,
                       bidirectional=False,
-                      num_classes=1)
+                      num_classes=1,
+                      dropout=dropout)
 
 model.to(device)
 
@@ -195,6 +197,7 @@ plt_train_acc = []
 print('Training model ...')
 for epoch in range(epochs):
     for batch,labels in traingen:
+        model.train()
         batch,labels = batch.to(device),labels.to(device)
         if not batch.shape[0] < train_params['batch_size']:
             model.zero_grad()
@@ -227,11 +230,15 @@ for epoch in range(epochs):
                 plt_losses.append(train_loss)
                 #plt.show()
                 if LENGTH_ANALYSIS:
-                    plt_acc.append(logit_evaluate_lengths(devset, eval_params, model, device))
+                    print('train')
                     plt_train_acc.append(logit_evaluate_lengths(trainset, eval_params, model, device))
+                    print('dev')
+                    plt_acc.append(logit_evaluate_lengths(devset, eval_params, model, device))
                 else:
-                    plt_acc.append(logit_evaluate(devset, eval_params, model, device))
+                    print('train')
                     plt_train_acc.append(logit_evaluate(trainset, eval_params, model, device))
+                    print('dev')
+                    plt_acc.append(logit_evaluate(devset, eval_params, model, device))
             if eval_every:
                 if timestep % eval_every == 1 and not timestep==1:
                     logit_evaluate(devset,eval_params,model,device)
