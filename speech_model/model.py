@@ -17,37 +17,50 @@ from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId
 from evaluate import evaluate,logit_evaluate,logit_evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
-import numpy as np
+import sys
+import yaml
 random.seed(123)
 
-model_name = 'full_model_hardtanh_last_d5_l2_b32_e50'
+if len(sys.argv) < 2:
+    config = 'conf/swbd-utt.yaml'
+else:
+    config = sys.argv[1]
 
-text_data = '../data/utterances.txt'
-speech_data = '../data/cmvn_tensors.pkl'
-labels_data = '../data/utterances_labels.pkl'
+with open(config,'r') as f:
+    cfg = yaml.load(f,yaml.FullLoader)
+
+
+VERBOSE = cfg['VERBOSE']
+LENGTH_ANALYSIS = cfg['LENGTH_ANALYSIS']
+print_every = int(cfg['print_every'])
+eval_every = cfg['eval_every']
+if eval_every:
+    eval_every = int(eval_every)
+train_per = float(cfg['train_per'])
+dev_per = float(cfg['dev_per'])
+
+# hyperparameters
+bidirectional = cfg['bidirectional']
+learning_rate = float(cfg['learning_rate'])
+hidden_size = int(cfg['hidden_size'])
+pad_len = int(cfg['pad_len'])
+datasource = cfg['datasource']
+num_epochs = int(cfg['num_epochs'])
+LSTM_LAYERS = int(cfg['LSTM_LAYERS'])
+dropout = float(cfg['dropout'])
+
+# Filenames
+text_data = cfg['text_data']
+speech_data = cfg['speech_data']
+labels_data = cfg['labels_data']
+model_name = cfg['model_name']
+results_path = cfg['results_path']
+results_file = '{}/{}.txt'.format(results_path,model_name)
+
+train_params = cfg['train_params']
+eval_params = cfg['eval_params']
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-dropout = 0.5
-
-train_per = 0.6
-dev_per = 0.2
-print_every = 500
-eval_every = None
-VERBOSE = False
-LENGTH_ANALYSIS = False
-
-train_params = {'batch_size': 32,
-                     'shuffle': True,
-                     'num_workers': 6}
-
-eval_params = {'batch_size': 1,
-                          'shuffle': True,
-                          'num_workers': 6}
-epochs = 50
-pad_len = 700
-learning_rate = 0.001
-LSTM_LAYERS = 2
 
 class SpeechEncoder(nn.Module):
     def __init__(self,
@@ -195,7 +208,7 @@ plt_train_acc = []
 
 
 print('Training model ...')
-for epoch in range(epochs):
+for epoch in range(num_epochs):
     for batch,labels in traingen:
         model.train()
         batch,labels = batch.to(device),labels.to(device)
