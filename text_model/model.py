@@ -4,14 +4,14 @@ from torch import nn
 import torch
 import pandas as pd
 import yaml
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data
 from evaluate import evaluate,last_only_evaluate
 import numpy as np
 import sys
 
 
 if len(sys.argv) < 2:
-    config = 'conf/swbd-utt.yaml'
+    config = 'conf/burnc.yaml'
 else:
     config = sys.argv[1]
 
@@ -68,6 +68,18 @@ elif datasource == 'LIBRI':
     libridev = '../data/libri/dev.txt'
     train_data = load_libri_data(libritrain,shuffle=True,max_len=max_len)
     dev_data = load_libri_data(libridev,shuffle=True,max_len=max_len)
+
+elif datasource == 'BURNC':
+
+    burncfeats = datafile
+    data = load_burnc_data(burncfeats)
+
+    train_idx = int(train_ratio*len(data))
+    dev_idx = int((train_ratio+dev_ratio)*len(data))
+
+    train_data = data[:train_idx]
+    dev_data = data[train_idx:dev_idx]
+    test_data = data[dev_idx:]
 
 else:
     print("NO DATA SOURCE GIVEN")
@@ -273,7 +285,7 @@ dev_accs = pd.Series(dev_accs)
 train_steps = pd.Series(timesteps)
 
 
-plot_results(train_losses,train_accs,dev_accs,train_steps,model_name)
+plot_results(train_losses,train_accs,dev_accs,train_steps,model_name,results_path)
 
 
 print("==============================================")

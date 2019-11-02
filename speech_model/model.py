@@ -14,15 +14,17 @@ import torch
 import psutil
 import os
 from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId
-from evaluate import evaluate,logit_evaluate,logit_evaluate_lengths,baseline_with_len
+from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
 import sys
 import yaml
+import math
 random.seed(123)
 
 if len(sys.argv) < 2:
     config = 'conf/swbd-utt.yaml'
+    #config = 'conf/burnc.yaml'
 else:
     config = sys.argv[1]
 
@@ -40,6 +42,7 @@ train_per = float(cfg['train_per'])
 dev_per = float(cfg['dev_per'])
 
 # hyperparameters
+include_lstm = cfg['include_lstm']
 bidirectional = cfg['bidirectional']
 learning_rate = float(cfg['learning_rate'])
 hidden_size = int(cfg['hidden_size'])
@@ -70,7 +73,8 @@ class SpeechEncoder(nn.Module):
                  bidirectional=True,
                  lstm_layers=3,
                  num_classes=2,
-                 dropout=None):
+                 dropout=None,
+                 include_lstm=True):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -79,6 +83,7 @@ class SpeechEncoder(nn.Module):
         self.lstm_layers = lstm_layers
         self.num_classes = num_classes
         self.dropout = dropout
+        self.include_lstm = include_lstm
 
         self.feat_dim = 16
         self.in_channels = 1
@@ -102,37 +107,67 @@ class SpeechEncoder(nn.Module):
                                   nn.Hardtanh(inplace=True)
                                   )
 
-
         # RNN VERSION:
-        rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
-        self.lstm = nn.LSTM(input_size=rnn_input_size,
-                            #batch_first=True,
-                            hidden_size=self.hidden_size,
-                            num_layers=self.lstm_layers,
-                            bidirectional=self.bidirectional,
-                            dropout=self.dropout)
+        if self.include_lstm:
 
-        if self.bidirectional:
-            self.lin_input_size = self.hidden_size * 2
+            rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
+            self.lstm = nn.LSTM(input_size=rnn_input_size,
+                                #batch_first=True,
+                                hidden_size=self.hidden_size,
+                                num_layers=self.lstm_layers,
+                                bidirectional=self.bidirectional,
+                                dropout=self.dropout)
+
+            if self.bidirectional:
+                self.lin_input_size = self.hidden_size * 2
+            else:
+                self.lin_input_size = self.hidden_size
+
+            self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
+
         else:
-            self.lin_input_size = self.hidden_size
 
-        self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
+            self.maxpool = nn.MaxPool1d(2)
+            self.cnn_output_size = math.floor(
+                (self.seq_len - self.kernel1[0] + self.padding[0] * 2) / self.stride1[0]) + 1
+            self.cnn_output_size = math.floor(
+                (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
+            self.cnn_output_size = int(((math.floor(self.cnn_output_size / 2) * self.out_channels)))
+
+            self.fc1_out = 1600
+
+            self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)
+            self.relu = nn.ReLU()
+            self.fc2 = nn.Linear(self.fc1_out, self.num_classes)
+
+
+
 
     def forward(self,x,hidden):
         if VERBOSE: ('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape)
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         if VERBOSE: print('Dims after conv: ',x.shape)
-        x = x.view(x.shape[0],x.shape[1],x.shape[2]).transpose(1,2).transpose(0,1).contiguous()
-        if VERBOSE: print('Dims going into lstm: ',x.shape)
-        x,hidden = self.lstm(x.view(x.shape[0],x.shape[1],x.shape[2]),hidden)
-        if VERBOSE: print('Dims after lstm:', x.shape)
-        x = x[-1,:,:] # TAKE LAST TIMESTEP
-        #x = torch.mean(x,0)
-        if VERBOSE: print('Dims after compression:', x.shape)
-        x = self.fc(x.view(1, x.shape[0], self.lin_input_size))
-        if VERBOSE: print('Dims after fc:', x.shape)
-        return x,hidden
+
+        if self.include_lstm:
+            x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous()
+            if VERBOSE: print('Dims going into lstm: ', x.shape)
+            x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
+            if VERBOSE: print('Dims after lstm:', x.shape)
+            x = x[-1,:,:] # TAKE LAST TIMESTEP
+            #x = torch.mean(x,0)
+            if VERBOSE: print('Dims after compression:', x.shape)
+            x = self.fc(x.view(1, x.shape[0], self.lin_input_size))
+            if VERBOSE: print('Dims after fc:', x.shape)
+            return x,hidden
+        else:
+            x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
+            if VERBOSE: print('Dims after pooling: ', x.shape)
+            x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2]))
+            x = self.relu(x)
+            if VERBOSE: print('Dims after fc1:', x.shape)
+            x = self.fc2(x)
+            if VERBOSE: print('Dims after fc2:', x.shape)
+            return x, hidden
 
     def init_hidden(self,batch_size):
         if self.bidirectional:
@@ -143,8 +178,6 @@ class SpeechEncoder(nn.Module):
             c0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_size).requires_grad_().to(device)
 
         return (h0,c0)
-
-
 
 
 print('Loading data ...')
@@ -191,21 +224,25 @@ timestep = 0
 
 print('done')
 
-print('Baseline eval....')
-
-if LENGTH_ANALYSIS:
-    baseline_with_len(devset, eval_params)
-    logit_evaluate_lengths(devset, eval_params, model, device)
-else:
-    logit_evaluate(devset, eval_params, model, device)
-
-print('done')
 
 plt_time = []
 plt_losses = []
 plt_acc = []
 plt_train_acc = []
 
+print('Baseline eval....')
+
+if LENGTH_ANALYSIS:
+    baseline_with_len(devset, eval_params)
+    plt_acc.append(evaluate_lengths(devset, eval_params, model, device))
+    plt_train_acc.append(evaluate_lengths(trainset,eval_params,model,device))
+else:
+    plt_acc.append(evaluate(devset, eval_params, model, device))
+    plt_train_acc.append(evaluate(trainset, eval_params, model, device))
+plt_losses.append(0)
+plt_time.append(0)
+
+print('done')
 
 print('Training model ...')
 for epoch in range(num_epochs):
@@ -238,29 +275,27 @@ for epoch in range(num_epochs):
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 print('Train loss at',timestep,': ',train_loss)
                 process = psutil.Process(os.getpid())
-                #print('Memory usage at timestep ', timestep, ':', process.memory_info().rss / 1000000000, 'GB')
 
                 plt_losses.append(train_loss)
                 #plt.show()
                 if LENGTH_ANALYSIS:
                     print('train')
-                    plt_train_acc.append(logit_evaluate_lengths(trainset, eval_params, model, device))
+                    plt_train_acc.append(evaluate_lengths(trainset, eval_params, model, device))
                     print('dev')
-                    plt_acc.append(logit_evaluate_lengths(devset, eval_params, model, device))
+                    plt_acc.append(evaluate_lengths(devset, eval_params, model, device))
                 else:
                     print('train')
-                    plt_train_acc.append(logit_evaluate(trainset, eval_params, model, device))
+                    plt_train_acc.append(evaluate(trainset, eval_params, model, device))
                     print('dev')
-                    plt_acc.append(logit_evaluate(devset, eval_params, model, device))
+                    plt_acc.append(evaluate(devset, eval_params, model, device))
             if eval_every:
                 if timestep % eval_every == 1 and not timestep==1:
-                    logit_evaluate(devset,eval_params,model,device)
+                    evaluate(devset,eval_params,model,device)
             timestep += 1
-            #import pdb;pdb.set_trace()
         else:
             print('Batch of size',batch.shape,'rejected')
-            print('Last batch:')
-            print(batch)
+            #print(batch)
+
 
 print('done')
 

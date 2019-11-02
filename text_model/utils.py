@@ -66,6 +66,26 @@ def load_libri_data(filename,shuffle=True,debug=True,max_len=None):
         random.shuffle(data)
     return data
 
+def load_burnc_data(text2labels,shuffle=True):
+
+    df = pd.read_csv(text2labels, sep='\t', header=None)
+
+    utt = df[0].tolist()
+    text = df[1].tolist()
+    labels = df[2].tolist()
+    
+    text =  [[tok for tok in line.split()] for line in text]
+    labels = [[int(lbl) for lbl in line.split()] for line in labels]
+
+    data = []
+    random.seed(SEED)
+    for i in range(len(text)):
+        data.append((text[i],labels[i]))
+    if shuffle:
+        random.shuffle(data)
+    return data
+
+
 def to_ints(data,vocab_size,wd_to_i=None,i_to_wd=None): # TODO add UNK and PAD (figure out what the pytorch defaults for these are, if any)
 
     num_wds = []
@@ -200,7 +220,9 @@ def majority_baseline(X,Y):
     print(classification_report(Y, preds))
 
 
-def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
+def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name,results_dir=None):
+    if not results_dir:
+        results_dir = 'results'
     df = pd.DataFrame(dict(train_steps=train_steps,
                            train_losses=train_losses,
                            train_accs=train_accs,
@@ -214,9 +236,9 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
     df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
     df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
 
-    plt.savefig('results/{}.png'.format(model_name))
+    plt.savefig(results_dir+'/{}.png'.format(model_name))
     plt.show()
-    df.to_csv('results/{}.tsv'.format(model_name), sep='\t')
+    df.to_csv(results_dir+'/{}.tsv'.format(model_name), sep='\t')
 
 def main():
     libri_file = '../data/libri/train_360.txt'

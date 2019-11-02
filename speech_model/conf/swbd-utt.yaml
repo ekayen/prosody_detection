@@ -6,6 +6,7 @@ train_per: 0.6
 dev_per: 0.2
 
 batch_size: 64
+include_lstm: False
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
@@ -18,7 +19,8 @@ dropout: 0.5
 text_data: '../data/utterances.txt'
 speech_data: '../data/cmvn_tensors.pkl'
 labels_data: '../data/utterances_labels.pkl'
-model_name: 'full_model_hardtanh_last_d5_l2_b32_e50'
+#model_name: 'full_model_hardtanh_last_d5_l2_b32_e50_batcheval'
+model_name: 'cnn_only_hardtanh_last_d5_l2_b32_e50_batcheval'
 results_path: 'results'
 
 
@@ -28,6 +30,6 @@ train_params:
   num_workers: 6
 
 eval_params:
-  batch_size: 1
+  batch_size: 32
   shuffle: True
   num_workers: 6
