@@ -213,7 +213,8 @@ model = SpeechEncoder(seq_len=pad_len,
                       lstm_layers=LSTM_LAYERS,
                       bidirectional=False,
                       num_classes=1,
-                      dropout=dropout)
+                      dropout=dropout,
+                      include_lstm=include_lstm)
 
 model.to(device)
 
