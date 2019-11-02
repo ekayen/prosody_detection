@@ -12,7 +12,7 @@ learning_rate: 0.001
 hidden_size: 512
 pad_len: 700
 datasource: 'SWBDNXT_UTT'
-num_epochs: 50
+num_epochs: 100
 LSTM_LAYERS: 2
 dropout: 0.5
 
@@ -20,7 +20,7 @@ text_data: '../data/utterances.txt'
 speech_data: '../data/cmvn_tensors.pkl'
 labels_data: '../data/utterances_labels.pkl'
 #model_name: 'full_model_hardtanh_last_d5_l2_b32_e50_batcheval'
-model_name: 'cnn_only_hardtanh_last_d5_l2_b32_e50_batcheval'
+model_name: 'cnn_only_hardtanh_last_d5_l2_b32_e100_batcheval'
 results_path: 'results'
 
 

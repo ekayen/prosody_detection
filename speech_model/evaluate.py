@@ -20,8 +20,7 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True):
                     output,_ = model(x,hidden)
                 else:
                     output = model(x)
-
-                output = output.detach().view(output.shape[1])
+                output = output.detach().view(output.shape[-2])
                 threshold = 0
                 prediction =  (output > threshold).type(torch.int64) * 1
                 #prediction = torch.tensor(prediction,dtype=torch.int64)
