@@ -253,6 +253,8 @@ for epoch in range(num_epochs):
             tag_scores,_ = model(input,hidden)
             #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
             #print('true:',labels)
+            print('output:',tag_scores.shape)
+            print('labels:',labels.shape)
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
