@@ -17,8 +17,8 @@ num_epochs: 20
 num_layers: 2
 dropout: 0.5
 
-datafile: '../data/burnc/text2labels_breath_tok'
+datafile: '../data/burnc/text2labels_breath_sent'
 glove_path: '../data/emb/glove.6B.100d.txt'
 #model_name: 'nonseq-utt-l2-b64-d8-e18-v4000-lr001'
-model_name: 'burnc_breath_l2_b64-d5-e20-v3100-lr001-glove'
+model_name: 'burnc_breath_sent_l2_b64-d5-e20-v3100-lr001-glove'
 results_path: 'results/burnc'
