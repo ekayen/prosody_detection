@@ -4,6 +4,8 @@ eval_every: 500
 train_ratio: 0.6
 dev_ratio: 0.2
 
+model_type: 'lstm'
+
 batch_size: 64
 bidirectional: True
 learning_rate: 0.001
