@@ -18,7 +18,8 @@ else:
 with open(config,'r') as f:
     cfg = yaml.load(f,yaml.FullLoader)
 torch.manual_seed(0)
-
+torch.cuda.manual_seed(0)
+np.random.seed(0)
 
 print_dims = cfg['print_dims']
 print_every = int(cfg['print_every'])
@@ -88,7 +89,7 @@ X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,vocab_size)
 X_dev,Y_dev,_,_ = to_ints(dev_data,vocab_size,wd_to_i,i_to_wd)
 
 # LOAD VECTORS
-
+words_found = 0
 if use_pretrained:
     vec_dict_pkl = '../data/emb/50d-dict.pkl'
     if os.path.exists(vec_dict_pkl):
@@ -99,7 +100,6 @@ if use_pretrained:
         with open(vec_dict_pkl, 'wb') as f:
             pickle.dump(i_to_vec, f)
 
-    words_found = 0
     weights_matrix = np.zeros((vocab_size+2, embedding_dim))
     for i in i_to_wd:
         try:
@@ -109,7 +109,6 @@ if use_pretrained:
             weights_matrix[i] = np.random.normal(scale=0.6, size=(embedding_dim, ))
 
     weights_matrix = torch.tensor(weights_matrix)
-
 
 # BUILD THE MODEL
 
@@ -141,14 +140,14 @@ class BiLSTM(nn.Module):
         self.bidirectional = bidirectional
         self.output_dim = output_dim
         self.dropout = dropout
+        self.use_pretrained = use_pretrained
 
         # layers:
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        emb_layer = nn.Embedding(vocab_size, embedding_dim)
-        if use_pretrained:
-            emb_layer.load_state_dict({'weight': weights_matrix})
+        if self.use_pretrained:
+            self.embedding.load_state_dict({'weight': weights_matrix})
             if nontrainable:
-                emb_layer.weight.requires_grad = False
+                self.embedding.weight.requires_grad = False
         self.lstm = nn.LSTM(embedding_dim,
                             hidden_size,
                             bidirectional=self.bidirectional,
@@ -253,8 +252,8 @@ for epoch in range(num_epochs):
             tag_scores,_ = model(input,hidden)
             #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
             #print('true:',labels)
-            print('output:',tag_scores.shape)
-            print('labels:',labels.shape)
+            #print('output:',tag_scores.shape)
+            #print('labels:',labels.shape)
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
