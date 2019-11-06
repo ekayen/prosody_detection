@@ -4,7 +4,7 @@ import torch
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
 
-def evaluate(X, Y,mdl,device,to_file=False):
+def evaluate(X, Y,mdl,device,model_type='lstm',to_file=False):
     print("EVAL=================================================================================================")
     y_pred = []
     with torch.no_grad():
@@ -13,9 +13,11 @@ def evaluate(X, Y,mdl,device,to_file=False):
             eval_batch_size = 1
 
             if not (list(input.shape)[0] == 0):
-                hidden = mdl.init_hidden(eval_batch_size)
-                tag_scores, _ = mdl(input.view(len(input),eval_batch_size), hidden)
-
+                if model_type=='lstm':
+                    hidden = mdl.init_hidden(eval_batch_size)
+                    tag_scores, _ = mdl(input.view(len(input),eval_batch_size), hidden)
+                else:
+                    tag_scores = mdl(input.view(len(input),eval_batch_size))
 
                 pred = tag_scores.cpu()
                 pred = np.where(pred>0.5,1,0)

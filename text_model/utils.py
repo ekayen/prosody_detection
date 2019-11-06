@@ -9,9 +9,8 @@ from torch.nn.utils.rnn import pad_sequence
 import matplotlib.pyplot as plt
 from seqeval.metrics import accuracy_score, classification_report,f1_score
 
-SEED = 123
 
-def load_data(filename,shuffle=True,debug=True,max_len=None):
+def load_data(filename,seed=42,shuffle=True,debug=True,max_len=None):
     data = []
     if '.txt' in filename:
         with open(filename,'r') as f:
@@ -30,14 +29,13 @@ def load_data(filename,shuffle=True,debug=True,max_len=None):
     else:
         print("File format not recognized.")
     if shuffle:
-        if debug:
-            random.seed(SEED)
+        random.seed(seed)
         random.shuffle(data)
     return data
 
 
 
-def load_libri_data(filename,shuffle=True,debug=True,max_len=None):
+def load_libri_data(filename,seed=42,shuffle=True,debug=True,max_len=None):
     HEADER = '<file>'
     NON_LABELED = '\tNA\t'
     FINAL_PUNC = '.?!'
@@ -61,12 +59,11 @@ def load_libri_data(filename,shuffle=True,debug=True,max_len=None):
                     else:
                         labels.append(1)
     if shuffle:
-        if debug:
-            random.seed(SEED)
+        random.seed(seed)
         random.shuffle(data)
     return data
 
-def load_burnc_data(text2labels,shuffle=True):
+def load_burnc_data(text2labels,seed=42,shuffle=True):
 
     df = pd.read_csv(text2labels, sep='\t', header=None)
 
@@ -78,10 +75,27 @@ def load_burnc_data(text2labels,shuffle=True):
     labels = [[int(lbl) for lbl in line.split()] for line in labels]
 
     data = []
-    random.seed(SEED)
     for i in range(len(text)):
         data.append((text[i],labels[i]))
     if shuffle:
+        random.seed(seed)
+        random.shuffle(data)
+    return data
+
+def load_burnc_spans(spans,seed=42,shuffle=True):
+    df = pd.read_csv(spans, sep='\t', header=None)
+
+    spans = df[0].tolist()
+    labels = df[1].tolist()
+
+    text = [[tok for tok in line.split()] for line in spans]
+    labels = [[int(line)] for line in labels]
+
+    data = []
+    for i in range(len(text)):
+        data.append((text[i], labels[i]))
+    if shuffle:
+        random.seed(seed)
         random.shuffle(data)
     return data
 
@@ -156,13 +170,13 @@ def load_vectors(vector_file,wd_to_idx):
 
 def shuffle_input_output(X,Y):
     data = list(zip(X,Y))
+    random.seed(0)
     random.shuffle(data)
     X,Y = zip(*data)
     return(X,Y)
 
 def make_batches(X,Y,batch_size,device):
     X,Y = shuffle_input_output(X,Y)
-    counter = 0
     start = 0
     end = batch_size
     batched_X = []

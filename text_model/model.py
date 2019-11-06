@@ -4,11 +4,11 @@ from torch import nn
 import torch
 import pandas as pd
 import yaml
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data,load_burnc_spans
 from evaluate import evaluate,last_only_evaluate
 import numpy as np
 import sys
-
+import random
 
 if len(sys.argv) < 2:
     config = 'conf/burnc.yaml'
@@ -17,9 +17,18 @@ else:
 
 with open(config,'r') as f:
     cfg = yaml.load(f,yaml.FullLoader)
-torch.manual_seed(0)
-torch.cuda.manual_seed(0)
-np.random.seed(0)
+
+seed = cfg['seed']
+
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
+
+model_type = 'simpleff'
+#model_type =
+model_type = cfg['model_type']
+
 
 print_dims = cfg['print_dims']
 print_every = int(cfg['print_every'])
@@ -52,9 +61,19 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # LOAD THE DATA
 
+def split_data(data,train_ratio=0.6,dev_ratio=0.2):
+    train_idx = int(train_ratio*len(data))
+    dev_idx = int((train_ratio+dev_ratio)*len(data))
+
+    train_data = data[:train_idx]
+    dev_data = data[train_idx:dev_idx]
+    test_data = data[dev_idx:]
+
+    return train_data,dev_data,test_data
+
 if datasource == 'SWBDNXT' or datasource == 'SWBDNXT_UTT':
 
-    data = load_data(datafile,shuffle=True,max_len=max_len)
+    data = load_data(datafile,seed=seed,shuffle=True,max_len=max_len)
 
     train_idx = int(train_ratio*len(data))
     dev_idx = int((train_ratio+dev_ratio)*len(data))
@@ -67,20 +86,24 @@ elif datasource == 'LIBRI':
 
     libritrain = '../data/libri/train_360.txt'
     libridev = '../data/libri/dev.txt'
-    train_data = load_libri_data(libritrain,shuffle=True,max_len=max_len)
-    dev_data = load_libri_data(libridev,shuffle=True,max_len=max_len)
+    train_data = load_libri_data(libritrain,seed=seed,shuffle=True,max_len=max_len)
+    dev_data = load_libri_data(libridev,seed=seed,shuffle=True,max_len=max_len)
 
 elif datasource == 'BURNC':
 
     burncfeats = datafile
-    data = load_burnc_data(burncfeats)
+    data = load_burnc_data(burncfeats,seed=seed)
 
-    train_idx = int(train_ratio*len(data))
-    dev_idx = int((train_ratio+dev_ratio)*len(data))
+    train_data,dev_data,test_data = split_data(data,train_ratio,dev_ratio)
 
-    train_data = data[:train_idx]
-    dev_data = data[train_idx:dev_idx]
-    test_data = data[dev_idx:]
+
+elif datasource == 'BURNC_SPANS':
+
+    burncspans = datafile
+    data = load_burnc_spans(datafile,seed=seed)
+
+    train_data,dev_data,test_data = split_data(data,train_ratio,dev_ratio)
+    print(train_data[0])
 
 else:
     print("NO DATA SOURCE GIVEN")
@@ -92,7 +115,7 @@ X_dev,Y_dev,_,_ = to_ints(dev_data,vocab_size,wd_to_i,i_to_wd)
 words_found = 0
 if use_pretrained:
     vec_dict_pkl = '../data/emb/50d-dict.pkl'
-    if os.path.exists(vec_dict_pkl):
+    if os.path.exists(vec_dict_pkl) and embedding_dim==100:
         with open(vec_dict_pkl,'rb') as f:
             i_to_vec = pickle.load(f)
     else:
@@ -112,6 +135,34 @@ if use_pretrained:
 
 # BUILD THE MODEL
 
+class FFModel(nn.Module):
+    def __init__(self,embedding_dim,vocab_size,bottleneck_feats,window_size=3,num_classes=1):
+        super(FFModel, self).__init__()
+        self.bottleneck_feats = bottleneck_feats
+        self.window_size = window_size
+        self.num_classes = num_classes
+
+        self.embedding = nn.Embedding(vocab_size+2,embedding_dim)
+        self.embedding.load_state_dict({'weight': weights_matrix})
+        self.embedding.weight.requires_grad = False
+        self.fc1 = nn.Linear(embedding_dim*self.window_size,self.bottleneck_feats)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(self.bottleneck_feats,self.num_classes)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self,x):
+        x = self.embedding(x)
+        batch_dim = x.shape[1]
+        x = x.transpose(0,1).contiguous().view(batch_dim,-1)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        return x
+
+
+
+
 class BiLSTM(nn.Module):
     # LSTM: (embedding_dim, hidden_size)
     # OUTPUT = (hidden size, tagset_size),
@@ -127,7 +178,7 @@ class BiLSTM(nn.Module):
                  output_dim=1,
                  dropout=0.5,
                  use_pretrained=False,
-                 nontrainable = False):
+                 nontrainable=False):
 
         super(BiLSTM,self).__init__()
 
@@ -190,15 +241,24 @@ class BiLSTM(nn.Module):
 
 # INSTANTIATE THE MODEL
 
-model = BiLSTM(batch_size=batch_size,
-               vocab_size=vocab_size+2,
-               tagset_size=2,
-               bidirectional=bidirectional,
-               lstm_layers=num_layers,
-               embedding_dim=embedding_dim,
-               hidden_size=hidden_size,
-               use_pretrained=use_pretrained,
-               dropout=dropout)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+
+if model_type == 'lstm':
+    model = BiLSTM(batch_size=batch_size,
+                   vocab_size=vocab_size+2,
+                   tagset_size=2,
+                   bidirectional=bidirectional,
+                   lstm_layers=num_layers,
+                   embedding_dim=embedding_dim,
+                   hidden_size=hidden_size,
+                   use_pretrained=use_pretrained,
+                   dropout=dropout)
+
+elif model_type == 'simpleff':
+    bottleneck_feats = cfg['bottleneck_feats']
+    model = FFModel(embedding_dim,vocab_size,bottleneck_feats)
+
 
 loss_fn = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -224,19 +284,21 @@ dev_accs = []
 # Add pre-training stats to output:
 train_losses.append(0)
 if not datasource == 'LIBRI':
-    #_, train_acc, _ = evaluate(X_train, Y_train_str, model, device)
-    train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
+    _, train_acc, _ = evaluate(X_train, Y_train_str, model, device,model_type=model_type)
+    #train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
     train_accs.append(train_acc)
 else:  # Don't do train acc every time for bigger datasets than SWBDNXT
     train_accs.append(0)
-#_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device)
-dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
+_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device,model_type=model_type)
+#dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
 dev_accs.append(dev_acc)
 timesteps.append(0)
 
+random.seed(seed)
+
 for epoch in range(num_epochs):
     # BATCH DATA
-    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, batch_size, device)
+    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, batch_size, device) # Also shuffles input
 
     print("TRAIN================================================================================================")
     for i in range(len(X_train_batches)):
@@ -248,8 +310,11 @@ for epoch in range(num_epochs):
             timestep += 1
             model.zero_grad()
 
-            hidden = model.init_hidden()
-            tag_scores,_ = model(input,hidden)
+            if model_type=='lstm':
+                hidden = model.init_hidden()
+                tag_scores,_ = model(input,hidden)
+            else:
+                tag_scores = model(input)
             #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
             #print('true:',labels)
             #print('output:',tag_scores.shape)
@@ -271,12 +336,13 @@ for epoch in range(num_epochs):
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
                 if not datasource == 'LIBRI':
-                    #_,train_acc,_ = evaluate(X_train, Y_train_str, model,device)
-                    train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
+                    _,train_acc,_ = evaluate(X_train, Y_train_str, model,device,model_type=model_type)
+                    #train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
                     train_accs.append(train_acc)
                 else: # Don't do train acc every time for bigger datasets than SWBDNXT
                     train_accs.append(0)
-                dev_acc = last_only_evaluate(X_dev, Y_dev_str, model,device)
+                #dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
+                _,dev_acc,_ = evaluate(X_dev, Y_dev_str, model, device, model_type=model_type)
                 dev_accs.append(dev_acc)
                 timesteps.append(timestep)
 
@@ -292,11 +358,12 @@ plot_results(train_losses,train_accs,dev_accs,train_steps,model_name,results_pat
 print("==============================================")
 print("==============================================")
 print('After training, train:')
-last_only_evaluate(X_train,Y_train_str,model,device)
-
+#last_only_evaluate(X_train,Y_train_str,model,device)
+evaluate(X_train,Y_train_str,model,device,model_type=model_type)
 
 print('After training, dev: ')
-last_only_evaluate(X_dev, Y_dev_str,model,device)#,True)
+#last_only_evaluate(X_dev, Y_dev_str,model,device)#,True)
+evaluate(X_dev, Y_dev_str,model,device,model_type=model_type)
 
 
 
