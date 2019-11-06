@@ -13,10 +13,10 @@ bidirectional: True
 learning_rate: 0.001
 embedding_dim: 300
 hidden_size: 128
-use_pretrained: True
+use_pretrained: False
 max_len: 80
 datasource: 'BURNC_SPANS'
-vocab_size: 4128
+vocab_size: 50
 num_epochs: 20
 num_layers: 2
 dropout: 0.5
@@ -24,5 +24,5 @@ dropout: 0.5
 datafile: '../data/burnc/spans'
 glove_path: '../data/emb/glove.6B.300d.txt'
 #model_name: 'nonseq-utt-l2-b64-d8-e18-v4000-lr001'
-model_name: 'burnc_simple_frozen_emb_9'
+model_name: 'burnc_simple_frozen_emb_v50_no_glove'
 results_path: 'results/burnc'

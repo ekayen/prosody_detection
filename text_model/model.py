@@ -136,15 +136,16 @@ if use_pretrained:
 # BUILD THE MODEL
 
 class FFModel(nn.Module):
-    def __init__(self,embedding_dim,vocab_size,bottleneck_feats,window_size=3,num_classes=1):
+    def __init__(self,embedding_dim,vocab_size,bottleneck_feats,use_pretrained=True,window_size=3,num_classes=1):
         super(FFModel, self).__init__()
         self.bottleneck_feats = bottleneck_feats
         self.window_size = window_size
         self.num_classes = num_classes
 
         self.embedding = nn.Embedding(vocab_size+2,embedding_dim)
-        self.embedding.load_state_dict({'weight': weights_matrix})
-        self.embedding.weight.requires_grad = False
+        if use_pretrained:
+            self.embedding.load_state_dict({'weight': weights_matrix})
+            self.embedding.weight.requires_grad = False
         self.fc1 = nn.Linear(embedding_dim*self.window_size,self.bottleneck_feats)
         self.relu = nn.ReLU()
         self.fc2 = nn.Linear(self.bottleneck_feats,self.num_classes)
@@ -257,7 +258,7 @@ if model_type == 'lstm':
 
 elif model_type == 'simpleff':
     bottleneck_feats = cfg['bottleneck_feats']
-    model = FFModel(embedding_dim,vocab_size,bottleneck_feats)
+    model = FFModel(embedding_dim,vocab_size,bottleneck_feats,use_pretrained=use_pretrained)
 
 
 loss_fn = nn.BCELoss()
