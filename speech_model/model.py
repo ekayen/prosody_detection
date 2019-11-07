@@ -6,7 +6,6 @@ Directly copied functions noted.
 
 Modified by: Elizabeth Nielsen
 """
-
 import pickle
 from torch import nn
 from torch.utils import data
