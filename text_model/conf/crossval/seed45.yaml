@@ -1,0 +1,28 @@
+print_dims: False
+print_every: 50
+eval_every: 500
+train_ratio: 0.6
+dev_ratio: 0.2
+
+model_type: 'lstm'
+seed: 45
+
+batch_size: 64
+bidirectional: True
+learning_rate: 0.001
+embedding_dim: 300
+hidden_size: 128
+use_pretrained: True
+max_len: 80
+datasource: 'BURNC'
+vocab_size: 2700
+num_epochs: 20
+num_layers: 2
+dropout: 0.5
+
+datafile: '../data/burnc/text2labels_breath_tok'
+glove_path: '../data/emb/glove.6B.300d.txt'
+#model_name: 'nonseq-utt-l2-b64-d8-e18-v4000-lr001'
+#model_name: 'burnc_breath_smaller_l2_b64-d5-e20-v3100-lr001'
+model_name: 'full_eval_burnc_breath_smaller_l2_b64-d5-e20-v2700-lr001-glove300_45'
+results_path: 'results/burnc/fullmodel_crosseval'
