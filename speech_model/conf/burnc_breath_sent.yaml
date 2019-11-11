@@ -5,12 +5,13 @@ eval_every:
 train_per: 0.6
 dev_per: 0.2
 
-include_lstm: True
+tok_level_pred: True
+include_lstm: False
 batch_size: 64
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
-pad_len: 700
+pad_len: 2150
 datasource: 'BURNC'
 num_epochs: 100
 LSTM_LAYERS: 2
@@ -18,17 +19,19 @@ dropout: 0.5
 
 text_data: '../data/burnc/text2labels_breath_sent'
 speech_data: '../data/burnc/burnc_mfcc_dict_breath_sent.pkl'
-labels_data: '../data/burnc/burnc_last_label_dict_breath_sent.pkl'
+#labels_data: '../data/burnc/burnc_last_label_dict_breath_sent.pkl'
+labels_data: '../data/burnc/burnc_label_dict_breath_sent.pkl'
+toktimes_data: '../data/burnc/burnc_toktimes_breath_sent.pkl'
 model_name: 'burnc_breath_sent_full_model'
 results_path: 'results/burnc'
 
 
 train_params:
-  batch_size: 32
+  batch_size: 1
   shuffle: True
   num_workers: 6
 
 eval_params:
-  batch_size: 32
+  batch_size: 1
   shuffle: True
   num_workers: 6
