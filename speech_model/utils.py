@@ -50,6 +50,28 @@ class UttDataset(data.Dataset):
         y = self.label_dict[id]
         return X, y
 
+class UttDatasetWithToktimes(UttDataset):
+    def __init__(self,list_ids,utt_dict,label_dict,toktimes_dict,pad_len):
+        super(UttDatasetWithToktimes,self).__init__(list_ids, utt_dict,label_dict,pad_len)
+        self.toktimes_dict = toktimes_dict
+
+    def pad_right(self,arr):
+        if arr.shape[0] < self.pad_len:
+            dff = self.pad_len - arr.shape[0]
+            arr = F.pad(arr,pad=(0,0,0,dff),mode='constant')
+        else:
+            arr = arr[:self.pad_len]
+        return arr
+
+    def __getitem__(self, index):
+        id = self.list_ids[index]
+        toks = self.pad_right(self.utt_dict[id])
+        toktimes = self.toktimes_dict[id]
+        X = (toks,toktimes)
+        y = self.label_dict[id]
+        return X,y
+
+
 class UttDatasetWithId(UttDataset):
     def __getitem__(self, index):
         id = self.list_ids[index]
@@ -96,3 +118,4 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
     plt.savefig('results/{}.png'.format(model_name))
     plt.show()
     df.to_csv('results/{}.tsv'.format(model_name), sep='\t')
+

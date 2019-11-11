@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from random import randint
 
-def evaluate(dataset,dataloader_params,model,device,recurrent=True):
+def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -13,19 +13,30 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True):
     with torch.no_grad():
         counter = 0
         for x,y in dataloader:
+            if tok_level_pred:
+                x,toktimes = x
             if x.shape[0]==dataloader_params['batch_size']:
                 x,y = x.to(device),y.to(device)
                 if recurrent:
                     hidden = model.init_hidden(dataloader_params['batch_size'])
-                    output,_ = model(x,hidden)
+                    output,_ = model(x,toktimes,hidden)
                 else:
                     output = model(x)
-                output = output.detach().view(output.shape[-2])
+                #print('output shape:',output.shape)
+                if tok_level_pred:
+                    output = output.detach().view(dataloader_params['batch_size'],output.shape[0])
+                else:
+                    output = output.detach().view(output.shape[-2])
+
                 threshold = 0
-                prediction =  (output > threshold).type(torch.int64) * 1
+                prediction = (output > threshold).type(torch.int64) * 1
                 #prediction = torch.tensor(prediction,dtype=torch.int64)
-                total_pred += prediction.shape[0]
-                true_pos_pred += (prediction==y).int().sum().item()
+                if tok_level_pred:
+                    total_pred += prediction.shape[1]
+                    true_pos_pred += (prediction == y).int().sum().item()
+                else:
+                    total_pred += prediction.shape[0]
+                    true_pos_pred += (prediction == y).int().sum().item()
             else:
                 print('rejected last small batch of size',x.shape)
     acc = true_pos_pred/total_pred
