@@ -41,8 +41,8 @@ def load_text_file(txtfile):
     with open(txtfile, 'r',encoding="utf8", errors='ignore') as f:
         text = f.readlines()
         text = ' '.join(text).replace('\n', '').lower()
-        #re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # TODO change to all end punc, not just period
-        re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)'
+        re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # TODO change to all end punc, not just period
+        #re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)'
         m = re.findall(re_break, text)
         break_pairs.extend(m)
     #print(text)
@@ -253,8 +253,8 @@ def main():
                             # Store breaks as pairs of words -- one on either side of the break.
                             # This requires less match-up between the words file and the text file,
                             # which are inconsistent with one another.
-                            break_pairs = load_text_file_nltk(textfile)
-                            #break_pairs = load_text_file(textfile)
+                            #break_pairs = load_text_file_nltk(textfile)
+                            break_pairs = load_text_file(textfile)
                             # Now use the break pairs to segment the text
                             utt_list = []
                             utt_token_times = []
@@ -267,7 +267,7 @@ def main():
                                     if words[idx].strip() == break_pair[0].strip() and \
                                         words[idx+1].strip() == break_pair[1].strip():
                                         utt_list.append(words[:idx+1])
-                                        utt_token_times.append(timestamps[:idx+1])
+                                        utt_token_times.append(timestamps[:idx+2])
                                         utt_labels.append(tones_per_word[:idx+1])
                                         # Make an utterance id: paragraph id + start time + end time
                                         start_time = timestamps[0]
