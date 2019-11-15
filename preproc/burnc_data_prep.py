@@ -13,6 +13,9 @@ from string import punctuation
 import nltk
 nltk.download('punkt')
 
+TOKENIZATION_METHOD = 'default'
+#TOKENIZATION_METHOD = 'breath_sent'
+#TOKENIZATION_METHOD = 'breath_tok'
 
 def text_reg(word):
     remove = punctuation.replace('-','').replace('<','').replace('>','')
@@ -41,8 +44,10 @@ def load_text_file(txtfile):
     with open(txtfile, 'r',encoding="utf8", errors='ignore') as f:
         text = f.readlines()
         text = ' '.join(text).replace('\n', '').lower()
-        #re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # default
-        re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)' # breath_tok
+        if TOKENIZATION_METHOD=='default':
+            re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # default
+        elif TOKENIZATION_METHOD=='breath_tok':
+            re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)' # breath_tok
         m = re.findall(re_break, text)
         break_pairs.extend(m)
     #print(text)
@@ -219,6 +224,7 @@ def main():
         datadir = os.path.join(burnc_dir,sp)
         for subdir, dirs, files in os.walk(datadir):
             for file in files:
+
                 # For each distinct paragraph, pull out the word file, text file, and recording file
                 if '.wrd' in file:
                     para_id = file.split('.')[0]
@@ -227,34 +233,53 @@ def main():
                     textfile = os.path.join(subdir,para_id+'.txt')
                     if not os.path.exists(textfile):
                         textfile = os.path.join(subdir,para_id+'.txn')
+
                     # Load tone file
                     tonefile = os.path.join(subdir,para_id+'.ton')
+
                     if os.path.exists(tonefile):
+
                         # Open the tone file and load dictionary of time to tone value (0 or 1)
                         time2tone = load_tone_file(tonefile)
+
                         # Open the word file and load in as two lists -- one of words, one of timestamps of beginnings of words
                         words,lines,timestamps = load_word_file(wordfile)
+
                         if words and time2tone:
+
                             speakers_used.add(sp)
+
                             # Load recording file
                             recordingid = para_id
                             recordingfile = os.path.join(subdir, para_id + '.sph')
+
                             if not os.path.exists(recordingfile):
                                 recordingfile = os.path.join(subdir, para_id + '.spn')
+
                             recording2file[recordingid] = recordingfile
+
                             # Convert tone dict to a list of same len as words, with all words either 0 or 1
                             tones_per_word = map_tones_to_words(time2tone,timestamps,words)
+
                             if sum(tones_per_word)==0:
                                 print('NO TONES')
                                 import pdb;pdb.set_trace()
+
                             # While you're here, make 3-token spans for replicating Stehwien et al.:
                             three_tok_spans.extend(make_three_tok_spans(para_id,words,tones_per_word))
+
                             # Open the text file and break on sentence breaks followed by breaths.
                             # Store breaks as pairs of words -- one on either side of the break.
                             # This requires less match-up between the words file and the text file,
                             # which are inconsistent with one another.
-                            break_pairs = load_text_file_nltk(textfile) #breath_sent
-                            #break_pairs = load_text_file(textfile) # default or breath_tok
+                            if TOKENIZATION_METHOD=='breath_sent':
+                                break_pairs = load_text_file_nltk(textfile) #breath_sent
+                            elif TOKENIZATION_METHOD=='default' or TOKENIZATION_METHOD=='breath_tok':
+                                break_pairs = load_text_file(textfile) # default or breath_tok
+                            else:
+                                print('Tokenization method not given or not recognized')
+                                import pdb;pdb.set_trace()
+
                             # Now use the break pairs to segment the text
                             utt_list = []
                             utt_token_times = []
@@ -263,24 +288,30 @@ def main():
                             utt_labels = []
                             for break_pair in break_pairs:
                                 idx = 0
+
                                 while idx < len(words)-1:
                                     if words[idx].strip() == break_pair[0].strip() and \
                                         words[idx+1].strip() == break_pair[1].strip():
+
                                         utt_list.append(words[:idx+1])
                                         utt_token_times.append(timestamps[:idx+2])
                                         utt_labels.append(tones_per_word[:idx+1])
+
                                         # Make an utterance id: paragraph id + start time + end time
                                         start_time = timestamps[0]
                                         end_time = timestamps[idx+1]
                                         utt_ids.append(para_id+'-'+'%08.3f'%start_time+'-'+ '%08.3f'%end_time)
                                         utt_start_end.append((start_time,end_time))
+
                                         # Chop the consumed words/times off the front of those lists
                                         words = words[idx+1:]
                                         timestamps = timestamps[idx+1:]
                                         tones_per_word = tones_per_word[idx+1:]
                                         break
+
                                     else:
                                         idx += 1
+
                             utt_list.append(words)
                             utt_token_times.append(timestamps)
                             start_time = timestamps[0]
@@ -288,6 +319,7 @@ def main():
                             utt_ids.append(para_id + '-' + '%08.3f' % start_time + '-' + '%08.3f' % end_time)
                             utt_start_end.append((start_time, end_time))
                             utt_labels.append(tones_per_word)
+
                             for i,utt_id in enumerate(utt_ids):
                                 utt2text[utt_id] = ' '.join(utt_list[i])
                                 utt2spk[utt_id] = sp
@@ -299,6 +331,7 @@ def main():
                             #print(utt_list)
                             #print('========================')
                             #import pdb;pdb.set_trace()
+
     utterances = sorted(list(utt2text.keys()))
     write_segments(utt2startend,utt2recording,utterances)
     write_wav_scp(recording2file,utterances)
@@ -307,20 +340,6 @@ def main():
     write_text2labels(utt2text,utt2tones,utterances)
     write_utt2toktime(utt2tokentimes,utterances)
     write_three_tok_spans(three_tok_spans)
-
-
-
-    import pdb;pdb.set_trace()
-
-    # Obtain utterance basenames and speaker to utterance mappings
-    # Write audio SCP file
-
-    # Write speaker files (spk2utt) (If utterances do not start with a speaker label, comment this out)
-    # Write segments file
-
-
-
-    # Obtain active voice regions (If the full audio should be used as an utterance, comment this out)
 
 
 if __name__ == "__main__":
