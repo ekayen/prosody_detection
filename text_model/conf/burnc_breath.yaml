@@ -1,3 +1,4 @@
+print_preds: True
 print_dims: False
 print_every: 50
 eval_every: 500
@@ -6,6 +7,7 @@ dev_ratio: 0.2
 
 model_type: 'lstm'
 seed: 42
+
 
 batch_size: 64
 bidirectional: True
@@ -25,4 +27,4 @@ glove_path: '../data/emb/glove.6B.300d.txt'
 #model_name: 'nonseq-utt-l2-b64-d8-e18-v4000-lr001'
 #model_name: 'burnc_breath_smaller_l2_b64-d5-e20-v3100-lr001'
 model_name: 'full_eval_burnc_breath_smaller_l2_b64-d5-e20-v2700-lr001-glove300'
-results_path: 'results/burnc'
+results_path: 'results/burnc/investigation'

@@ -51,6 +51,7 @@ datasource = cfg['datasource']
 num_epochs = int(cfg['num_epochs'])
 LSTM_LAYERS = int(cfg['LSTM_LAYERS'])
 dropout = float(cfg['dropout'])
+feat_dim = int(cfg['feat_dim'])
 
 # Filenames
 text_data = cfg['text_data']
@@ -77,7 +78,8 @@ class SpeechEncoder(nn.Module):
                  num_classes=2,
                  dropout=None,
                  include_lstm=True,
-                 tok_level_pred=False):
+                 tok_level_pred=False,
+                 feat_dim = 16):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -89,7 +91,7 @@ class SpeechEncoder(nn.Module):
         self.include_lstm = include_lstm
         self.tok_level_pred = tok_level_pred
 
-        self.feat_dim = 16
+        self.feat_dim = feat_dim
         self.in_channels = 1
         self.hidden_channels = 128
         self.out_channels = 256
@@ -247,6 +249,7 @@ with open(toktimes_data,'rb') as f:
 all_ids = list(feat_dict.keys())
 random.shuffle(all_ids)
 
+
 train_ids = all_ids[:int(len(all_ids)*train_per)]
 dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_per))]
 test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
@@ -282,7 +285,8 @@ model = SpeechEncoder(seq_len=pad_len,
                       num_classes=1,
                       dropout=dropout,
                       include_lstm=include_lstm,
-                      tok_level_pred=tok_level_pred)
+                      tok_level_pred=tok_level_pred,
+                      feat_dim=feat_dim)
 
 model.to(device)
 

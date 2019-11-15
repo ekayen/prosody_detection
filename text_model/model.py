@@ -29,7 +29,7 @@ model_type = 'simpleff'
 #model_type =
 model_type = cfg['model_type']
 
-
+print_preds = cfg['print_preds']
 print_dims = cfg['print_dims']
 print_every = int(cfg['print_every'])
 eval_every = int(cfg['eval_every'])
@@ -285,17 +285,20 @@ dev_accs = []
 # Add pre-training stats to output:
 train_losses.append(0)
 if not datasource == 'LIBRI':
-    _, train_acc, _ = evaluate(X_train, Y_train_str, model, device,model_type=model_type)
+    _, train_acc, _ = evaluate(X_train, Y_train_str, model, device,i_to_wd,model_type=model_type,print_preds=print_preds,timestep=0)
     #train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
     train_accs.append(train_acc)
 else:  # Don't do train acc every time for bigger datasets than SWBDNXT
     train_accs.append(0)
-_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device,model_type=model_type)
+_, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device,i_to_wd,model_type=model_type,print_preds=print_preds,timestep=0)
 #dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
 dev_accs.append(dev_acc)
 timesteps.append(0)
 
 random.seed(seed)
+
+
+#true_labels = []
 
 for epoch in range(num_epochs):
     # BATCH DATA
@@ -307,7 +310,10 @@ for epoch in range(num_epochs):
         input, labels = X_train_batches[i], Y_train_batches[i]
 
         if not (list(input.shape)[0] == 0):
-
+            """
+            if epoch==0:
+                true_labels.append((input,labels))
+            """
             timestep += 1
             model.zero_grad()
 
@@ -337,15 +343,32 @@ for epoch in range(num_epochs):
                 train_loss = (sum(recent_losses)/len(recent_losses)).item()
                 train_losses.append(train_loss)
                 if not datasource == 'LIBRI':
-                    _,train_acc,_ = evaluate(X_train, Y_train_str, model,device,model_type=model_type)
+                    _,train_acc,_ = evaluate(X_train, Y_train_str, model,device,i_to_wd,model_type=model_type,print_preds=print_preds,timestep=timestep)
                     #train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
                     train_accs.append(train_acc)
                 else: # Don't do train acc every time for bigger datasets than SWBDNXT
                     train_accs.append(0)
                 #dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
-                _,dev_acc,_ = evaluate(X_dev, Y_dev_str, model, device, model_type=model_type)
+                _,dev_acc,_ = evaluate(X_dev, Y_dev_str, model, device, i_to_wd,model_type=model_type,print_preds=print_preds,timestep=timestep)
                 dev_accs.append(dev_acc)
                 timesteps.append(timestep)
+    """
+    with open('../data/burnc/train_w_true_labels.tsv','w') as f:
+        for x,y in true_labels:
+            print(x)
+            print(y)
+            x = x.transpose(0, 1).tolist()
+            y = y.transpose(0, 1).tolist()
+            x = [list(np.trim_zeros(np.array(utt))) for utt in x]
+            tmp = []
+            for i,utt in enumerate(y):
+                tmp.append(utt[:len(x[i])])
+            y = tmp
+            for words,labels in zip(x,y):
+                words = [i_to_wd[i] for i in words]
+                labels = [str(i) for i in labels]
+                f.write(' '.join(words)+'\t'+' '.join(labels)+'\n')
+    """
 
 train_losses = pd.Series(train_losses)
 train_accs = pd.Series(train_accs)
@@ -360,11 +383,11 @@ print("==============================================")
 print("==============================================")
 print('After training, train:')
 #last_only_evaluate(X_train,Y_train_str,model,device)
-evaluate(X_train,Y_train_str,model,device,model_type=model_type)
+evaluate(X_train,Y_train_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
 
 print('After training, dev: ')
 #last_only_evaluate(X_dev, Y_dev_str,model,device)#,True)
-evaluate(X_dev, Y_dev_str,model,device,model_type=model_type)
+evaluate(X_dev, Y_dev_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
 
 
 

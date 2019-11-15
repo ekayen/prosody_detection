@@ -16,6 +16,7 @@ datasource: 'BURNC'
 num_epochs: 100
 LSTM_LAYERS: 2
 dropout: 0.5
+feat_dim: 16
 
 text_data: '../data/burnc/text2labels_breath_sent'
 speech_data: '../data/burnc/burnc_mfcc_dict_breath_sent.pkl'

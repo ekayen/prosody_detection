@@ -2,11 +2,39 @@ import numpy as np
 import pickle
 import torch
 from seqeval.metrics import accuracy_score, classification_report,f1_score
+import sys
+import yaml
+import os
 
+if len(sys.argv) < 2:
+    config = 'conf/burnc.yaml'
+else:
+    config = sys.argv[1]
 
-def evaluate(X, Y,mdl,device,model_type='lstm',to_file=False):
+with open(config,'r') as f:
+    cfg = yaml.load(f,yaml.FullLoader)
+
+results_path = cfg['results_path']
+
+def write_preds(output_preds,timestep,i_to_wd):
+    filename = 'predictions'
+    if timestep:
+        filename += str(timestep)
+    filename += '.tsv'
+    filepath = os.path.join(results_path,filename)
+    with open(filepath,'w') as f:
+        f.write('input' + '\t' + 'prediction' + '\t' + 'true' + '\n')
+        for x,y_pred,y in output_preds:
+            x = [i_to_wd[i] for i in x.tolist()]
+            if type(y_pred)==int:
+                y_pred = [y_pred]
+            y_pred = [str(i) for i in y_pred]
+            f.write(' '.join(x)+'\t'+' '.join(y_pred)+'\t'+' '.join(y)+'\n')
+
+def evaluate(X, Y,mdl,device,i_to_wd,model_type='lstm',to_file=False,print_preds=False,timestep=None):
     print("EVAL=================================================================================================")
     y_pred = []
+    output_preds = []
     with torch.no_grad():
         for i in range(len(X)):
             input = X[i].to(device)
@@ -23,11 +51,14 @@ def evaluate(X, Y,mdl,device,model_type='lstm',to_file=False):
                 pred = np.where(pred>0.5,1,0)
                 pred = np.squeeze(pred)
                 pred = pred.tolist()
+                if print_preds:
+                    output_preds.append((input,pred,Y[i]))
                 if type(pred) is int:
                     pred = [pred]
                 pred = [str(j) for j in pred]
 
                 y_pred.append(pred)
+    write_preds(output_preds,timestep,i_to_wd)
     print('Evaluation:')
 
     if to_file:

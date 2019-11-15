@@ -41,8 +41,8 @@ def load_text_file(txtfile):
     with open(txtfile, 'r',encoding="utf8", errors='ignore') as f:
         text = f.readlines()
         text = ' '.join(text).replace('\n', '').lower()
-        re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # TODO change to all end punc, not just period
-        #re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)'
+        #re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # default
+        re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)' # breath_tok
         m = re.findall(re_break, text)
         break_pairs.extend(m)
     #print(text)
@@ -57,7 +57,7 @@ def flatten_list(in_list):
                 flat_list.append(list_item)
     return flat_list
 
-def load_text_file_nltk(txtfile):
+def load_text_file_nltk(txtfile): # breath_sent
     from nltk.tokenize import sent_tokenize
     break_pairs = []
     with open(txtfile, 'r',encoding="utf8", errors='ignore') as f:
@@ -253,8 +253,8 @@ def main():
                             # Store breaks as pairs of words -- one on either side of the break.
                             # This requires less match-up between the words file and the text file,
                             # which are inconsistent with one another.
-                            #break_pairs = load_text_file_nltk(textfile)
-                            break_pairs = load_text_file(textfile)
+                            break_pairs = load_text_file_nltk(textfile) #breath_sent
+                            #break_pairs = load_text_file(textfile) # default or breath_tok
                             # Now use the break pairs to segment the text
                             utt_list = []
                             utt_token_times = []

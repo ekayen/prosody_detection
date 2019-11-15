@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import torch
+import pickle
 
 #### STEP 1: Find utterance keys and find what files and frames they correspond to
 burnc_keys_path = '../data/burnc/text2labels_breath_tok'
@@ -17,17 +18,14 @@ key2files = dict(zip(keys,files))
 #### Then drop the unused columns, make each row into an array, keyed by the frame,
 #### and then select the right frames for your utterance
 
-#df = pd.read_csv(os.path.join(data_path,'tmp.csv'),sep=';')
-
-
-
+key2feats = {}
 for key in keys:
     print(key)
     file = key2files[key]
     range = key2range[key]
-    df = pd.read_csv(os.path.join(data_path,file),sep=';')
-    print(df.columns)
-    df = df[['frameIndex',
+    orig_df = pd.read_csv(os.path.join(data_path,file),sep=';')
+    #print(df.columns)
+    df = orig_df[['frameIndex',
              'frameTime',
              'audspec_lengthL1norm_sma',
              'voicingFinalUnclipped_sma.1',
@@ -35,6 +33,8 @@ for key in keys:
              'HarmonicsToNoiseRatioACFLogdB_sma',
              'F0final_sma.1',
              'pcm_zcr_sma']]
+
+    import pdb;pdb.set_trace()
 
     #utt_df = df.loc[df['frameTime'] >= range[0] and df['frameTime'] <= range[1]]
     utt_df = df.loc[df['frameTime'] >= range[0]]
@@ -47,10 +47,18 @@ for key in keys:
                      'pcm_zcr_sma']]
 
     feat_tensors = []
-    for row in utt_df.iterrows():
-        tens = torch.tensor(row.tolist())
+    for i,row in utt_df.iterrows():
+        tens = torch.tensor(row.tolist()).view(1,len(row.tolist()))
         feat_tensors.append(tens)
 
+    key2feats[key] = torch.cat(feat_tensors,dim=0)
 
-    import pdb;pdb.set_trace()
+with open('../data/burnc/burnc_mfcc_dict.pkl','rb') as f:
+    mfcc_dict = pickle.load(f)
 
+
+
+
+
+with open('../data/burnc/burnc_breath_opensmilefeats.pkl','wb') as f:
+    pickle.dump(key2feats,f)
