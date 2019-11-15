@@ -2,7 +2,7 @@
 
 ## Feature extraction:
 
-Because of the particular way Kaldi features are generated, the preprocessing procedure is quite different depending on which feature extraction method you use. In the case of Kaldi, a lot of the text processing has to be done before feature extraction; in OpenSMILE, the text processing can happen at any point.
+Because of the particular way Kaldi features are generated, the preprocessing procedure is quite different depending on which feature extraction method you use. In the case of Kaldi, a lot of the text processing has to be done before feature extraction; in OpenSMILE, the text processing can happen at any point relative to speech feature extraction.
 
 1. Kaldi feature extraction
 
@@ -14,7 +14,7 @@ In order to do Kaldi feature extraction, you have to first get all of the data i
 
 `kaldi/egs/burnc`
 
-I recommend creating this subdir by copying the structure of the SWBD recipe, including the data, utils, and steps subdirs (the latter two should be symlinks).
+I recommend creating this subdir by copying the structure of the SWBD recipe, including the data, utils, and steps subdirs (the latter two should be symlinks). Put the actual data from BURNC into the data subdir, or adjust all filepaths in subsequent steps to point to wherever BURNC is located.
 
 First, you need to generate a certain number of files at the path `data/train` inside your subdir:
 
@@ -70,7 +70,7 @@ source path.sh
 ./local/cmvn.sh --cmd "$train_cmd" data/train exp/make_cmvn_dd/train mfcc_pitch
 
 ```
-(Note: I'm not sure if that last `cmvn.sh` script exists in the SWBD recipe? But it's just calling `apply_cmvn`)
+(Note: I'm not sure if that last `cmvn.sh` script exists in the SWBD recipe? But it's just calling `apply_cmvn` with the appropriate arguments.)
 
 Once you've done this, you still need to do the preprocessing of text, which you can do by calling `prep_nxt_text.py`
 
@@ -87,5 +87,4 @@ Then, using the config file that you'll find here once I'm done making it, call 
 ## Prepping data for the model:
 
 
-Most of the text preprocessing is done at this point. Just make sure you've copied over text2labels and utt2toktimes to the stars data directory (in the case of BURNC), and then run either `filter_feats_burnc.ipynb` or `filter_feats.ipynb` (for SWBD data).
-
+Most of the text preprocessing is already done at this point. Just make sure you've copied over text2labels and utt2toktimes to the stars data directory (in the case of BURNC), and then run either `filter_feats_burnc.ipynb` or `filter_feats.ipynb` (for SWBD data). If you've applied cmvn to SWBD and consequently have the features in text format, then use `filter_cmvn.ipynb` instead. These scripts will load the speech and text features into python dictionaries and then pickle them to make them easy for the model to subsequently use. In the case of SWBD, this step also drops a huge segment of the overall data
