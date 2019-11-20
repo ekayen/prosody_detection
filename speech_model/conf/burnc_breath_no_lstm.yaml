@@ -7,7 +7,7 @@ dev_per: 0.2
 
 tok_level_pred: True
 batch_size: 64
-include_lstm: True
+include_lstm: False
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
@@ -15,19 +15,19 @@ pad_len: 2150
 datasource: 'BURNC'
 num_epochs: 25
 LSTM_LAYERS: 2
-dropout: 0.5
+dropout: 0
 feat_dim: 16
 context: False
 
-seed: 153
+seed: 142
 
 text_data: '../data/burnc/text2labels_breath_tok'
 speech_data: '../data/burnc/burnc_mfcc_dict_breath_tok.pkl'
 #labels_data: '../data/burnc/burnc_last_label_dict_breath.pkl'
 labels_data: '../data/burnc/burnc_label_dict_breath_tok.pkl'
 toktimes_data: '../data/burnc/burnc_toktimes_breath_tok.pkl'
-model_name: 'cnn_lstm_seed_153_sanity'
-results_path: 'results/burnc/seq_tagging'
+model_name: 'cnn_only_seed_142'
+results_path: 'results/burnc/seq_tagging/cnn_only_crossval'
 
 
 train_params:

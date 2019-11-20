@@ -7,7 +7,7 @@ dev_per: 0.2
 
 tok_level_pred: True
 batch_size: 64
-include_lstm: False
+include_lstm: True
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
@@ -17,13 +17,16 @@ num_epochs: 25
 LSTM_LAYERS: 2
 dropout: 0.5
 feat_dim: 6
+context: False
+
+seed: 43
 
 text_data: '../data/burnc/text2labels_breath_tok'
 speech_data: '../data/burnc/burnc_breath_opensmilefeats.pkl'
 #labels_data: '../data/burnc/burnc_last_label_dict_breath.pkl'
 labels_data: '../data/burnc/burnc_label_dict_breath_tok.pkl'
 toktimes_data: '../data/burnc/burnc_toktimes_breath_tok.pkl'
-model_name: 'burnc_breath_opensmile'
+model_name: 'cnn_lstm_open_seed43'
 results_path: 'results/burnc/seq_tagging'
 
 
