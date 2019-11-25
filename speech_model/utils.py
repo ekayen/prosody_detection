@@ -69,7 +69,7 @@ class UttDatasetWithToktimes(UttDataset):
         toktimes = self.toktimes_dict[id]
         X = (toks,toktimes)
         y = self.label_dict[id]
-        return X,y
+        return id,X,y
 
 
 class UttDatasetWithId(UttDataset):
@@ -101,7 +101,7 @@ def plot_grad_flow(named_parameters):
     plt.title("Gradient flow")
     plt.grid(True)
 
-def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
+def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name,results_path):
     df = pd.DataFrame(dict(train_steps=train_steps,
                            train_losses=train_losses,
                            train_accs=train_accs,
@@ -115,7 +115,7 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name):
     df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
     df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
 
-    plt.savefig('results/{}.png'.format(model_name))
+    plt.savefig('{}/{}.png'.format(results_path,model_name))
     plt.show()
-    df.to_csv('results/{}.tsv'.format(model_name), sep='\t')
+    df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 

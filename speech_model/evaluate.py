@@ -12,9 +12,8 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
     dataloader = data.DataLoader(dataset, **dataloader_params)
     with torch.no_grad():
         counter = 0
-        for x,y in dataloader:
-            if tok_level_pred:
-                x,toktimes = x
+        for id,x,y in dataloader:
+            x,toktimes = x
             if x.shape[0]==dataloader_params['batch_size']:
                 x,y = x.to(device),y.to(device)
                 if recurrent:

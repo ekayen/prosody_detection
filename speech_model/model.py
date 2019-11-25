@@ -19,7 +19,7 @@ import random
 import sys
 import yaml
 import math
-random.seed(123)
+import numpy as np
 
 if len(sys.argv) < 2:
     #config = 'conf/swbd-utt.yaml'
@@ -52,6 +52,7 @@ num_epochs = int(cfg['num_epochs'])
 LSTM_LAYERS = int(cfg['LSTM_LAYERS'])
 dropout = float(cfg['dropout'])
 feat_dim = int(cfg['feat_dim'])
+context = cfg['context']
 
 # Filenames
 text_data = cfg['text_data']
@@ -65,7 +66,20 @@ results_file = '{}/{}.txt'.format(results_path,model_name)
 train_params = cfg['train_params']
 eval_params = cfg['eval_params']
 
+seed = cfg['seed']
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def set_seeds(seed):
+    print(f'setting seed to {seed}')
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
 
 class SpeechEncoder(nn.Module):
 
@@ -79,7 +93,8 @@ class SpeechEncoder(nn.Module):
                  dropout=None,
                  include_lstm=True,
                  tok_level_pred=False,
-                 feat_dim = 16):
+                 feat_dim=16,
+                 context=False):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -90,6 +105,7 @@ class SpeechEncoder(nn.Module):
         self.dropout = dropout
         self.include_lstm = include_lstm
         self.tok_level_pred = tok_level_pred
+        self.context = context
 
         self.feat_dim = feat_dim
         self.in_channels = 1
@@ -114,10 +130,8 @@ class SpeechEncoder(nn.Module):
                                   )
 
 
-
-
         # RNN VERSION:
-        if tok_level_pred or self.include_lstm:
+        if self.include_lstm:
 
             rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
             self.lstm = nn.LSTM(input_size=rnn_input_size,
@@ -135,19 +149,25 @@ class SpeechEncoder(nn.Module):
             self.fc = nn.Linear(self.lin_input_size, self.num_classes, bias=False)
 
         else:
+            if not tok_level_pred:
+                self.maxpool = nn.MaxPool1d(2)
+                self.cnn_output_size = math.floor(
+                    (self.seq_len - self.kernel1[0] + self.padding[0] * 2) / self.stride1[0]) + 1
+                self.cnn_output_size = math.floor(
+                    (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
+                self.cnn_output_size = int(((math.floor(self.cnn_output_size / 2) * self.out_channels)))
 
-            self.maxpool = nn.MaxPool1d(2)
-            self.cnn_output_size = math.floor(
-                (self.seq_len - self.kernel1[0] + self.padding[0] * 2) / self.stride1[0]) + 1
-            self.cnn_output_size = math.floor(
-                (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
-            self.cnn_output_size = int(((math.floor(self.cnn_output_size / 2) * self.out_channels)))
+                self.fc1_out = 1600
 
-            self.fc1_out = 1600
+                self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)#,dropout=self.dropout)
+                self.relu = nn.ReLU()
+                self.fc2 = nn.Linear(self.fc1_out, self.num_classes)
 
-            self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)
-            self.relu = nn.ReLU()
-            self.fc2 = nn.Linear(self.fc1_out, self.num_classes)
+            else:
+                self.fc1 = nn.Linear(self.out_channels,int(self.out_channels/2))
+                self.relu = nn.ReLU()
+                self.dropout = nn.Dropout(p=self.dropout)
+                self.fc2 = nn.Linear(int(self.out_channels/2),self.num_classes)
 
     def convolve_timestamps(self,timestamps):
         '''
@@ -171,14 +191,23 @@ class SpeechEncoder(nn.Module):
         return tokens
 
     @staticmethod
-    def token_flatten(toks):
+    def token_flatten(toks,context):
         output = []
         for tok in toks:
             summed = tok.sum(dim=2)
             output.append(summed)
             #print(tok.shape)
-            #print(summed.shape)
-        #print(len(output))
+            #maxed = tok.max(dim=2).values
+            #output.append(maxed)
+
+        if context:
+            mark_focus = True
+            tok_w_context = []
+            for i,tok in enumerate(output):
+                t_prev = torch.tensor(np.zeros(tok.shape),dtype=torch.float32).to(device) if i==0 else output[i-1]
+                t_next = torch.tensor(np.zeros(tok.shape),dtype=torch.float32).to(device) if i==len(output)-1 else output[i+1]
+                tok_w_context.append(torch.cat((t_prev,tok,t_next),dim=0))
+            out = tok_w_context
         out = torch.cat(output,dim=0)
         #print(out.shape)
         return out
@@ -190,41 +219,74 @@ class SpeechEncoder(nn.Module):
         W: number of frames in signal
         H: number of acoustic features in signal
         '''
-        toktimes = self.convolve_timestamps(toktimes)
+        if tok_level_pred:
+            toktimes = self.convolve_timestamps(toktimes)
         if VERBOSE: print('Input dims: ', x.view(x.shape[0], 1, x.shape[1], x.shape[2]).shape) # in: N x C x W x H
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         if VERBOSE: print('Dims after conv: ',x.shape) # in: N x C x W x H , where W is compressed and H=1
 
-
-
         if self.tok_level_pred:
-            x = SpeechEncoder.token_split(x,toktimes) # TODO make work with batches
-            x = SpeechEncoder.token_flatten(x) # TODO make work with batches
-            x = x.view(x.shape[0],x.shape[2],x.shape[1]) # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
-            x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
-            x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
-            return x,hidden
 
-        elif self.include_lstm:
-            x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
-            if VERBOSE: print('Dims going into lstm: ', x.shape)
-            x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
-            if VERBOSE: print('Dims after lstm:', x.shape) # here: W x N x lstm_hidden_size
-            x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
-            #x = torch.mean(x,0)
-            if VERBOSE: print('Dims after compression:', x.shape)
-            x = self.fc(x.view(1, x.shape[0], self.lin_input_size))  # in 1 x N? x lstm_hidden_size
-            if VERBOSE: print('Dims after fc:', x.shape)
-            return x,hidden
+            if self.include_lstm:
+                TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
+                if TOKENIZE_FIRST:
+                    x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
+                    x = SpeechEncoder.token_flatten(x, self.context)  # TODO make work with batches
+                    x = x.view(x.shape[0], x.shape[2], x.shape[
+                        1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
+                    x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
+                    x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
+                    return x,hidden
+                else:
+
+                    # NOTE: this path is quite inefficiently written right now. If you continue with this model, rewrite.
+                    # (The main culprit is the two reshapings to make it cooperate with the LSTM which isn't batch-first
+                    # that is easy enough to change if this is going to be used more heavily, but didn't want to change the
+                    # constructor function for the sake of this version of the model, if it's not gonna be used a lot)
+
+                    x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0,1).contiguous()  # here: W x N x C
+                    x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
+                    x = x.transpose(0,1).transpose(1,2).contiguous()
+                    x = x.view(x.shape[0],x.shape[1],x.shape[2],1)
+                    x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
+                    x = SpeechEncoder.token_flatten(x, self.context)  # TODO make work with batches
+                    x = x.view(x.shape[0],x.shape[2],x.shape[1])
+                    x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
+
+                    return x,hidden
+
+
+            else:
+                x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
+                x = SpeechEncoder.token_flatten(x, self.context)  # TODO make work with batches
+                x = x.view(x.shape[0], x.shape[2], x.shape[1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
+                x = self.fc1(x)
+                x = self.relu(x)
+                x = self.dropout(x)
+                x = self.fc2(x)
+                return x,hidden
+
         else:
-            x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
-            if VERBOSE: print('Dims after pooling: ', x.shape)
-            x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2]))
-            x = self.relu(x)
-            if VERBOSE: print('Dims after fc1:', x.shape)
-            x = self.fc2(x)
-            if VERBOSE: print('Dims after fc2:', x.shape)
-            return x, hidden
+            if self.include_lstm:
+                x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
+                if VERBOSE: print('Dims going into lstm: ', x.shape)
+                x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
+                if VERBOSE: print('Dims after lstm:', x.shape) # here: W x N x lstm_hidden_size
+                x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
+                #x = torch.mean(x,0)
+                if VERBOSE: print('Dims after compression:', x.shape)
+                x = self.fc(x.view(1, x.shape[0], self.lin_input_size))  # in 1 x N? x lstm_hidden_size
+                if VERBOSE: print('Dims after fc:', x.shape)
+                return x,hidden
+            else:
+                x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
+                if VERBOSE: print('Dims after pooling: ', x.shape)
+                x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2]))
+                x = self.relu(x)
+                if VERBOSE: print('Dims after fc1:', x.shape)
+                x = self.fc2(x)
+                if VERBOSE: print('Dims after fc2:', x.shape)
+                return x, hidden
 
     def init_hidden(self,batch_size):
         if self.bidirectional:
@@ -245,6 +307,8 @@ with open(speech_data,'rb') as f:
 with open(toktimes_data,'rb') as f:
     toktimes_dict = pickle.load(f)
 
+set_seeds(seed)
+
 #all_ids = list(labels_dict.keys())
 all_ids = list(feat_dict.keys())
 random.shuffle(all_ids)
@@ -254,7 +318,7 @@ train_ids = all_ids[:int(len(all_ids)*train_per)]
 dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_per))]
 test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
 
-
+"""
 if tok_level_pred:
     trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
 else:
@@ -267,16 +331,21 @@ elif LENGTH_ANALYSIS:
 else:
     devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
 
+"""
+trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
+devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, pad_len)
+
 #######################
 #for key in feat_dict:
 #    assert(feat_dict[key].shape[1]==16)
 #######################
 
-
 traingen = data.DataLoader(trainset, **train_params)
 
 print('done')
 print('Building model ...')
+
+set_seeds(seed)
 
 model = SpeechEncoder(seq_len=pad_len,
                       batch_size=train_params['batch_size'],
@@ -286,7 +355,8 @@ model = SpeechEncoder(seq_len=pad_len,
                       dropout=dropout,
                       include_lstm=include_lstm,
                       tok_level_pred=tok_level_pred,
-                      feat_dim=feat_dim)
+                      feat_dim=feat_dim,
+                      context=context)
 
 model.to(device)
 
@@ -318,12 +388,21 @@ plt_time.append(0)
 
 print('done')
 
+set_seeds(seed)
+
 print('Training model ...')
+max_grad = float("-inf")
+min_grad = float("inf")
 for epoch in range(num_epochs):
-    for (batch,toktimes),labels in traingen:
+    for id,(batch,toktimes),labels in traingen:
+
         model.train()
         batch,labels = batch.to(device),labels.to(device)
         if not batch.shape[0] < train_params['batch_size']:
+
+            #print("+++++++++++++++++")
+            #print(f'timestep {timestep}')
+
             model.zero_grad()
             hidden = model.init_hidden(train_params['batch_size'])
             output,_ = model(batch,toktimes,hidden)
@@ -332,17 +411,43 @@ for epoch in range(num_epochs):
                 print('labels shape: ',labels.shape)
                 print('output: ',output.cpu().detach().squeeze())
                 print('true labels: ',labels.float())
-            #print('output: ', output.cpu().detach().squeeze().shape)
 
-            #print('output shape: ', output.cpu().detach().shape)
-            #print('labels shape: ', labels.cpu().detach().shape)
-            #import pdb;pdb.set_trace()
+            """
+            print(id)
+            print('in')
+            print(batch)
+            print('out')
+            print(output)
+            print('==============================================')
+            """
             if tok_level_pred:
-                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())  # With RNN
+                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())
             else:
-                loss = criterion(output.view(train_params['batch_size']), labels.float())  # With RNN
+                loss = criterion(output.view(train_params['batch_size']), labels.float())
             loss.backward()
             plot_grad_flow(model.named_parameters())
+
+
+            """
+            # Check for exploding gradients
+            for n, p in model.named_parameters():
+                if (p.requires_grad) and ("bias" not in n):
+                    curr_min, curr_max = p.grad.min(), p.grad.max()
+                    if curr_min <= min_grad:
+                        min_grad = curr_min
+                    if curr_max >= max_grad:
+                        max_grad = curr_max
+            print(f'min/max grad: {min_grad}, {max_grad}')
+            """
+            #import pdb;pdb.set_trace()
+
+
+            if torch.sum(torch.isnan(batch)).item() > 0:
+                import pdb;pdb.set_trace()
+
+
+            torch.nn.utils.clip_grad_norm(model.parameters(), 5)
+
             optimizer.step()
             recent_losses.append(loss.detach())
 
@@ -373,7 +478,6 @@ for epoch in range(num_epochs):
             timestep += 1
         else:
             print('Batch of size',batch.shape,'rejected')
-            #print(batch)
 
 
 print('done')
@@ -381,5 +485,5 @@ print('done')
 process = psutil.Process(os.getpid())
 print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
-plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,model_name)
+plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,model_name,results_path)
 
