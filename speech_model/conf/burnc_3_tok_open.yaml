@@ -13,21 +13,21 @@ learning_rate: 0.001
 hidden_size: 512
 pad_len: 2150
 datasource: 'BURNC'
-num_epochs: 25
+num_epochs: 50
 LSTM_LAYERS: 2
-dropout: 0.5
+dropout: 0.2
 feat_dim: 7
 context: False
 
-seed: 120
+seed: 131
 
 text_data: '../data/burnc/span2tok_open.pkl'
-speech_data: '../data/burnc/span2feat_open_bitmark.pkl'
+speech_data: '../data/burnc/span2feat_bitmark_open.pkl'
 #labels_data: '../data/burnc/burnc_last_label_dict_breath.pkl'
 labels_data: '../data/burnc/span2lbl_open.pkl'
 toktimes_data: '../data/burnc/span2toktimes_open.pkl'
-model_name: 'cnn_only_3tok_open_bitmark_seed120'
-results_path: 'results/burnc'
+model_name: 'cnn_only_3tok_open_bitmark_seed131'
+results_path: 'results/burnc/cnn_only_3tok_open_bitmark_cv'
 
 
 train_params:

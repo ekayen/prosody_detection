@@ -13,9 +13,9 @@ from string import punctuation
 import nltk
 nltk.download('punkt')
 
-TOKENIZATION_METHOD = 'default'
+#TOKENIZATION_METHOD = 'default'
 #TOKENIZATION_METHOD = 'breath_sent'
-#TOKENIZATION_METHOD = 'breath_tok'
+TOKENIZATION_METHOD = 'breath_tok'
 
 def text_reg(word):
     remove = punctuation.replace('-','').replace('<','').replace('>','')
@@ -186,24 +186,26 @@ def write_utt2toktime(utt2toktimes,utterances):
             f.write(utt+"\t"+' '.join([str(tim) for tim in utt2toktimes[utt]]))
             f.write("\n")
 
-def make_three_tok_spans(para_id,words,tones):
+def make_three_tok_spans(para_id,words,tones,timestamps):
     spans = []
     padded_words = ['<PAD>'] + words + ['<PAD>']
     padded_tones = [0] + tones + [0]
+    timestamps = [timestamps[0]] + timestamps + [timestamps[-1]]
     for i in range(1,len(padded_words)-1):
         print(i)
         print(padded_words[i-1])
         print(padded_words[i])
         print(padded_words[i+1])
         print(padded_tones[i])
-        spans.append(((padded_words[i-1],padded_words[i],padded_words[i+1]),padded_tones[i]))
+        toktimes = (timestamps[i-1],timestamps[i],timestamps[i+1],timestamps[i+2])
+        spans.append((para_id,(padded_words[i-1],padded_words[i],padded_words[i+1]),padded_tones[i],toktimes))
     return spans
 
 
 def write_three_tok_spans(spans):
     with open(os.path.join(out_dir, 'spans'), 'w') as f:
-        for span,label in spans:
-            f.write(' '.join(span)+'\t'+str(label))
+        for para_id,span,label,toktimes in spans:
+            f.write(para_id+'\t'+' '.join(span)+'\t'+str(label)+'\t'+' '.join([str(tim) for tim in toktimes]))
             f.write('\n')
 
 def main():
@@ -216,7 +218,7 @@ def main():
     utt2recording = {}
     recording2file = {}
     utt2startend = {} # store start and end timestamp of utterance
-    utt2tokentimes = {} # store start time of each token (not necessary for kaldi, but plan to use in model
+    utt2tokentimes = {} # store start time of each token (not necessary for kaldi, but plan to use in model)
     utt2tones = {}
     speakers = ['f1a','f2b','f3a','m1b','m2b','m4b']
     # Go through all the datafiles
@@ -266,7 +268,7 @@ def main():
                                 import pdb;pdb.set_trace()
 
                             # While you're here, make 3-token spans for replicating Stehwien et al.:
-                            three_tok_spans.extend(make_three_tok_spans(para_id,words,tones_per_word))
+                            three_tok_spans.extend(make_three_tok_spans(para_id,words,tones_per_word,timestamps))
 
                             # Open the text file and break on sentence breaks followed by breaths.
                             # Store breaks as pairs of words -- one on either side of the break.

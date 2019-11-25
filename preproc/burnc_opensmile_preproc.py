@@ -9,7 +9,7 @@ data_path = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
 
 keys = pd.read_csv(burnc_keys_path,sep='\t',header=None)[0].tolist()
 ranges = [(float(key.split('-')[1]),float(key.split('-')[2])) for key in keys]
-files = [key.split('-')[0]+'.csv' for key in keys]
+files = [key.split('-')[0]+'.is13.csv' for key in keys]
 
 key2range = dict(zip(keys,ranges))
 key2files = dict(zip(keys,files))
@@ -18,46 +18,50 @@ key2files = dict(zip(keys,files))
 #### Then drop the unused columns, make each row into an array, keyed by the frame,
 #### and then select the right frames for your utterance
 
+#tmp = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/tmp.csv'
+tmp = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc/f3ast2p1.csv'
+
+df = pd.read_csv(tmp,sep=';')
+
+"""
+keep_feats = ['audspec_lengthL1norm_sma',
+              'voicingFinalUnclipped_sma.1',
+              'pcm_RMSenergy_sma',
+              'HarmonicsToNoiseRatioACFLogdB_sma',
+              'F0final_sma.1',
+              'pcm_zcr_sma']
+"""
+keep_feats = ['audspec_lengthL1norm_sma',
+              'voicingFinalUnclipped_sma',
+              'pcm_RMSenergy_sma',
+              'logHNR_sma',
+              'F0final_sma',
+              'pcm_zcr_sma']
+
 key2feats = {}
 for key in keys:
+    #key = 'm1brrlp5-0042.700-0051.640' # for debugging only
     print(key)
     file = key2files[key]
     range = key2range[key]
     orig_df = pd.read_csv(os.path.join(data_path,file),sep=';')
     #print(df.columns)
-    df = orig_df[['frameIndex',
-             'frameTime',
-             'audspec_lengthL1norm_sma',
-             'voicingFinalUnclipped_sma.1',
-             'pcm_RMSenergy_sma',
-             'HarmonicsToNoiseRatioACFLogdB_sma',
-             'F0final_sma.1',
-             'pcm_zcr_sma']]
+    df = orig_df[['frameTime']+keep_feats]
 
-    import pdb;pdb.set_trace()
+
 
     #utt_df = df.loc[df['frameTime'] >= range[0] and df['frameTime'] <= range[1]]
     utt_df = df.loc[df['frameTime'] >= range[0]]
     utt_df = utt_df.loc[utt_df['frameTime'] <= range[1]]
-    utt_df = utt_df[['audspec_lengthL1norm_sma',
-                     'voicingFinalUnclipped_sma.1',
-                     'pcm_RMSenergy_sma',
-                     'HarmonicsToNoiseRatioACFLogdB_sma',
-                     'F0final_sma.1',
-                     'pcm_zcr_sma']]
+    utt_df_red = utt_df[keep_feats]
+
 
     feat_tensors = []
-    for i,row in utt_df.iterrows():
+    for i,row in utt_df_red.iterrows():
         tens = torch.tensor(row.tolist()).view(1,len(row.tolist()))
         feat_tensors.append(tens)
 
     key2feats[key] = torch.cat(feat_tensors,dim=0)
-
-with open('../data/burnc/burnc_mfcc_dict.pkl','rb') as f:
-    mfcc_dict = pickle.load(f)
-
-
-
 
 
 with open('../data/burnc/burnc_breath_opensmilefeats.pkl','wb') as f:
