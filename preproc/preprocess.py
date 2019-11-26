@@ -1,5 +1,5 @@
-from burnc_data_prep import gen_kaldi_inputs
-from paths import burnc_dir,kaldi_dir
+from burnc_data_prep import burnc_text_preproc
+from paths import burnc_dir,kaldi_dir,speakers_file
 """
     {paragraph_id:
         {utterances:
@@ -45,14 +45,14 @@ def gen_feat_dict(source='burnc',feats='pros'):
     :param source: corpus to use ('burnc' or 'swbd')
     :return: a nested dictionary with the format shown above that has all necessary features and info.
     '''
-
     paragraphs = []
 
 
 def main():
-    speakers_file = 'burnc_speakers.txt'
-    gen_kaldi_inputs(burnc_dir,kaldi_dir,speakers_file)
+    burnc_text_preproc(burnc_dir,kaldi_dir,speakers_file)
 
 
 if __name__ == "__main__":
     main()
+
+

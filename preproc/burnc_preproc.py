@@ -193,8 +193,21 @@ def write_three_tok_spans(spans,out_dir):
             f.write(para_id+'\t'+' '.join(span)+'\t'+str(label)+'\t'+' '.join([str(tim) for tim in toktimes]))
             f.write('\n')
 
-def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
+def write_kaldi_inputs(out_dir,utterances,utt2startend,utt2recording,\
+                       recording2file,utt2text,utt2tones,utt2spk,utt2tokentimes,\
+                       three_tok_spans):
+    write_segments(utt2startend,utt2recording,utterances,out_dir=out_dir)
+    write_wav_scp(recording2file,utterances,out_dir=out_dir)
+    write_text(utt2text,utterances,out_dir=out_dir)
+    write_utt2spk(utt2spk,utterances,out_dir=out_dir)
+    write_text2labels(utt2text,utt2tones,utterances,out_dir=out_dir)
+    write_utt2toktime(utt2tokentimes,utterances,out_dir=out_dir)
+    write_three_tok_spans(three_tok_spans,out_dir=out_dir)
+
+
+def burnc_text_preproc(burnc_dir,out_dir,speakers_file):
     # Segment text into sentence-level utterances
+    para_ids = []
     three_tok_spans = []
     speakers_used = set()
     utterances = []
@@ -205,6 +218,14 @@ def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
     utt2startend = {} # store start and end timestamp of utterance
     utt2tokentimes = {} # store start time of each token (not necessary for kaldi, but plan to use in model)
     utt2tones = {}
+
+    # TODO adding the following 26 Nov
+    para2utt = {}
+    utt2toks = {}
+    tok2tones = {}
+    tok2times = {}
+    tok2tokstr = {}
+
     with open(speakers_file,'r') as f:
         speakers = [line.strip() for line in f.readlines()]
     # Go through all the datafiles
@@ -216,6 +237,7 @@ def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
                 # For each distinct paragraph, pull out the word file, text file, and recording file
                 if '.wrd' in file:
                     para_id = file.split('.')[0]
+                    para_ids.append(para_id)
                     print(para_id)
                     wordfile = os.path.join(subdir,file)
                     textfile = os.path.join(subdir,para_id+'.txt')
@@ -281,15 +303,43 @@ def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
                                     if words[idx].strip() == break_pair[0].strip() and \
                                         words[idx+1].strip() == break_pair[1].strip():
 
-                                        utt_list.append(words[:idx+1])
-                                        utt_token_times.append(timestamps[:idx+2])
-                                        utt_labels.append(tones_per_word[:idx+1])
-
                                         # Make an utterance id: paragraph id + start time + end time
-                                        start_time = timestamps[0]
-                                        end_time = timestamps[idx+1]
-                                        utt_ids.append(para_id+'-'+'%08.3f'%start_time+'-'+ '%08.3f'%end_time)
-                                        utt_start_end.append((start_time,end_time))
+                                        utt_start = timestamps[0]
+                                        utt_end = timestamps[idx + 1]
+                                        utt_id = para_id+'-'+'%08.3f'%utt_start+'-'+ '%08.3f'%utt_end
+
+                                        utt_ids.append(utt_id)
+
+                                        # Make dict of utt: (start time, end time)
+                                        utt_start_end.append((utt_start,utt_end))
+
+                                        # Make dict of para_id: [utt1, utt2, ...]
+                                        if not para_id in para2utt:
+                                            para2utt[para_id] = [utt_id]
+                                        else:
+                                            para2utt[para_id].append(utt_id)
+
+                                        curr_toks = words[:idx+1]
+                                        curr_toktimes = timestamps[:idx+2]
+                                        curr_tones = tones_per_word[:idx+1]
+                                        for i,tok in enumerate(curr_toks):
+                                            tok_start = curr_toktimes[i]
+                                            tok_end = curr_toktimes[i+1]
+                                            tok_id = para_id+'-tok-'+'%08.3f'%tok_start+'-'+ '%08.3f'%tok_end
+                                            tok2tokstr[tok_id] = tok
+                                            tok2times[tok_id] = (tok_start,tok_end)
+                                            tok2tones[tok_id] = curr_tones[i]
+                                            if not utt_id in utt2toks:
+                                                utt2toks[utt_id] = [tok_id]
+                                            else:
+                                                utt2toks[utt_id].append(tok_id)
+
+
+                                        utt_list.append(curr_toks)
+                                        utt_token_times.append(curr_toktimes)
+                                        utt_labels.append(curr_tones)
+
+
 
                                         # Chop the consumed words/times off the front of those lists
                                         words = words[idx+1:]
@@ -300,13 +350,33 @@ def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
                                     else:
                                         idx += 1
 
-                            utt_list.append(words)
-                            utt_token_times.append(timestamps)
-                            start_time = timestamps[0]
-                            end_time = timestamps[-1]
-                            utt_ids.append(para_id + '-' + '%08.3f' % start_time + '-' + '%08.3f' % end_time)
-                            utt_start_end.append((start_time, end_time))
+
+                            # Last utterance:
+                            # TODO add word stuff here or somehow take this bit out
+                            curr_toks = words
+                            curr_toktimes = timestamps
+                            curr_tones = tones_per_word
+
+                            utt_list.append(curr_toks)
+                            utt_token_times.append(curr_toktimes)
+                            utt_start = timestamps[0]
+                            utt_end = timestamps[-1]
+                            utt_id = para_id + '-' + '%08.3f' % utt_start + '-' + '%08.3f' % utt_end
+                            utt_ids.append(utt_id)
+                            utt_start_end.append((utt_start, utt_end))
                             utt_labels.append(tones_per_word)
+
+                            for i, tok in enumerate(curr_toks):
+                                tok_start = curr_toktimes[i]
+                                tok_end = curr_toktimes[i + 1]
+                                tok_id = para_id + '-tok-' + '%08.3f' % tok_start + '-' + '%08.3f' % tok_end
+                                tok2tokstr[tok_id] = tok
+                                tok2times[tok_id] = (tok_start, tok_end)
+                                tok2tones[tok_id] = curr_tones[i]
+                                if not utt_id in utt2toks:
+                                    utt2toks[utt_id] = [tok]
+                                else:
+                                    utt2toks[utt_id].append(tok)
 
                             for i,utt_id in enumerate(utt_ids):
                                 utt2text[utt_id] = ' '.join(utt_list[i])
@@ -316,14 +386,23 @@ def gen_kaldi_inputs(burnc_dir,out_dir,speakers_file):
                                 utt2tokentimes[utt_id] = utt_token_times[i]
                                 utt2tones[utt_id] = utt_labels[i]
 
+
     utterances = sorted(list(utt2text.keys()))
-    write_segments(utt2startend,utt2recording,utterances,out_dir=out_dir)
-    write_wav_scp(recording2file,utterances,out_dir=out_dir)
-    write_text(utt2text,utterances,out_dir=out_dir)
-    write_utt2spk(utt2spk,utterances,out_dir=out_dir)
-    write_text2labels(utt2text,utt2tones,utterances,out_dir=out_dir)
-    write_utt2toktime(utt2tokentimes,utterances,out_dir=out_dir)
-    write_three_tok_spans(three_tok_spans,out_dir=out_dir)
+    #tokens = []
+    utt2text
+    utt2spk
+    utt2recording
+    utt2startend
+    utt2tokentimes
+    utt2tones
+    three_tok_spans
+    utt_ids
+
+    para2utt
+
+    write_kaldi_inputs(out_dir, utterances, utt2startend, utt2recording, \
+                      recording2file, utt2text, utt2tones, utt2spk, utt2tokentimes, \
+                      three_tok_spans)
 
 
 
@@ -331,7 +410,7 @@ def main():
     speakers_file = 'burnc_speakers.txt'
     burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
     out_dir = 'tmp'
-    gen_kaldi_inputs(burnc_dir,out_dir,speakers_file)
+    burnc_text_preproc(burnc_dir,out_dir,speakers_file)
 
 
 if __name__ == "__main__":
