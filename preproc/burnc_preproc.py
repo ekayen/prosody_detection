@@ -18,13 +18,13 @@ import torch
 TOKENIZATION_METHOD = 'breath_tok'
 
 class BurncPreprocessor:
-    def __init__(self,burnc_dir,pros_feat_dir,mfcc_dir,out_dir,speakers_file,tok_method='breath_tok',filter_para=['f2bs02p1']):
+    def __init__(self,burnc_dir,pros_feat_dir,mfcc_file,out_dir,speakers_file,tok_method='breath_tok',filter_para=['f2bs02p1']):
 
         self.burnc_dir = burnc_dir
         self.out_dir = out_dir
         self.speakers_file = speakers_file
         self.pros_feat_dir = pros_feat_dir
-        self.mfcc_dir = mfcc_dir
+        self.mfcc_file = mfcc_file
         self.tok_method = tok_method
         self.filter_para = filter_para
 
@@ -388,6 +388,17 @@ class BurncPreprocessor:
         self.load_opensmile_feats()
         self.load_kaldi_feats()
 
+
+    def get_tok_feats(self,df,start,end):
+        tok_df = df.loc[df['frameTime'] >= start]
+        tok_df = tok_df.loc[tok_df['frameTime'] < end]
+        tok_df = tok_df[self.pros_feat_names]
+        feat_tensors = []
+        for i, row in tok_df.iterrows():
+            tens = torch.tensor(row.tolist()).view(1, len(row.tolist()))
+            feat_tensors.append(tens)
+        return torch.cat(feat_tensors,dim=0)
+
     def load_opensmile_feats(self):
         print('loading pros feats...')
         for para in self.para2utt:
@@ -399,17 +410,31 @@ class BurncPreprocessor:
                         print(tok)
                         tok_start = self.tok2times[tok][0]
                         tok_end = self.tok2times[tok][1]
-                        tok_df = feat_df.loc[feat_df['frameTime'] >= tok_start]
-                        tok_df = tok_df.loc[tok_df['frameTime'] < tok_end]
-                        tok_df = tok_df[self.pros_feat_names]
-                        feat_tensors = []
-                        for i,row in tok_df.iterrows():
-                            tens = torch.tensor(row.tolist()).view(1,len(row.tolist()))
-                            feat_tensors.append(tens)
-                        self.tok2prosfeats[tok] = torch.cat(feat_tensors,dim=0)
+                        self.tok2prosfeats[tok] = self.get_tok_feats(feat_df,tok_start,tok_end)
 
     def load_kaldi_feats(self):
-        pass
+        for utt_id,mat in kaldi_io.read_mat_scp(self.mfcc_file):
+
+            if utt_id in self.utt_ids:
+                para_id = self.utt2para[utt_id]
+                if not para_id in self.filter_para:
+                    toktimes = self.utt2tokentimes[utt_id]
+                    tok_idx = [int(round(tim*100)) for tim in toktimes]
+                    offset = tok_idx[0]
+                    tok_idx = [tim-offset for tim in tok_idx] # TODO pause here to go for the evening, but these should be the right indices now
+                    for i in range(len(tok_idx)-1):
+                        tok_start = tok_idx[i]
+                        tok_end = tok_idx[i+1]
+
+                        tok_end = mat.shape[0] if tok_end > mat.shape[0] else tok_end
+                        tok_id = self.utt2toks[utt_id][i]
+                        tok_feats = torch.tensor(mat[tok_start:tok_end,:])
+                        self.tok2mfccfeats[tok_id] = tok_feats
+                        #if utt_id == 'm2btrlp7-0014.340-0017.170':
+                        #    import pdb;pdb.set_trace()
+
+
+
 
 
 
@@ -425,7 +450,7 @@ def main():
     proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,out_dir,speakers_file)
     proc.text_preproc()
     #import pdb;pdb.set_trace()
-    proc.acoustic_preproc()
+    proc.load_kaldi_feats()
     import pdb;pdb.set_trace()
 
 
