@@ -1,4 +1,4 @@
-from burnc_data_prep import burnc_text_preproc
+from burnc_preproc import BurncPreprocessor
 from paths import burnc_dir,kaldi_dir,speakers_file
 """
     {paragraph_id:
@@ -49,8 +49,14 @@ def gen_feat_dict(source='burnc',feats='pros'):
 
 
 def main():
-    burnc_text_preproc(burnc_dir,kaldi_dir,speakers_file)
+    speakers_file = 'burnc_speakers.txt'
+    burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
+    pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
+    mfcc_dir = '/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
+    out_dir = 'tmp'
 
+    proc = BurncPreprocessor(burnc_dir, out_dir, pros_feat_dir, mfcc_dir, speakers_file)
+    proc.text_preproc()
 
 if __name__ == "__main__":
     main()

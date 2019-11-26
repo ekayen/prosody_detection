@@ -5,23 +5,35 @@ Modeled on Herman Kamper's recipe for Mboshi parallel data
 """
 
 import re
-import glob
 import os
-import subprocess
 from string import punctuation
 import nltk
+import kaldi_io
 nltk.download('punkt')
+import pandas as pd
+import torch
 
 #TOKENIZATION_METHOD = 'default'
 #TOKENIZATION_METHOD = 'breath_sent'
 TOKENIZATION_METHOD = 'breath_tok'
 
 class BurncPreprocessor:
-    def __init__(self,burnc_dir,out_dir,speakers_file):
+    def __init__(self,burnc_dir,pros_feat_dir,mfcc_dir,out_dir,speakers_file,tok_method='breath_tok',filter_para=['f2bs02p1']):
 
         self.burnc_dir = burnc_dir
         self.out_dir = out_dir
         self.speakers_file = speakers_file
+        self.pros_feat_dir = pros_feat_dir
+        self.mfcc_dir = mfcc_dir
+        self.tok_method = tok_method
+        self.filter_para = filter_para
+
+        self.pros_feat_names = ['audspec_lengthL1norm_sma',
+                           'voicingFinalUnclipped_sma',
+                           'pcm_RMSenergy_sma',
+                           'logHNR_sma',
+                           'F0final_sma',
+                           'pcm_zcr_sma']
 
         self.para_ids = []
         self.three_tok_spans = []
@@ -38,10 +50,14 @@ class BurncPreprocessor:
 
         # adding the following 26 Nov
         self.para2utt = {}
+        self.utt2para = {}
         self.utt2toks = {}
-        self.tok2tones = {}
+        self.tok2utt = {}
+        self.tok2tone = {}
         self.tok2times = {}
         self.tok2tokstr = {}
+        self.tok2prosfeats = {}
+        self.tok2mfccfeats = {}
 
     @staticmethod
     def text_reg(word):
@@ -65,15 +81,14 @@ class BurncPreprocessor:
             else:
                 return None,None,None
 
-    @staticmethod
-    def load_text_file(txtfile):
+    def load_text_file(self,txtfile):
         break_pairs = []
         with open(txtfile, 'r',encoding="utf8", errors='ignore') as f:
             text = f.readlines()
             text = ' '.join(text).replace('\n', '').lower()
-            if TOKENIZATION_METHOD=='default':
+            if self.tok_method=='default':
                 re_break = r'([a-zA-z]+)[\.\?!][\s]+brth[\s]+([a-zA-z]+)'  # default
-            elif TOKENIZATION_METHOD=='breath_tok':
+            elif self.tok_method=='breath_tok':
                 re_break = r'([a-zA-z]+)[\s]*[\.\?!]?[\s]+brth[\s]+([a-zA-z]+)' # breath_tok
             m = re.findall(re_break, text)
             break_pairs.extend(m)
@@ -252,6 +267,7 @@ class BurncPreprocessor:
             self.para2utt[para_id] = [utt_id]
         else:
             self.para2utt[para_id].append(utt_id)
+        self.utt2para[utt_id] = para_id
 
         curr_toks = words[:idx + 1]
         curr_toktimes = timestamps[:idx + 2]
@@ -262,11 +278,12 @@ class BurncPreprocessor:
             tok_id = para_id + '-tok-' + '%08.3f' % tok_start + '-' + '%08.3f' % tok_end
             self.tok2tokstr[tok_id] = tok
             self.tok2times[tok_id] = (tok_start, tok_end)
-            self.tok2tones[tok_id] = curr_tones[i]
+            self.tok2tone[tok_id] = curr_tones[i]
             if not utt_id in self.utt2toks:
                 self.utt2toks[utt_id] = [tok_id]
             else:
                 self.utt2toks[utt_id].append(tok_id)
+            self.tok2utt[tok_id] = utt_id
 
         self.utt2text[utt_id] = ' '.join(curr_toks)
         self.utt2spk[utt_id] = spkr
@@ -289,8 +306,6 @@ class BurncPreprocessor:
                     # For each distinct paragraph, pull out the word file, text file, and recording file
                     if '.wrd' in file:
                         para_id = file.split('.')[0]
-                        self.para_ids.append(para_id)
-                        print(para_id)
                         wordfile = os.path.join(subdir,file)
                         textfile = os.path.join(subdir,para_id+'.txt')
                         if not os.path.exists(textfile):
@@ -309,6 +324,8 @@ class BurncPreprocessor:
 
                             if words and time2tone:
 
+                                self.para_ids.append(para_id)
+                                print(para_id)
 
                                 # Load recording file
                                 recordingid = para_id
@@ -333,10 +350,10 @@ class BurncPreprocessor:
                                 # Store breaks as pairs of words -- one on either side of the break.
                                 # This requires less match-up between the words file and the text file,
                                 # which are inconsistent with one another.
-                                if TOKENIZATION_METHOD=='breath_sent':
+                                if self.tok_method=='breath_sent':
                                     break_pairs = BurncPreprocessor.load_text_file_nltk(textfile) #breath_sent
-                                elif TOKENIZATION_METHOD=='default' or TOKENIZATION_METHOD=='breath_tok':
-                                    break_pairs = BurncPreprocessor.load_text_file(textfile) # default or breath_tok
+                                elif self.tok_method=='default' or self.tok_method=='breath_tok':
+                                    break_pairs = self.load_text_file(textfile) # default or breath_tok
                                 else:
                                     print('Tokenization method not given or not recognized')
                                     import pdb;pdb.set_trace()
@@ -354,44 +371,6 @@ class BurncPreprocessor:
                                             words[idx+1].strip() == break_pair[1].strip():
 
                                             self.process_utt(words, timestamps, para_id, sp, recordingid, tones_per_word, idx)
-                                            """
-    
-                                            # Make an utterance id: paragraph id + start time + end time
-                                            utt_start = timestamps[0]
-                                            utt_end = timestamps[idx + 1]
-                                            utt_id = para_id+'-'+'%08.3f'%utt_start+'-'+ '%08.3f'%utt_end
-    
-                                            utt_ids.append(utt_id)
-    
-                                            # Make dict of utt: (start time, end time)
-                                            utt_start_end.append((utt_start,utt_end))
-    
-                                            # Make dict of para_id: [utt1, utt2, ...]
-                                            if not para_id in para2utt:
-                                                para2utt[para_id] = [utt_id]
-                                            else:
-                                                para2utt[para_id].append(utt_id)
-    
-                                            curr_toks = words[:idx+1]
-                                            curr_toktimes = timestamps[:idx+2]
-                                            curr_tones = tones_per_word[:idx+1]
-                                            for i,tok in enumerate(curr_toks):
-                                                tok_start = curr_toktimes[i]
-                                                tok_end = curr_toktimes[i+1]
-                                                tok_id = para_id+'-tok-'+'%08.3f'%tok_start+'-'+ '%08.3f'%tok_end
-                                                tok2tokstr[tok_id] = tok
-                                                tok2times[tok_id] = (tok_start,tok_end)
-                                                tok2tones[tok_id] = curr_tones[i]
-                                                if not utt_id in utt2toks:
-                                                    utt2toks[utt_id] = [tok_id]
-                                                else:
-                                                    utt2toks[utt_id].append(tok_id)
-    
-    
-                                            utt_list.append(curr_toks)
-                                            utt_token_times.append(curr_toktimes)
-                                            utt_labels.append(curr_tones)
-                                            """
 
                                             # Chop the consumed words/times off the front of those lists
                                             words = words[idx+1:]
@@ -402,38 +381,35 @@ class BurncPreprocessor:
                                         else:
                                             idx += 1
 
+                                # Last utterance in paragraph:
                                 self.process_utt(words, timestamps, para_id, sp, recordingid, tones_per_word,  idx=len(words)-1)
 
-                                """
-                                # Last utterance:
-                                # TODO add word stuff here or somehow take this bit out
-                                curr_toks = words
-                                curr_toktimes = timestamps
-                                curr_tones = tones_per_word
-    
-                                utt_list.append(curr_toks)
-                                utt_token_times.append(curr_toktimes)
-                                utt_start = timestamps[0]
-                                utt_end = timestamps[-1]
-                                utt_id = para_id + '-' + '%08.3f' % utt_start + '-' + '%08.3f' % utt_end
-                                utt_ids.append(utt_id)
-                                utt_start_end.append((utt_start, utt_end))
-                                utt_labels.append(tones_per_word)
-    
-                                for i, tok in enumerate(curr_toks):
-                                    tok_start = curr_toktimes[i]
-                                    tok_end = curr_toktimes[i + 1]
-                                    tok_id = para_id + '-tok-' + '%08.3f' % tok_start + '-' + '%08.3f' % tok_end
-                                    tok2tokstr[tok_id] = tok
-                                    tok2times[tok_id] = (tok_start, tok_end)
-                                    tok2tones[tok_id] = curr_tones[i]
-                                    if not utt_id in utt2toks:
-                                        utt2toks[utt_id] = [tok]
-                                    else:
-                                        utt2toks[utt_id].append(tok)
-                                """
+    def acoustic_preproc(self):
+        self.load_opensmile_feats()
+        self.load_kaldi_feats()
 
+    def load_opensmile_feats(self):
+        print('loading pros feats...')
+        for para in self.para2utt:
+            if not para in self.filter_para:
+                feat_df = pd.read_csv(os.path.join(self.pros_feat_dir,para+'.is13.csv'),sep=';')
+                feat_df = feat_df[['frameTime']+self.pros_feat_names]
+                for utt in self.para2utt[para]:
+                    for tok in self.utt2toks[utt]:
+                        print(tok)
+                        tok_start = self.tok2times[tok][0]
+                        tok_end = self.tok2times[tok][1]
+                        tok_df = feat_df.loc[feat_df['frameTime'] >= tok_start]
+                        tok_df = tok_df.loc[tok_df['frameTime'] < tok_end]
+                        tok_df = tok_df[self.pros_feat_names]
+                        feat_tensors = []
+                        for i,row in tok_df.iterrows():
+                            tens = torch.tensor(row.tolist()).view(1,len(row.tolist()))
+                            feat_tensors.append(tens)
+                        self.tok2prosfeats[tok] = torch.cat(feat_tensors,dim=0)
 
+    def load_kaldi_feats(self):
+        pass
 
 
 
@@ -442,11 +418,16 @@ class BurncPreprocessor:
 def main():
     speakers_file = 'burnc_speakers.txt'
     burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
+    pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
+    mfcc_dir = '/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
     out_dir = 'tmp'
 
-    preprocessor = BurncPreprocessor(burnc_dir,out_dir,speakers_file)
-    preprocessor.text_preproc()
+    proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,out_dir,speakers_file)
+    proc.text_preproc()
+    #import pdb;pdb.set_trace()
+    proc.acoustic_preproc()
     import pdb;pdb.set_trace()
+
 
 
 if __name__ == "__main__":
