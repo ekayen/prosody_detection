@@ -1,5 +1,5 @@
 from burnc_data_prep import gen_kaldi_inputs
-from paths import burnc_dir,out_dir
+from paths import burnc_dir,kaldi_dir
 """
     {paragraph_id:
         {utterances:
@@ -32,7 +32,7 @@ from paths import burnc_dir,out_dir
          },
         {tokens:
              {tok_id1: ‘the’,
-        tok_id2: ‘supreme’
+              tok_id2: ‘supreme’
         ...
         }
     }
