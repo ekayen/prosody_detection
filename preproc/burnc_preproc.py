@@ -9,6 +9,7 @@ import os
 from string import punctuation
 import nltk
 import kaldi_io
+import pickle
 nltk.download('punkt')
 import pandas as pd
 import torch
@@ -18,11 +19,12 @@ import torch
 TOKENIZATION_METHOD = 'breath_tok'
 
 class BurncPreprocessor:
-    def __init__(self,burnc_dir,pros_feat_dir,mfcc_file,out_dir,speakers_file,tok_method='breath_tok',filter_para=['f2bs02p1']):
+    def __init__(self,burnc_dir,pros_feat_dir,mfcc_file,kaldi_dir,speakers_file,save_dir,tok_method='breath_tok',filter_para=['f2bs02p1']):
 
         self.burnc_dir = burnc_dir
-        self.out_dir = out_dir
+        self.kaldi_dir = kaldi_dir
         self.speakers_file = speakers_file
+        self.save_dir = save_dir
         self.pros_feat_dir = pros_feat_dir
         self.mfcc_file = mfcc_file
         self.tok_method = tok_method
@@ -58,6 +60,9 @@ class BurncPreprocessor:
         self.tok2tokstr = {}
         self.tok2prosfeats = {}
         self.tok2mfccfeats = {}
+
+        # Final nested dict of all features
+        self.nested = {}
 
     @staticmethod
     def text_reg(word):
@@ -173,7 +178,7 @@ class BurncPreprocessor:
 
     def write_segments(self):
         print('write segments')
-        with open(os.path.join(self.out_dir,'segments'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'segments'),'w') as f:
             for utt in self.utterances:
                 f.write(utt+" "+self.utt2recording[utt]+" "+str(self.utt2startend[utt][0])+" "+str(self.utt2startend[utt][1]))
                 f.write('\n')
@@ -184,21 +189,21 @@ class BurncPreprocessor:
 
     def write_wav_scp(self):
         recordingids = self.sort_rec(self.recording2file)
-        with open(os.path.join(self.out_dir,'wav.scp'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'wav.scp'),'w') as f:
             for recording in recordingids:
                 f.write(recording+" /home/elizabeth/repos/kaldi/tools/sph2pipe_v2.5/sph2pipe -f wav -p -c 1 "+self.recording2file[recording]+" |")
                 f.write('\n')
 
     def write_text(self):
         print('write utt2text')
-        with open(os.path.join(self.out_dir,'text'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'text'),'w') as f:
             for utt in self.utterances:
                 f.write(utt+" "+self.utt2text[utt])
                 f.write('\n')
 
     def write_utt2spk(self):
         print('write utt2spk')
-        with open(os.path.join(self.out_dir,'utt2spk'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'utt2spk'),'w') as f:
             for utt in self.utterances:
                 f.write(utt+" "+self.utt2spk[utt])
                 f.write('\n')
@@ -215,13 +220,13 @@ class BurncPreprocessor:
 
     def write_text2labels(self):
         print('write text2labels')
-        with open(os.path.join(self.out_dir,'text2labels'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'text2labels'),'w') as f:
             for utt in self.utterances:
                 f.write(utt+"\t"+self.utt2text[utt]+"\t"+' '.join([str(tone) for tone in self.utt2tones[utt]]))
                 f.write('\n')
 
     def write_utt2toktime(self):
-        with open(os.path.join(self.out_dir,'utt2toktimes'),'w') as f:
+        with open(os.path.join(self.kaldi_dir,'utt2toktimes'),'w') as f:
             for utt in self.utterances:
                 f.write(utt+"\t"+' '.join([str(tim) for tim in self.utt2toktimes[utt]]))
                 f.write("\n")
@@ -239,7 +244,7 @@ class BurncPreprocessor:
         return spans
 
     def write_three_tok_spans(self):
-        with open(os.path.join(self.out_dir, 'spans'), 'w') as f:
+        with open(os.path.join(self.kaldi_dir, 'spans'), 'w') as f:
             for para_id,span,label,toktimes in self.spans:
                 f.write(para_id+'\t'+' '.join(span)+'\t'+str(label)+'\t'+' '.join([str(tim) for tim in toktimes]))
                 f.write('\n')
@@ -322,7 +327,7 @@ class BurncPreprocessor:
                             # Open the word file and load in as two lists -- one of words, one of timestamps of beginnings of words
                             words,lines,timestamps = BurncPreprocessor.load_word_file(wordfile)
 
-                            if words and time2tone:
+                            if words and time2tone and not para_id in self.filter_para:
 
                                 self.para_ids.append(para_id)
                                 print(para_id)
@@ -421,7 +426,7 @@ class BurncPreprocessor:
                     toktimes = self.utt2tokentimes[utt_id]
                     tok_idx = [int(round(tim*100)) for tim in toktimes]
                     offset = tok_idx[0]
-                    tok_idx = [tim-offset for tim in tok_idx] # TODO pause here to go for the evening, but these should be the right indices now
+                    tok_idx = [tim-offset for tim in tok_idx]
                     for i in range(len(tok_idx)-1):
                         tok_start = tok_idx[i]
                         tok_end = tok_idx[i+1]
@@ -430,13 +435,34 @@ class BurncPreprocessor:
                         tok_id = self.utt2toks[utt_id][i]
                         tok_feats = torch.tensor(mat[tok_start:tok_end,:])
                         self.tok2mfccfeats[tok_id] = tok_feats
-                        #if utt_id == 'm2btrlp7-0014.340-0017.170':
-                        #    import pdb;pdb.set_trace()
 
+    def gen_nested_dict(self):
+        print('generating nested dict ...')
+        for para in self.para2utt:
+            print(para)
+            self.nested[para] = {
+                'utterances': dict([(utt_id,self.utt2toks[utt_id]) for utt_id in self.para2utt[para]]),
+                'tokens': [tok for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]],
+                'mfccs': dict([(tok, self.tok2mfccfeats[tok]) for utt_id in self.para2utt[para] for tok in
+                               self.utt2toks[utt_id]]),
+                'prosfeats': dict([(tok, self.tok2prosfeats[tok]) for utt_id in self.para2utt[para] for tok in
+                               self.utt2toks[utt_id]]),
+                'tok2times':  dict([(tok,self.tok2times[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
+                'tok2tokstr': dict([(tok,self.tok2tokstr[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]])
+            }
 
+    def save_nested(self,save_dir=None,name='burnc.pkl'):
+        if not save_dir: save_dir = self.save_dir
+        with open(os.path.join(save_dir,name),'wb') as f:
+            pickle.dump(self.nested,f)
 
-
-
+    def preproc(self,kaldi_prep=False):
+        self.text_preproc()
+        if kaldi_prep:
+            self.write_kaldi_inputs()
+        self.acoustic_preproc()
+        self.gen_nested_dict()
+        self.save_nested()
 
 
 
@@ -445,13 +471,11 @@ def main():
     burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
     pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
     mfcc_dir = '/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
-    out_dir = 'tmp'
+    kaldi_dir = 'tmp'
+    save_dir = 'tmp'
 
-    proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,out_dir,speakers_file)
-    proc.text_preproc()
-    #import pdb;pdb.set_trace()
-    proc.load_kaldi_feats()
-    import pdb;pdb.set_trace()
+    proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir)
+    proc.preproc()
 
 
 
