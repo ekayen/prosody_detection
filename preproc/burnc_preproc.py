@@ -442,7 +442,7 @@ class BurncPreprocessor:
             print(para)
             self.nested[para] = {
                 'utterances': dict([(utt_id,self.utt2toks[utt_id]) for utt_id in self.para2utt[para]]),
-                'tokens': [tok for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]],
+                'tokens': [tok for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]], # TODO maybe make a dict and add utt_ids as values?
                 'mfccs': dict([(tok, self.tok2mfccfeats[tok]) for utt_id in self.para2utt[para] for tok in
                                self.utt2toks[utt_id]]),
                 'prosfeats': dict([(tok, self.tok2prosfeats[tok]) for utt_id in self.para2utt[para] for tok in
@@ -456,13 +456,14 @@ class BurncPreprocessor:
         with open(os.path.join(save_dir,name),'wb') as f:
             pickle.dump(self.nested,f)
 
-    def preproc(self,kaldi_prep=False):
+    def preproc(self,kaldi_prep=False,write_dict=True):
         self.text_preproc()
         if kaldi_prep:
             self.write_kaldi_inputs()
         self.acoustic_preproc()
         self.gen_nested_dict()
-        self.save_nested()
+        if write_dict:
+            self.save_nested()
 
 
 
@@ -476,7 +477,6 @@ def main():
 
     proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir)
     proc.preproc()
-
 
 
 if __name__ == "__main__":

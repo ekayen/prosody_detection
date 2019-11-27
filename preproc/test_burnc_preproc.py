@@ -2,7 +2,9 @@ from burnc_preproc import BurncPreprocessor
 import pickle
 import os
 
-test_from_file = True
+NUM_UTTS = 1721 # This is the num of utterances with breath tokenization, and dropping the problematic f2b file.
+
+test_from_file = False
 save_dir = 'tmp'
 data_name = 'proc.pkl'
 
@@ -23,6 +25,7 @@ else:
 
 
 def test_frame_sizes():
+    print('testing frame sizes ...')
     for para in nested:
         for tok in nested[para]['tok2times']:
             utt = proc.tok2utt[tok]
@@ -31,7 +34,7 @@ def test_frame_sizes():
             else:
                 last = False
             span = abs(nested[para]['tok2times'][tok][1]-nested[para]['tok2times'][tok][0])*100
-            print(tok,nested[para]['tok2times'][tok],span,nested[para]['mfccs'][tok].shape[0],nested[para]['prosfeats'][tok].shape[0])
+            #print(tok,nested[para]['tok2times'][tok],span,nested[para]['mfccs'][tok].shape[0],nested[para]['prosfeats'][tok].shape[0])
             if last:
                 assert abs(nested[para]['mfccs'][tok].shape[0] - nested[para]['prosfeats'][tok].shape[0]) <= 4
             else:
@@ -40,9 +43,10 @@ def test_frame_sizes():
             num_pros_frames = nested[para]['prosfeats'][tok].shape[0]
             assert abs(num_mfcc_frames - span) <= 5
             assert abs(num_pros_frames - span) <= 5
-
+    print('done')
 
 def test_num_toks():
+    print('testing num tokens...')
     assert len(proc.tok2times) == len(proc.tok2tokstr)
     assert len(proc.tok2tone) == len(proc.tok2tokstr)
     assert len(proc.tok2mfccfeats) == len(proc.tok2tokstr)
@@ -52,8 +56,10 @@ def test_num_toks():
     for utt in proc.utt2toks:
         toks_in_utts += len(proc.utt2toks[utt])
     assert len(proc.tok2times)==toks_in_utts
+    print('done')
 
 def test_num_utts():
+    print('testing num utterances ...')
     assert len(proc.utt2text) == len(proc.utt2spk)
     assert len(proc.utt2recording) == len(proc.utt2spk)
     assert len(proc.utt2startend) == len(proc.utt2spk)
@@ -66,6 +72,8 @@ def test_num_utts():
     for para in proc.para2utt:
         utts_in_para += len(proc.para2utt[para])
     assert utts_in_para == len(proc.utt2spk)
+    assert utts_in_para == NUM_UTTS
+    print('done')
 
 test_frame_sizes()
 test_num_toks()
