@@ -447,7 +447,9 @@ class BurncPreprocessor:
                 'prosfeats': dict([(tok, self.tok2prosfeats[tok]) for utt_id in self.para2utt[para] for tok in
                                self.utt2toks[utt_id]]),
                 'tok2times':  dict([(tok,self.tok2times[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
-                'tok2tokstr': dict([(tok,self.tok2tokstr[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]])
+                'tok2tokstr': dict([(tok,self.tok2tokstr[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
+                'tok2tone': dict([(tok,self.tok2tone[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
+                'tok2utt': dict([(tok,self.tok2utt[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
             }
 
     def save_nested(self,save_dir=None,name='burnc.pkl'):
