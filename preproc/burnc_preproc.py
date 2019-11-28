@@ -50,7 +50,6 @@ class BurncPreprocessor:
         self.utt2tones = {}
         self.utt_ids = []
 
-        # adding the following 26 Nov
         self.para2utt = {}
         self.utt2para = {}
         self.utt2toks = {}
