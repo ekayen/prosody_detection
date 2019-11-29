@@ -392,7 +392,6 @@ class BurncPreprocessor:
         self.load_opensmile_feats()
         self.load_kaldi_feats()
 
-
     def get_tok_feats(self,df,start,end):
         tok_df = df.loc[df['frameTime'] >= start]
         tok_df = tok_df.loc[tok_df['frameTime'] < end]
@@ -437,6 +436,7 @@ class BurncPreprocessor:
 
     def gen_nested_dict(self):
         print('generating nested dict ...')
+        """
         for para in self.para2utt:
             print(para)
             self.nested[para] = {
@@ -451,20 +451,31 @@ class BurncPreprocessor:
                 'tok2tone': dict([(tok,self.tok2tone[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
                 'tok2utt': dict([(tok,self.tok2utt[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
             }
+        """
+        self.nested['utt2toks'] = self.utt2toks
+        self.nested['tok2mfcc'] = self.tok2mfccfeats
+        self.nested['tok2pros'] = self.tok2prosfeats
+        self.nested['tok2str'] = self.tok2tokstr
+        self.nested['tok2times'] = self.tok2times
+        self.nested['tok2tone'] = self.tok2tone
+        self.nested['utt2para'] = self.utt2para
+        self.nested['utt_ids'] = self.utt_ids
+        self.nested['tok2utt'] = self.tok2utt
+        self.nested['para2utt'] = self.para2utt
 
     def save_nested(self,save_dir=None,name='burnc.pkl'):
         if not save_dir: save_dir = self.save_dir
         with open(os.path.join(save_dir,name),'wb') as f:
             pickle.dump(self.nested,f)
 
-    def preproc(self,kaldi_prep=False,write_dict=True):
+    def preproc(self,kaldi_prep=False,write_dict=True,out_file='burnc.pkl'):
         self.text_preproc()
         if kaldi_prep:
             self.write_kaldi_inputs()
         self.acoustic_preproc()
         self.gen_nested_dict()
         if write_dict:
-            self.save_nested()
+            self.save_nested(name=out_file)
 
 
 
@@ -477,7 +488,7 @@ def main():
     save_dir = 'tmp'
 
     proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir)
-    proc.preproc()
+    proc.preproc(out_file='burnc_utt.pkl')
 
 
 if __name__ == "__main__":

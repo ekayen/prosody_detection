@@ -11,16 +11,18 @@ random.seed(0)
 torch.manual_seed(123)
 
 class BurncDataset(data.Dataset):
-    def __init__(self,config,input_dict,mode='train'):
+    def __init__(self,cfg,input_dict,pad_len,mode='train'):
 
         # Load the config file for the whole model
-        with open(config, 'r') as f:
-            cfg = yaml.load(f, yaml.FullLoader)
+
+        #with open(config, 'r') as f:
+        #    cfg = yaml.load(f, yaml.FullLoader) # TODO issue is that this isn't a full path
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
         self.feats = cfg['feats']
         self.bitmark = cfg['bitmark']
 
+        self.pad_len = pad_len
         self.input_dict = input_dict
         self.mode = mode
 
@@ -29,7 +31,7 @@ class BurncDataset(data.Dataset):
             split_ids = yaml.load(f, yaml.FullLoader)
         self.utt_ids = split_ids[self.mode]
         if self.segmentation=='tokens':
-            self.ids = [tok for utt_id in self.utt_ids for tok in input_dict[utt_id.split('-')[0]]['utterances'][utt_id] ]
+            self.ids = [tok for utt_id in self.utt_ids for tok in input_dict['utt2toks'][utt_id]]
         elif self.segmentation=='utterances':
             self.ids = self.utt_ids
 
@@ -38,36 +40,45 @@ class BurncDataset(data.Dataset):
 
 
 class BurncDatasetSpeech(BurncDataset):
-    def __init__(self, config, input_dict, mode='train'):
-        super(BurncDatasetSpeech,self).__init__(config, input_dict, mode)
+    def __init__(self, config, input_dict, pad_len, mode='train'):
+        super(BurncDatasetSpeech,self).__init__(config, input_dict, pad_len, mode)
+
+
+    def pad_right(self,arr):
+        if arr.shape[0] < self.pad_len:
+            dff = self.pad_len - arr.shape[0]
+            arr = F.pad(arr,pad=(0,0,0,dff),mode='constant')
+        else:
+            arr = arr[:self.pad_len]
+        return arr
 
     def __getitem__(self, index):
         id = self.ids[index]
-        para_id = id.split('-')[0]
+        #para_id = id.split('-')[0]
         if self.segmentation == 'tokens':
             tok_ids = [id]
             if self.context_window:
-                curr_utt = self.input_dict[para_id]['tok2utt'][id]
-                prev_idx = self.input_dict[para_id]['utterances'][curr_utt].index(id) - 1
-                next_idx = self.input_dict[para_id]['utterances'][curr_utt].index(id) + 1
+                curr_utt = self.input_dict['tok2utt'][id]
+                prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
+                next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
                 if prev_idx >= 0:
-                    prev_id = self.input_dict[para_id]['utterances'][curr_utt][prev_idx]
+                    prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
                     tok_ids = [prev_id] + tok_ids
-                if next_idx <= len(self.input_dict[para_id]['utterances'][curr_utt]):
-                    next_id = self.input_dict[para_id]['utterances'][curr_utt][next_idx]
+                if next_idx <= len(self.input_dict['utt2toks'][curr_utt]):
+                    next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
                     tok_ids.append(next_id)
-            tok_feats = [self.input_dict[para_id][self.feats][i] for i in tok_ids]
+            tok_feats = [self.input_dict[self.feats][i] for i in tok_ids]
             X = torch.cat(tok_feats,dim=0)
-            Y = torch.tensor(self.input_dict[para_id]['tok2tone'][id])
-            toktimes = [self.input_dict[para_id]['tok2times'][i][0] for i in tok_ids] + [self.input_dict[para_id]['tok2times'][tok_ids[-1]][1]]
+            Y = torch.tensor(self.input_dict['tok2tone'][id])
+            toktimes = torch.tensor([self.input_dict['tok2times'][i][0] for i in tok_ids] + [self.input_dict['tok2times'][tok_ids[-1]][1]])
 
         elif self.segmentation == 'utterances':
-            tok_ids = self.input_dict[para_id]['utterances'][id]
-            X = torch.cat([self.input_dict[para_id][self.feats][tok_id] for tok_id in tok_ids], dim=0)
-            Y = torch.tensor([self.input_dict[para_id]['tok2tone'][tok_id] for tok_id in tok_ids])
-            toktimes = [self.input_dict[para_id]['tok2times'][tok_id][0] for tok_id in tok_ids] + \
-                       [self.input_dict[para_id]['tok2times'][tok_ids[-1]][1]]
-        import pdb;pdb.set_trace()
+            tok_ids = self.input_dict['utt2toks'][id]
+            X = torch.cat([self.input_dict[self.feats][tok_id] for tok_id in tok_ids], dim=0)
+            X = self.pad_right(X)
+            Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
+            toktimes = torch.tensor([self.input_dict['tok2times'][tok_id][0] for tok_id in tok_ids] + \
+                       [self.input_dict['tok2times'][tok_ids[-1]][1]])
         return id, (X, toktimes), Y
 
 class SynthDataset(data.Dataset):
@@ -177,11 +188,16 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name,resu
     plt.show()
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
+def main():
+    cfg_file = 'conf/burnc_breath_open.yaml'
+    with open(cfg_file, 'r') as f:
+        cfg = yaml.load(f, yaml.FullLoader)
+    burnc_dict = '../data/burnc/burnc_utt.pkl'
+    with open(burnc_dict,'rb') as f:
+        input_dict = pickle.load(f)
+    dataset = BurncDatasetSpeech(cfg, input_dict, mode='train')
+    dataset.__getitem__(4)
+    import pdb;pdb.set_trace()
 
-import pickle
-with open('../data/burnc/burnc.pkl','rb') as f:
-    input_dict = pickle.load(f)
-
-dataset = BurncDatasetSpeech(config='tmp_config.yaml',input_dict=input_dict,mode='train')
-
-dataset.__getitem__(4)
+if __name__ == "__main__":
+    main()

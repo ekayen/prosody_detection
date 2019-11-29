@@ -12,7 +12,7 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes
+from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
@@ -298,7 +298,7 @@ class SpeechEncoder(nn.Module):
 
         return (h0,c0)
 
-
+"""
 print('Loading data ...')
 with open(labels_data,'rb') as f:
     labels_dict = pickle.load(f)
@@ -319,6 +319,7 @@ dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_pe
 test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
 
 """
+"""
 if tok_level_pred:
     trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
 else:
@@ -331,6 +332,9 @@ elif LENGTH_ANALYSIS:
 else:
     devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
 
+
+
+"""
 """
 trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
 devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, pad_len)
@@ -339,6 +343,14 @@ devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, 
 #for key in feat_dict:
 #    assert(feat_dict[key].shape[1]==16)
 #######################
+
+"""
+with open(speech_data,'rb') as f:
+    data_dict = pickle.load(f)
+
+trainset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='train')
+devset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='dev')
+
 
 traingen = data.DataLoader(trainset, **train_params)
 
@@ -396,6 +408,8 @@ min_grad = float("inf")
 for epoch in range(num_epochs):
     for id,(batch,toktimes),labels in traingen:
 
+        print(id[0])
+
         model.train()
         batch,labels = batch.to(device),labels.to(device)
         if not batch.shape[0] < train_params['batch_size']:
@@ -406,6 +420,18 @@ for epoch in range(num_epochs):
             model.zero_grad()
             hidden = model.init_hidden(train_params['batch_size'])
             output,_ = model(batch,toktimes,hidden)
+
+            ##############
+
+            #para = data_dict['utt2para'][id[0]]
+            #utts = data_dict['para2utt'][para]
+            #print(id[0])
+            #print(utts)
+            #print(id[0]==utts[-1])
+            #import pdb;pdb.set_trace()
+
+            ##############
+
             if VERBOSE:
                 print('output shape: ',output.shape)
                 print('labels shape: ',labels.shape)
