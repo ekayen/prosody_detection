@@ -263,7 +263,6 @@ class BurncPreprocessor:
         # Make an utterance id: paragraph id + start time + end time
         utt_start = timestamps[0]
         utt_end = timestamps[idx + 1]
-        frames = torch.tensor([int(round(100*(tim-utt_start))) for tim in timestamps],dtype=torch.float32)
         utt_id = para_id + '-' + '%08.3f' % utt_start + '-' + '%08.3f' % utt_end
 
         self.utt_ids.append(utt_id)
@@ -278,6 +277,7 @@ class BurncPreprocessor:
         curr_toks = words[:idx + 1]
         curr_toktimes = timestamps[:idx + 2]
         curr_tones = tones_per_word[:idx + 1]
+        frames = torch.tensor([int(round(100*(tim-utt_start))) for tim in curr_toktimes],dtype=torch.float32)
         for i, tok in enumerate(curr_toks):
             tok_start = curr_toktimes[i]
             tok_end = curr_toktimes[i + 1]

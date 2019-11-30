@@ -35,8 +35,8 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 #prediction = torch.tensor(prediction,dtype=torch.int64)
                 if tok_level_pred:
                     total_pred += prediction.shape[1]
-                    import pdb;pdb.set_trace()
                     true_pos_pred += (prediction == y).int().sum().item()
+
                 else:
                     total_pred += prediction.shape[0]
                     true_pos_pred += (prediction == y).int().sum().item()

@@ -68,7 +68,7 @@ class BurncDatasetSpeech(BurncDataset):
                     next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
                     tok_ids.append(next_id)
             tok_feats = [self.input_dict[self.feats][i] for i in tok_ids]
-            if self.context_window and self.bitmark:
+            if self.context_window and self.bitmark: # TODO this is redundant
                 tmp = []
                 for i,feats in enumerate(tok_feats):
                     if i==1:
@@ -101,8 +101,6 @@ class BurncDatasetSpeech(BurncDataset):
             Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
 
             toktimes = self.input_dict['utt2frames'][id]
-
-        print
         return id, (X, toktimes), Y
 
 class SynthDataset(data.Dataset):
@@ -213,8 +211,8 @@ def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name,resu
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
 def main():
-    cfg_file = 'conf/burnc_3_tok_open.yaml'
-    #cfg_file = 'conf/burnc_breath_open.yaml'
+    #cfg_file = 'conf/burnc_3_tok_open.yaml'
+    cfg_file = 'conf/burnc_breath_open.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     burnc_dict = '../data/burnc/burnc_utt.pkl'
