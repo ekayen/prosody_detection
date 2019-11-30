@@ -30,7 +30,6 @@ else:
 with open(config,'r') as f:
     cfg = yaml.load(f,yaml.FullLoader)
 
-
 VERBOSE = cfg['VERBOSE']
 LENGTH_ANALYSIS = cfg['LENGTH_ANALYSIS']
 print_every = int(cfg['print_every'])
@@ -59,6 +58,7 @@ text_data = cfg['text_data']
 speech_data = cfg['speech_data']
 labels_data = cfg['labels_data']
 toktimes_data = cfg['toktimes_data']
+all_data = cfg['all_data']
 model_name = cfg['model_name']
 results_path = cfg['results_path']
 results_file = '{}/{}.txt'.format(results_path,model_name)
@@ -314,12 +314,18 @@ all_ids = list(feat_dict.keys())
 random.shuffle(all_ids)
 
 
-train_ids = all_ids[:int(len(all_ids)*train_per)]
-dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_per))]
-test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
+#train_ids = all_ids[:int(len(all_ids)*train_per)]
+#dev_ids = all_ids[int(len(all_ids)*train_per):int(len(all_ids)*(train_per+dev_per))]
+#test_ids = all_ids[int(len(all_ids)*(train_per+dev_per)):]
 
-"""
-"""
+with open(cfg['datasplit'],'r') as f:
+    all_ids = yaml.load(f,yaml.FullLoader)
+
+train_ids = all_ids['train']
+dev_ids = all_ids['dev']
+test_ids = all_ids['test']
+
+
 if tok_level_pred:
     trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
 else:
@@ -333,11 +339,11 @@ else:
     devset = UttDataset(dev_ids,feat_dict,labels_dict,pad_len)
 
 
+old_trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
+old_devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, pad_len)
 
-"""
-"""
-trainset = UttDatasetWithToktimes(train_ids,feat_dict,labels_dict,toktimes_dict,pad_len)
-devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, pad_len)
+set_seeds(seed)
+old_traingen = data.DataLoader(old_trainset, **train_params)
 
 #######################
 #for key in feat_dict:
@@ -345,19 +351,41 @@ devset = UttDatasetWithToktimes(dev_ids, feat_dict, labels_dict, toktimes_dict, 
 #######################
 
 """
-with open(speech_data,'rb') as f:
+with open(all_data,'rb') as f:
     data_dict = pickle.load(f)
 
 trainset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='train')
 devset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='dev')
 
-
+set_seeds(seed)
 traingen = data.DataLoader(trainset, **train_params)
 
 print('done')
 print('Building model ...')
 
 set_seeds(seed)
+
+"""
+#################################
+
+for (id1,(batch1,toktimes1),labels1),(id2, (batch2,toktimes2),labels2) in zip(old_traingen,traingen):
+    print(id1)
+    print(id2)
+    print('-------------')
+    print(batch1)
+    print(batch2)
+    print('-------------')
+    print(toktimes1)
+    print(toktimes2)
+    print('-------------')
+    print(labels1)
+    print(labels2)
+    print("==================")
+    import pdb;pdb.set_trace()
+
+
+#################################
+"""
 
 model = SpeechEncoder(seq_len=pad_len,
                       batch_size=train_params['batch_size'],
@@ -402,13 +430,18 @@ print('done')
 
 set_seeds(seed)
 
+
+
 print('Training model ...')
 max_grad = float("-inf")
 min_grad = float("inf")
 for epoch in range(num_epochs):
-    for id,(batch,toktimes),labels in traingen:
+    utts_seen = set()
+    for id, (batch, toktimes), labels in traingen:
 
-        print(id[0])
+        #print(id[0])
+        utts_seen.add(id[0])
+
 
         model.train()
         batch,labels = batch.to(device),labels.to(device)
@@ -504,7 +537,6 @@ for epoch in range(num_epochs):
             timestep += 1
         else:
             print('Batch of size',batch.shape,'rejected')
-
 
 print('done')
 

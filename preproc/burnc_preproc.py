@@ -49,6 +49,7 @@ class BurncPreprocessor:
         self.utt2tokentimes = {}  # store start time of each token (not necessary for kaldi, but plan to use in model)
         self.utt2tones = {}
         self.utt_ids = []
+        self.utt2frames = {}
 
         self.para2utt = {}
         self.utt2para = {}
@@ -262,6 +263,7 @@ class BurncPreprocessor:
         # Make an utterance id: paragraph id + start time + end time
         utt_start = timestamps[0]
         utt_end = timestamps[idx + 1]
+        frames = torch.tensor([int(round(100*(tim-utt_start))) for tim in timestamps],dtype=torch.float32)
         utt_id = para_id + '-' + '%08.3f' % utt_start + '-' + '%08.3f' % utt_end
 
         self.utt_ids.append(utt_id)
@@ -295,6 +297,7 @@ class BurncPreprocessor:
         self.utt2startend[utt_id] = (utt_start, utt_end)  # store start and end timestamp of utterance
         self.utt2tokentimes[utt_id] = curr_toktimes
         self.utt2tones[utt_id] = curr_tones
+        self.utt2frames[utt_id] = frames
 
     def text_preproc(self):
         # Segment text into sentence-level utterances
@@ -462,6 +465,7 @@ class BurncPreprocessor:
         self.nested['utt_ids'] = self.utt_ids
         self.nested['tok2utt'] = self.tok2utt
         self.nested['para2utt'] = self.para2utt
+        self.nested['utt2frames'] = self.utt2frames
 
     def save_nested(self,save_dir=None,name='burnc.pkl'):
         if not save_dir: save_dir = self.save_dir

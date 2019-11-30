@@ -2,6 +2,7 @@
 segmentation: utterances
 context_window: False
 datasplit: ../data/burnc/splits/random0.yaml
+#datasplit: ../data/burnc/splits/dummy.yaml
 feats: tok2pros
 bitmark: True
 
@@ -27,15 +28,15 @@ dropout: 0.5
 feat_dim: 6
 context: False
 
-seed: 153
+seed: 256
 
 text_data: '../data/burnc/text2labels_breath_tok'
-#speech_data: '../data/burnc/burnc_breath_opensmilefeats.pkl'
-speech_data: '../data/burnc/burnc_utt.pkl'
+speech_data: '../data/burnc/burnc_breath_opensmilefeats.pkl'
+all_data: '../data/burnc/burnc_utt.pkl'
 #labels_data: '../data/burnc/burnc_last_label_dict_breath.pkl'
 labels_data: '../data/burnc/burnc_label_dict_breath_tok.pkl'
 toktimes_data: '../data/burnc/burnc_toktimes_breath_tok.pkl'
-model_name: 'cnn_lstm_open_seed153_gc_bi'
+model_name: 'cnn_lstm_open_seed256_gc_bi'
 results_path: 'results/burnc/seq_tagging/cnn_lstm_crossval/open'
 
 
