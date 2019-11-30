@@ -445,13 +445,16 @@ for epoch in range(num_epochs):
 
         model.train()
         batch,labels = batch.to(device),labels.to(device)
-        if not batch.shape[0] < train_params['batch_size']:
+        #if not batch.shape[0] < train_params['batch_size']:
+        if True:
 
             #print("+++++++++++++++++")
             #print(f'timestep {timestep}')
 
             model.zero_grad()
-            hidden = model.init_hidden(train_params['batch_size'])
+            #hidden = model.init_hidden(train_params['batch_size'])
+            curr_bat_size = batch.shape[0]
+            hidden = model.init_hidden(curr_bat_size)
             output,_ = model(batch,toktimes,hidden)
 
             ##############
@@ -482,7 +485,8 @@ for epoch in range(num_epochs):
             if tok_level_pred:
                 loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())
             else:
-                loss = criterion(output.view(train_params['batch_size']), labels.float())
+                #loss = criterion(output.view(train_params['batch_size']), labels.float())
+                loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
             plot_grad_flow(model.named_parameters())
 
@@ -535,8 +539,8 @@ for epoch in range(num_epochs):
                 if timestep % eval_every == 1 and not timestep==1:
                     evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
             timestep += 1
-        else:
-            print('Batch of size',batch.shape,'rejected')
+        #else:
+        #    print('Batch of size',batch.shape,'rejected')
 
 print('done')
 

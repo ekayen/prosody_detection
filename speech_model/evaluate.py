@@ -14,16 +14,19 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
         counter = 0
         for id,x,y in dataloader:
             x,toktimes = x
-            if x.shape[0]==dataloader_params['batch_size']:
+            curr_bat_size = x.shape[0]
+            if True:#x.shape[0]==dataloader_params['batch_size']:
                 x,y = x.to(device),y.to(device)
                 if recurrent:
-                    hidden = model.init_hidden(dataloader_params['batch_size'])
+                    #hidden = model.init_hidden(dataloader_params['batch_size'])
+                    hidden = model.init_hidden(curr_bat_size)
                     output,_ = model(x,toktimes,hidden)
                 else:
                     output = model(x)
                 #print('output shape:',output.shape)
                 if tok_level_pred:
-                    output = output.detach().view(dataloader_params['batch_size'],output.shape[0])
+                    #output = output.detach().view(dataloader_params['batch_size'],output.shape[0])
+                    output = output.detach().view(curr_bat_size, output.shape[0])
                 else:
                     output = output.detach().view(output.shape[-2])
 
@@ -32,12 +35,13 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 #prediction = torch.tensor(prediction,dtype=torch.int64)
                 if tok_level_pred:
                     total_pred += prediction.shape[1]
+                    import pdb;pdb.set_trace()
                     true_pos_pred += (prediction == y).int().sum().item()
                 else:
                     total_pred += prediction.shape[0]
                     true_pos_pred += (prediction == y).int().sum().item()
-            else:
-                print('rejected last small batch of size',x.shape)
+            #else:
+            #    print('rejected last small batch of size',x.shape)
     acc = true_pos_pred/total_pred
     print('Accuracy: ',acc)
     return acc

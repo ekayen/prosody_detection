@@ -14,7 +14,7 @@ train_per: 0.6
 dev_per: 0.2
 
 tok_level_pred: False
-batch_size: 64
+batch_size: 32
 include_lstm: False
 bidirectional: False
 learning_rate: 0.001
