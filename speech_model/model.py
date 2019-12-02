@@ -12,7 +12,7 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech
+from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
@@ -52,6 +52,7 @@ LSTM_LAYERS = int(cfg['LSTM_LAYERS'])
 dropout = float(cfg['dropout'])
 feat_dim = int(cfg['feat_dim'])
 context = cfg['context']
+weight_decay = cfg['weight_decay']
 
 # Filenames
 #text_data = cfg['text_data']
@@ -357,6 +358,8 @@ with open(all_data,'rb') as f:
 trainset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='train')
 devset = BurncDatasetSpeech(cfg, data_dict, pad_len, mode='dev')
 
+epoch_size = len(trainset)
+
 set_seeds(seed)
 traingen = data.DataLoader(trainset, **train_params)
 
@@ -401,9 +404,9 @@ model = SpeechEncoder(seq_len=pad_len,
 model.to(device)
 
 criterion = nn.BCEWithLogitsLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 recent_losses = []
-timestep = 0
+
 
 print('done')
 
@@ -436,6 +439,8 @@ print('Training model ...')
 max_grad = float("-inf")
 min_grad = float("inf")
 for epoch in range(num_epochs):
+    #print(f'Epoch {epoch}:')
+    timestep = 0
     for id, (batch, toktimes), labels in traingen:
 
         model.train()
@@ -501,7 +506,6 @@ for epoch in range(num_epochs):
         if torch.sum(torch.isnan(batch)).item() > 0:
             import pdb;pdb.set_trace()
 
-
         torch.nn.utils.clip_grad_norm(model.parameters(), 5)
 
         optimizer.step()
@@ -510,28 +514,37 @@ for epoch in range(num_epochs):
         if len(recent_losses) > 50:
             recent_losses = recent_losses[1:]
 
-        if timestep % print_every == 1:
-            plt_time.append(timestep)
-            train_loss = (sum(recent_losses)/len(recent_losses)).item()
-            print('Train loss at',timestep,': ',train_loss)
-            process = psutil.Process(os.getpid())
-
-            plt_losses.append(train_loss)
-            #plt.show()
-            if LENGTH_ANALYSIS:
-                print('train')
-                plt_train_acc.append(evaluate_lengths(trainset, eval_params, model, device))
-                print('dev')
-                plt_acc.append(evaluate_lengths(devset, eval_params, model, device))
-            else:
-                print('train')
-                plt_train_acc.append(evaluate(trainset, eval_params, model, device,tok_level_pred=tok_level_pred))
-                print('dev')
-                plt_acc.append(evaluate(devset, eval_params, model, device,tok_level_pred=tok_level_pred))
-        if eval_every:
-            if timestep % eval_every == 1 and not timestep==1:
-                evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
         timestep += 1
+        print_progress(timestep/epoch_size, info=f'Epoch {epoch}')
+
+    # Print stuff!
+    #plt_time.append(timestep)
+    plt_time.append(epoch)
+    train_loss = (sum(recent_losses)/len(recent_losses)).item()
+    #print('Train loss at',timestep,': ',round(train_loss,5))
+    process = psutil.Process(os.getpid())
+
+    plt_losses.append(train_loss)
+    #plt.show()
+    if LENGTH_ANALYSIS:
+        #print('train')
+        train_acc = evaluate_lengths(trainset, eval_params, model, device,noisy=False)
+        plt_train_acc.append(train_acc)
+        #print('dev')
+        dev_acc = evaluate_lengths(devset, eval_params, model, device,noisy=False)
+        plt_acc.append(dev_acc)
+    else:
+        #print('train')
+        train_acc = evaluate(trainset, eval_params, model, device,tok_level_pred=tok_level_pred,noisy=False)
+        plt_train_acc.append(train_acc)
+        #print('dev')
+        dev_acc = evaluate(devset, eval_params, model, device,tok_level_pred=tok_level_pred,noisy=False)
+        plt_acc.append(dev_acc)
+    print()
+    print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_acc,5)}\tDev acc:{round(dev_acc,5)}')
+    #if timestep % eval_every == 1 and not timestep==1:
+    #evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
+
 
 
 print('done')
@@ -541,6 +554,3 @@ print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
 plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,model_name,results_path)
 
-def print_progress(progress, info='', bar_len=20):
-	filled = int(progress*bar_len)
-	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')

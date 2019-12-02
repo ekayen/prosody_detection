@@ -10,6 +10,10 @@ import yaml
 random.seed(0)
 torch.manual_seed(123)
 
+def print_progress(progress, info='', bar_len=20):
+	filled = int(progress*bar_len)
+	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
+
 class BurncDataset(data.Dataset):
     def __init__(self,cfg,input_dict,pad_len,mode='train'):
 

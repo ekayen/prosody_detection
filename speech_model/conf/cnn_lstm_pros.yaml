@@ -41,5 +41,6 @@ LSTM_LAYERS: 2
 dropout: 0.5
 feat_dim: 6
 context: False
+weight_decay: 0
 
 seed: 256

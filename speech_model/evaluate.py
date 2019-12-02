@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from random import randint
 
-def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False):
+def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -41,7 +41,7 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 true_pos_pred += (prediction == y).int().sum().item()
 
     acc = true_pos_pred/total_pred
-    print('Accuracy: ',acc)
+    if noisy: print('Accuracy: ',round(acc,5))
     return acc
 
 def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):
