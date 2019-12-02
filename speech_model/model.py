@@ -36,8 +36,8 @@ print_every = int(cfg['print_every'])
 eval_every = cfg['eval_every']
 if eval_every:
     eval_every = int(eval_every)
-train_per = float(cfg['train_per'])
-dev_per = float(cfg['dev_per'])
+#train_per = float(cfg['train_per'])
+#dev_per = float(cfg['dev_per'])
 
 # hyperparameters
 tok_level_pred = cfg['tok_level_pred']
@@ -46,7 +46,7 @@ bidirectional = cfg['bidirectional']
 learning_rate = float(cfg['learning_rate'])
 hidden_size = int(cfg['hidden_size'])
 pad_len = int(cfg['pad_len'])
-datasource = cfg['datasource']
+#datasource = cfg['datasource']
 num_epochs = int(cfg['num_epochs'])
 LSTM_LAYERS = int(cfg['LSTM_LAYERS'])
 dropout = float(cfg['dropout'])
@@ -54,10 +54,10 @@ feat_dim = int(cfg['feat_dim'])
 context = cfg['context']
 
 # Filenames
-text_data = cfg['text_data']
-speech_data = cfg['speech_data']
-labels_data = cfg['labels_data']
-toktimes_data = cfg['toktimes_data']
+#text_data = cfg['text_data']
+#speech_data = cfg['speech_data']
+#labels_data = cfg['labels_data']
+#toktimes_data = cfg['toktimes_data']
 all_data = cfg['all_data']
 model_name = cfg['model_name']
 results_path = cfg['results_path']
@@ -436,111 +436,103 @@ print('Training model ...')
 max_grad = float("-inf")
 min_grad = float("inf")
 for epoch in range(num_epochs):
-    utts_seen = set()
     for id, (batch, toktimes), labels in traingen:
-
-        #print(id[0])
-        utts_seen.add(id[0])
-
 
         model.train()
         batch,labels = batch.to(device),labels.to(device)
         #if not batch.shape[0] < train_params['batch_size']:
-        if True:
+         #print("+++++++++++++++++")
+        #print(f'timestep {timestep}')
 
-            #print("+++++++++++++++++")
-            #print(f'timestep {timestep}')
+        model.zero_grad()
+        #hidden = model.init_hidden(train_params['batch_size'])
+        curr_bat_size = batch.shape[0]
+        hidden = model.init_hidden(curr_bat_size)
+        output,_ = model(batch,toktimes,hidden)
 
-            model.zero_grad()
-            #hidden = model.init_hidden(train_params['batch_size'])
-            curr_bat_size = batch.shape[0]
-            hidden = model.init_hidden(curr_bat_size)
-            output,_ = model(batch,toktimes,hidden)
+        ##############
 
-            ##############
+        #para = data_dict['utt2para'][id[0]]
+        #utts = data_dict['para2utt'][para]
+        #print(id[0])
+        #print(utts)
+        #print(id[0]==utts[-1])
+        #import pdb;pdb.set_trace()
 
-            #para = data_dict['utt2para'][id[0]]
-            #utts = data_dict['para2utt'][para]
-            #print(id[0])
-            #print(utts)
-            #print(id[0]==utts[-1])
-            #import pdb;pdb.set_trace()
+        ##############
 
-            ##############
+        if VERBOSE:
+            print('output shape: ',output.shape)
+            print('labels shape: ',labels.shape)
+            print('output: ',output.cpu().detach().squeeze())
+            print('true labels: ',labels.float())
 
-            if VERBOSE:
-                print('output shape: ',output.shape)
-                print('labels shape: ',labels.shape)
-                print('output: ',output.cpu().detach().squeeze())
-                print('true labels: ',labels.float())
+        """
+        print(id)
+        print('in')
+        print(batch)
+        print('out')
+        print(output)
+        print('==============================================')
+        """
+        if tok_level_pred:
+            loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())
+        else:
+            #loss = criterion(output.view(train_params['batch_size']), labels.float())
+            loss = criterion(output.view(curr_bat_size), labels.float())
+        loss.backward()
+        plot_grad_flow(model.named_parameters())
 
-            """
-            print(id)
-            print('in')
-            print(batch)
-            print('out')
-            print(output)
-            print('==============================================')
-            """
-            if tok_level_pred:
-                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())
+
+        """
+        # Check for exploding gradients
+        for n, p in model.named_parameters():
+            if (p.requires_grad) and ("bias" not in n):
+                curr_min, curr_max = p.grad.min(), p.grad.max()
+                if curr_min <= min_grad:
+                    min_grad = curr_min
+                if curr_max >= max_grad:
+                    max_grad = curr_max
+        print(f'min/max grad: {min_grad}, {max_grad}')
+        """
+        #import pdb;pdb.set_trace()
+
+
+        if torch.sum(torch.isnan(batch)).item() > 0:
+            import pdb;pdb.set_trace()
+
+
+        torch.nn.utils.clip_grad_norm(model.parameters(), 5)
+
+        optimizer.step()
+        recent_losses.append(loss.detach())
+
+        if len(recent_losses) > 50:
+            recent_losses = recent_losses[1:]
+
+        if timestep % print_every == 1:
+            plt_time.append(timestep)
+            train_loss = (sum(recent_losses)/len(recent_losses)).item()
+            print('Train loss at',timestep,': ',train_loss)
+            process = psutil.Process(os.getpid())
+
+            plt_losses.append(train_loss)
+            #plt.show()
+            if LENGTH_ANALYSIS:
+                print('train')
+                plt_train_acc.append(evaluate_lengths(trainset, eval_params, model, device))
+                print('dev')
+                plt_acc.append(evaluate_lengths(devset, eval_params, model, device))
             else:
-                #loss = criterion(output.view(train_params['batch_size']), labels.float())
-                loss = criterion(output.view(curr_bat_size), labels.float())
-            loss.backward()
-            plot_grad_flow(model.named_parameters())
+                print('train')
+                plt_train_acc.append(evaluate(trainset, eval_params, model, device,tok_level_pred=tok_level_pred))
+                print('dev')
+                plt_acc.append(evaluate(devset, eval_params, model, device,tok_level_pred=tok_level_pred))
+        if eval_every:
+            if timestep % eval_every == 1 and not timestep==1:
+                evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
+        timestep += 1
 
-
-            """
-            # Check for exploding gradients
-            for n, p in model.named_parameters():
-                if (p.requires_grad) and ("bias" not in n):
-                    curr_min, curr_max = p.grad.min(), p.grad.max()
-                    if curr_min <= min_grad:
-                        min_grad = curr_min
-                    if curr_max >= max_grad:
-                        max_grad = curr_max
-            print(f'min/max grad: {min_grad}, {max_grad}')
-            """
-            #import pdb;pdb.set_trace()
-
-
-            if torch.sum(torch.isnan(batch)).item() > 0:
-                import pdb;pdb.set_trace()
-
-
-            torch.nn.utils.clip_grad_norm(model.parameters(), 5)
-
-            optimizer.step()
-            recent_losses.append(loss.detach())
-
-            if len(recent_losses) > 50:
-                recent_losses = recent_losses[1:]
-
-            if timestep % print_every == 1:
-                plt_time.append(timestep)
-                train_loss = (sum(recent_losses)/len(recent_losses)).item()
-                print('Train loss at',timestep,': ',train_loss)
-                process = psutil.Process(os.getpid())
-
-                plt_losses.append(train_loss)
-                #plt.show()
-                if LENGTH_ANALYSIS:
-                    print('train')
-                    plt_train_acc.append(evaluate_lengths(trainset, eval_params, model, device))
-                    print('dev')
-                    plt_acc.append(evaluate_lengths(devset, eval_params, model, device))
-                else:
-                    print('train')
-                    plt_train_acc.append(evaluate(trainset, eval_params, model, device,tok_level_pred=tok_level_pred))
-                    print('dev')
-                    plt_acc.append(evaluate(devset, eval_params, model, device,tok_level_pred=tok_level_pred))
-            if eval_every:
-                if timestep % eval_every == 1 and not timestep==1:
-                    evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
-            timestep += 1
-        #else:
-        #    print('Batch of size',batch.shape,'rejected')
 
 print('done')
 
@@ -549,3 +541,6 @@ print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
 plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,model_name,results_path)
 
+def print_progress(progress, info='', bar_len=20):
+	filled = int(progress*bar_len)
+	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
