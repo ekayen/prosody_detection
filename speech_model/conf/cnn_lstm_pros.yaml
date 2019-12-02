@@ -1,0 +1,45 @@
+# dataloader params
+segmentation: utterances
+context_window: False
+datasplit: ../data/burnc/splits/tenfold0.yaml
+#datasplit: ../data/burnc/splits/fivefold0.yaml
+feats: tok2pros
+bitmark: True
+
+# Debugging params
+VERBOSE: False
+LENGTH_ANALYSIS: False
+print_every: 500
+eval_every:
+
+
+# i/o params
+all_data: '../data/burnc/burnc.pkl'
+model_name: 'cnn_lstm_open_seed256_gc_bi'
+results_path: 'results/seq_tagging/refactor/'
+
+train_params:
+  batch_size: 1
+  shuffle: True
+  num_workers: 6
+
+eval_params:
+  batch_size: 1
+  shuffle: True
+  num_workers: 6
+
+# Model params
+tok_level_pred: True
+batch_size: 1
+include_lstm: True
+bidirectional: True
+learning_rate: 0.001
+hidden_size: 512
+pad_len: 2150
+num_epochs: 25
+LSTM_LAYERS: 2
+dropout: 0.5
+feat_dim: 6
+context: False
+
+seed: 256

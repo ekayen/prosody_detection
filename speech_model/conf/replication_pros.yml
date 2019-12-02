@@ -1,0 +1,46 @@
+# dataloader params
+segmentation: tokens
+context_window: True
+datasplit: ../data/burnc/splits/tenfold0.yaml
+#datasplit: ../data/burnc/splits/dummy.yaml
+feats: tok2pros
+bitmark: True
+
+# Debugging params
+VERBOSE: False
+LENGTH_ANALYSIS: False
+print_every: 500
+eval_every:
+
+# i/o params
+all_data: '../data/burnc/burnc.pkl'
+model_name: 'cnn_only_3tok_open_bitmark_seed131'
+results_path: 'results/nonseq/burnc'
+
+train_params:
+  batch_size: 32
+  shuffle: True
+  num_workers: 6
+
+eval_params:
+  batch_size: 32
+  shuffle: True
+  num_workers: 6
+
+# model params
+tok_level_pred: False
+batch_size: 32
+include_lstm: False
+bidirectional: False
+learning_rate: 0.001
+hidden_size: 512
+pad_len: 2150
+datasource: 'BURNC'
+num_epochs: 50
+LSTM_LAYERS: 2
+dropout: 0.2
+feat_dim: 7
+#feat_dim: 6
+context: False
+
+seed: 131
