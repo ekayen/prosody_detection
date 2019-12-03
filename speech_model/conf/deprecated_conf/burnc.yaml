@@ -1,0 +1,38 @@
+VERBOSE: False
+LENGTH_ANALYSIS: False
+print_every: 500
+eval_every:
+train_per: 0.6
+dev_per: 0.2
+
+tok_level_pred: True
+batch_size: 64
+include_lstm: False
+bidirectional: False
+learning_rate: 0.001
+hidden_size: 512
+pad_len: 2150
+datasource: 'BURNC'
+num_epochs: 25
+LSTM_LAYERS: 2
+dropout: 0.5
+feat_dim: 16
+
+text_data: '../data/burnc/text2labels'
+speech_data: '../data/burnc/burnc_mfcc_dict.pkl'
+#labels_data: '../data/burnc/burnc_last_label_dict.pkl'
+labels_data: '../data/burnc/burnc_label_dict.pkl'
+toktimes_data: '../data/burnc/burnc_toktimes.pkl'
+model_name: 'tmp'
+results_path: 'results/seq_tagging'
+
+
+train_params:
+  batch_size: 1
+  shuffle: True
+  num_workers: 6
+
+eval_params:
+  batch_size: 1
+  shuffle: True
+  num_workers: 6
