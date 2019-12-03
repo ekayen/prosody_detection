@@ -102,8 +102,8 @@ class SpeechEncoder(nn.Module):
         timestamps = torch.floor((timestamps + (2*self.padding[0]) - self.kernel2[0])/self.stride2[0]) + 1
         return timestamps
 
-    @staticmethod
-    def token_split(input,toktimes):
+
+    def token_split(self,input,toktimes):
         toktimes = [int(tim) for tim in toktimes.squeeze().tolist()]
         tokens = []
         for i in range(1,len(toktimes)):
@@ -112,6 +112,7 @@ class SpeechEncoder(nn.Module):
             idx2 = toktimes[i]
             tok = input[:,:,idx1:idx2,:]
             tokens.append(tok)
+        tokens = self.token_flatten(tokens)
         return tokens
 
 
@@ -154,8 +155,7 @@ class SpeechEncoder(nn.Module):
             if self.include_lstm:
                 TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
                 if TOKENIZE_FIRST:
-                    x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
-                    x = self.token_flatten(x)  # TODO make work with batches
+                    x = self.token_split(x, toktimes)  # TODO make work with batches
                     x = x.view(x.shape[0], x.shape[2], x.shape[
                         1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
@@ -172,8 +172,7 @@ class SpeechEncoder(nn.Module):
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
                     x = x.transpose(0,1).transpose(1,2).contiguous()
                     x = x.view(x.shape[0],x.shape[1],x.shape[2],1)
-                    x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
-                    x = self.token_flatten(x)  # TODO make work with batches
+                    x = self.token_split(x, toktimes)  # TODO make work with batches
                     x = x.view(x.shape[0],x.shape[2],x.shape[1])
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
 
@@ -181,8 +180,7 @@ class SpeechEncoder(nn.Module):
 
 
             else:
-                x = SpeechEncoder.token_split(x, toktimes)  # TODO make work with batches
-                x = SpeechEncoder.token_flatten(x, self.context)  # TODO make work with batches
+                x = self.token_split(x, toktimes)  # TODO make work with batches
                 x = x.view(x.shape[0], x.shape[2], x.shape[1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
                 x = self.fc1(x)
                 x = self.relu(x)
