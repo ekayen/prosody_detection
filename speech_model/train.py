@@ -1,10 +1,5 @@
 """
-Based very lightly on https://github.com/SeanNaren/deepspeech.pytorch/blob/master/model.py
-by Sean Naren
-
-Directly copied functions noted.
-
-Modified by: Elizabeth Nielsen
+By: Elizabeth Nielsen
 """
 import pickle
 from torch import nn
@@ -40,9 +35,9 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
     plot_data['time'].append(0)
     print('done')
 
-    train_params = cfg['train_params']
+    #train_params = cfg['train_params']
 
-    traingen = data.DataLoader(trainset, **train_params)
+    traingen = data.DataLoader(trainset, **cfg['train_params'])
     epoch_size = len(trainset)
 
     print('Training model ...')
@@ -82,7 +77,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
             if torch.sum(torch.isnan(batch)).item() > 0:
                 import pdb;pdb.set_trace()
 
-            torch.nn.utils.clip_grad_norm(model.parameters(), 5)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
 
             optimizer.step()
             recent_losses.append(loss.detach())
