@@ -196,26 +196,26 @@ def plot_grad_flow(named_parameters):
     plt.title("Gradient flow")
     plt.grid(True)
 
-def plot_results(train_losses, train_accs, dev_accs, train_steps,model_name,results_path):
-    df = pd.DataFrame(dict(train_steps=train_steps,
-                           train_losses=train_losses,
-                           train_accs=train_accs,
-                           dev_accs=dev_accs))
+def plot_results(plot_data,model_name,results_path):
+    df = pd.DataFrame(dict(epochs=plot_data['time'],
+                           train_losses=plot_data['loss'],
+                           train_accs=plot_data['train_acc'],
+                           dev_accs=plot_data['dev_acc']))
 
     with open("tmp.pkl", 'wb') as f:
         pickle.dump(df, f)
 
     ax = plt.gca()
-    df.plot(kind='line', x='train_steps', y='train_losses', ax=ax)
-    df.plot(kind='line', x='train_steps', y='train_accs', color='red', ax=ax)
-    df.plot(kind='line', x='train_steps', y='dev_accs', color='green', ax=ax)
+    df.plot(kind='line', x='epochs', y='train_losses', ax=ax)
+    df.plot(kind='line', x='epochs', y='train_accs', color='red', ax=ax)
+    df.plot(kind='line', x='epochs', y='dev_accs', color='green', ax=ax)
 
     plt.savefig('{}/{}.png'.format(results_path,model_name))
     plt.show()
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
 def main():
-    #cfg_file = 'conf/burnc_3_tok_open.yaml'
+    # FOR TESTING ONLY
     cfg_file = 'conf/burnc_breath_open.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)

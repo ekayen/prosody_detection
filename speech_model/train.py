@@ -24,18 +24,20 @@ from model import SpeechEncoder
 
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device):
-    plt_time = []
-    plt_losses = []
-    plt_acc = []
-    plt_train_acc = []
+    plot_data = {
+        'time': [],
+        'loss': [],
+        'train_acc': [],
+        'dev_acc': [],
+    }
     recent_losses = []
 
 
     print('Baseline eval....')
-    plt_acc.append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
-    plt_train_acc.append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
-    plt_losses.append(0)
-    plt_time.append(0)
+    plot_data['dev_acc'].append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
+    plot_data['train_acc'].append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
+    plot_data['loss'].append(0)
+    plot_data['time'].append(0)
     print('done')
 
     train_params = cfg['train_params']
@@ -63,7 +65,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
             else:
                 loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
-            plot_grad_flow(model.named_parameters())
+            #plot_grad_flow(model.named_parameters())
 
             """
             # Check for exploding gradients
@@ -94,19 +96,19 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
         # Print stuff!
 
         # time
-        plt_time.append(epoch)
+        plot_data['time'].append(epoch)
 
         #loss
         train_loss = (sum(recent_losses)/len(recent_losses)).item()
-        plt_losses.append(train_loss)
+        plot_data['loss'].append(train_loss)
 
         # train acc
         train_acc = evaluate(trainset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
-        plt_train_acc.append(train_acc)
+        plot_data['train_acc'].append(train_acc)
 
         # dev acc
         dev_acc = evaluate(devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
-        plt_acc.append(dev_acc)
+        plot_data['dev_acc'].append(dev_acc)
 
         print()
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_acc,5)}\tDev acc:{round(dev_acc,5)}')
@@ -120,7 +122,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
     process = psutil.Process(os.getpid())
     print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
-    plot_results(plt_losses, plt_train_acc, plt_acc, plt_time,cfg['model_name'],cfg['results_path'])
+    plot_results(plot_data,cfg['model_name'],cfg['results_path'])
 
 def set_seeds(seed):
     print(f'setting seed to {seed}')

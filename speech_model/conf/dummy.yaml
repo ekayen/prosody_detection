@@ -1,8 +1,7 @@
 # dataloader params
 segmentation: tokens
 context_window: True
-datasplit: ../data/burnc/splits/tenfold0.yaml
-#datasplit: ../data/burnc/splits/dummy.yaml
+datasplit: ../data/burnc/splits/dummy.yaml
 feats: tok2pros
 bitmark: True
 
@@ -14,14 +13,13 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_only_3tok_open_bitmark_seed131'
-results_path: 'results/nonseq/burnc'
+model_name: 'dummy'
+results_path: 'results/refactor'
 
 train_params:
   batch_size: 32
   shuffle: True
   num_workers: 6
-
 eval_params:
   batch_size: 32
   shuffle: True
@@ -35,8 +33,7 @@ bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
 pad_len: 2150
-datasource: 'BURNC'
-num_epochs: 25
+num_epochs: 5
 lstm_layers: 2
 dropout: 0.2
 feat_dim: 7
