@@ -7,7 +7,7 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name
+from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name,report_hparams
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
@@ -19,8 +19,7 @@ from model import SpeechEncoder
 import argparse
 
 
-def train(model,criterion,optimizer,trainset,devset,cfg,device):
-    model_name = gen_model_name(cfg)
+def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
     plot_data = {
         'time': [],
@@ -78,6 +77,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
             """
 
             if torch.sum(torch.isnan(batch)).item() > 0:
+                print('NaNs!!!!')
                 import pdb;pdb.set_trace()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
@@ -121,10 +121,11 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
 
     plot_results(plot_data,model_name,cfg['results_path'])
 
+    print('Saving model ...')
     model_path = os.path.join(cfg['results_path'], model_name + '.pt')
     print(model_path)
     torch.save(model.state_dict(), model_path)
-
+    print('done')
 
 def set_seeds(seed):
     print(f'setting seed to {seed}')
@@ -154,8 +155,13 @@ def main():
     else:
         datasplit = cfg['datasplit']
 
+    model_name = gen_model_name(cfg,datasplit)
+    print(f'Model: {model_name}')
+
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
+
+    report_hparams(cfg,datasplit)
 
     set_seeds(seed)
 
@@ -188,7 +194,7 @@ def main():
 
     set_seeds(seed)
 
-    train(model, criterion, optimizer, trainset, devset, cfg, device)
+    train(model, criterion, optimizer, trainset, devset, cfg, device, model_name)
 
 if __name__=="__main__":
     main()

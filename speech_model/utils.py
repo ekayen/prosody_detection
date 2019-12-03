@@ -1,14 +1,12 @@
 import torch
 from torch.utils import data
 import torch.nn.functional as F
-import random
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
 import yaml
+from tabulate import tabulate
 
-random.seed(0)
-torch.manual_seed(123)
 
 def print_progress(progress, info='', bar_len=20):
 	filled = int(progress*bar_len)
@@ -213,17 +211,45 @@ def plot_results(plot_data,model_name,results_path):
     plt.show()
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
-def gen_model_name(cfg):
-    """
+def gen_model_name(cfg,datasplit):
     name_sections = []
-    name_sections.append(['model_name'])
+    name_sections.append(cfg['model_name'])
+    datasplit = datasplit.split('/')[-1].split('.')[0]
+    name_sections.append(datasplit)
     name_sections.append(f's{cfg["seed"]}')
     name_sections.append(f'cnn{cfg["cnn_layers"]}')
-    name_sections.append(f'lstm{cfg["lstm_layers"]}')
-    name_sections.append(f'd{cfg["dropout"]}')
+    if cfg['include_lstm']:
+        name_sections.append(f'lstm{cfg["lstm_layers"]}')
+    dropout = int(cfg['dropout']*10)
+    name_sections.append(f'd{dropout}')
     return '_'.join(name_sections)
-    """
-    return cfg['model_name']
+
+def report_hparams(cfg,datasplit=None):
+
+    if not datasplit: datasplit = cfg['datasplit']
+
+    to_print = [
+                    ['Model name', gen_model_name(cfg,datasplit)],
+                    ['Datasplit', datasplit],
+                    ['Features', cfg['feats']],
+                    ['Pad_len', cfg['pad_len']],
+                    ['Feature dim', cfg['feat_dim']],
+                    ['CNN layers', cfg['cnn_layers']],
+                    ['Dropout', cfg['dropout']],
+                    ['Learning rate', cfg['learning_rate']],
+                    ['Epochs', cfg['num_epochs']],
+                    ['Seed', cfg['seed']]
+                ]
+    if cfg['include_lstm']:
+        lstm_params = [['LSTM layers',cfg['lstm_layers']],
+                       ['LSTM hidden size',cfg['hidden_size']],
+                       ['Bidirectional',cfg['bidirectional']]]
+        to_print = to_print + lstm_params
+
+    print()
+    print(tabulate(to_print,
+                   headers=['Hparam','Value']))
+    print()
 
 def main():
     # FOR TESTING ONLY
