@@ -27,7 +27,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
     }
     recent_losses = []
 
-
     print('Baseline eval....')
     plot_data['dev_acc'].append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
     plot_data['train_acc'].append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
@@ -39,6 +38,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
 
     traingen = data.DataLoader(trainset, **cfg['train_params'])
     epoch_size = len(trainset)
+    print(epoch_size)
 
     print('Training model ...')
     max_grad = float("-inf")
@@ -85,7 +85,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
             if len(recent_losses) > 50:
                 recent_losses = recent_losses[1:]
 
-            timestep += 1
+            timestep += curr_bat_size
             print_progress(timestep/epoch_size, info=f'Epoch {epoch}')
 
         # Print stuff!
@@ -176,6 +176,8 @@ def main():
     set_seeds(seed)
 
     train(model, criterion, optimizer, trainset, devset, cfg, device)
+    model_path = os.path.join(cfg['results_path'],cfg['model_name']+'.pt')
+    torch.save(model.state_dict(), model_path)
 
 if __name__=="__main__":
     main()
