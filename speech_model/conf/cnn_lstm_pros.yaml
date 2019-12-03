@@ -37,7 +37,7 @@ learning_rate: 0.001
 hidden_size: 512
 pad_len: 2150
 num_epochs: 25
-LSTM_LAYERS: 2
+lstm_layers: 2
 dropout: 0.5
 feat_dim: 6
 context: False

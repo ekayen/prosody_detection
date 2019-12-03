@@ -37,7 +37,7 @@ hidden_size: 512
 pad_len: 2150
 datasource: 'BURNC'
 num_epochs: 50
-LSTM_LAYERS: 2
+lstm_layers: 2
 dropout: 0.2
 feat_dim: 7
 #feat_dim: 6
