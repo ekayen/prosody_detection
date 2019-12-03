@@ -7,7 +7,7 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress
+from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
@@ -16,9 +16,12 @@ import yaml
 import math
 import numpy as np
 from model import SpeechEncoder
+import argparse
 
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device):
+    model_name = gen_model_name(cfg)
+
     plot_data = {
         'time': [],
         'loss': [],
@@ -49,6 +52,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
 
             model.train()
             batch,labels = batch.to(device),labels.to(device)
+            import pdb;pdb.set_trace()
 
             model.zero_grad()
             curr_bat_size = batch.shape[0]
@@ -111,13 +115,16 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
         #evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
 
 
-
     print('done')
 
     process = psutil.Process(os.getpid())
     print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
-    plot_results(plot_data,cfg['model_name'],cfg['results_path'])
+    plot_results(plot_data,model_name,cfg['results_path'])
+
+    model_path = os.path.join(cfg['results_path'], model_name + '.pt')
+    torch.save(model.state_dict(), model_path)
+
 
 def set_seeds(seed):
     print(f'setting seed to {seed}')
@@ -128,12 +135,13 @@ def set_seeds(seed):
         torch.cuda.manual_seed_all(seed)
 
 def main():
-    if len(sys.argv) < 2:
-        config = 'conf/burnc.yaml'
-    else:
-        config = sys.argv[1]
 
-    with open(config, 'r') as f:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c","--config", help="path to config file", default='conf/cnn_lstm_pros.yaml')
+    parser.add_argument('-d','--datasplit', help='optional path to datasplit yaml file to override path specified in config')
+    args = parser.parse_args()
+
+    with open(args.config, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
 
 
@@ -141,13 +149,18 @@ def main():
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    if args.datasplit:
+        datasplit = args.datasplit
+    else:
+        datasplit = cfg['datasplit']
+
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
     set_seeds(seed)
 
-    trainset = BurncDatasetSpeech(cfg, data_dict, cfg['pad_len'], mode='train')
-    devset = BurncDatasetSpeech(cfg, data_dict, cfg['pad_len'], mode='dev')
+    trainset = BurncDatasetSpeech(cfg, data_dict, mode='train',datasplit=datasplit)
+    devset = BurncDatasetSpeech(cfg, data_dict, mode='dev',datasplit=datasplit)
 
     print('done')
     print('Building model ...')
@@ -176,8 +189,6 @@ def main():
     set_seeds(seed)
 
     train(model, criterion, optimizer, trainset, devset, cfg, device)
-    model_path = os.path.join(cfg['results_path'],cfg['model_name']+'.pt')
-    torch.save(model.state_dict(), model_path)
 
 if __name__=="__main__":
     main()

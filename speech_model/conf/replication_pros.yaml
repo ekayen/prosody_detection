@@ -15,7 +15,7 @@ eval_every:
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
 model_name: 'cnn_only_3tok_open_bitmark_seed131'
-results_path: 'results/nonseq/burnc'
+results_path: 'results/refactor'
 
 train_params:
   batch_size: 32
@@ -34,9 +34,12 @@ include_lstm: False
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
-pad_len: 2150
+pad_len: 420
+# if no context, smaller pad length:
+#pad_len: 373
 datasource: 'BURNC'
 num_epochs: 25
+cnn_layers: 2
 lstm_layers: 2
 dropout: 0.2
 feat_dim: 7

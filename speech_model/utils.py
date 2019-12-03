@@ -15,23 +15,22 @@ def print_progress(progress, info='', bar_len=20):
 	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
 
 class BurncDataset(data.Dataset):
-    def __init__(self,cfg,input_dict,pad_len,mode='train'):
+    def __init__(self,cfg,input_dict,mode='train',datasplit=None):
 
-        # Load the config file for the whole model
-
-        #with open(config, 'r') as f:
-        #    cfg = yaml.load(f, yaml.FullLoader) # TODO issue is that this isn't a full path
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
         self.feats = cfg['feats']
         self.bitmark = cfg['bitmark']
 
-        self.pad_len = pad_len
+        self.pad_len = cfg['pad_len']
         self.input_dict = input_dict
         self.mode = mode
 
+        if not datasplit:
+            datasplit = cfg['datasplit']
+
         # From the config file, load the ids you need
-        with open(cfg['datasplit'], 'r') as f:
+        with open(datasplit, 'r') as f:
             split_ids = yaml.load(f, yaml.FullLoader)
         self.utt_ids = split_ids[self.mode]
         if self.segmentation=='tokens':
@@ -44,8 +43,8 @@ class BurncDataset(data.Dataset):
 
 
 class BurncDatasetSpeech(BurncDataset):
-    def __init__(self, config, input_dict, pad_len, mode='train'):
-        super(BurncDatasetSpeech,self).__init__(config, input_dict, pad_len, mode)
+    def __init__(self, config, input_dict, mode='train',datasplit=None):
+        super(BurncDatasetSpeech,self).__init__(config, input_dict, mode, datasplit)
 
 
     def pad_right(self,arr):
@@ -86,14 +85,14 @@ class BurncDatasetSpeech(BurncDataset):
                         tmp.append(feats)
                 tok_feats = tmp
             X = torch.cat(tok_feats,dim=0)
-            X = self.pad_right(X)
+            #X = self.pad_right(X)
             Y = torch.tensor(self.input_dict['tok2tone'][id])
             toktimes = [self.input_dict['tok2times'][i][0] for i in tok_ids] + [self.input_dict['tok2times'][tok_ids[-1]][1]]
 
             if self.context_window and len(toktimes)< 4:
                 while len(toktimes) < 4:
                     toktimes.append(toktimes[-1])
-            if not len(toktimes)==4: print(id,len(toktimes))
+            #if not len(toktimes)==4: print(id,len(toktimes))
             initial_time = toktimes[0]
             toktimes = torch.tensor([int(round(100*(tim-initial_time))) for tim in toktimes],dtype=torch.float32)
 
@@ -214,16 +213,32 @@ def plot_results(plot_data,model_name,results_path):
     plt.show()
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
+def gen_model_name(cfg):
+    """
+    name_sections = []
+    name_sections.append(['model_name'])
+    name_sections.append(f's{cfg["seed"]}')
+    name_sections.append(f'cnn{cfg["cnn_layers"]}')
+    name_sections.append(f'lstm{cfg["lstm_layers"]}')
+    name_sections.append(f'd{cfg["dropout"]}')
+    return '_'.join(name_sections)
+    """
+    return cfg['model_name']
+
 def main():
     # FOR TESTING ONLY
-    cfg_file = 'conf/burnc_breath_open.yaml'
+    cfg_file = 'conf/replication_pros.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
-    burnc_dict = '../data/burnc/burnc_utt.pkl'
+    burnc_dict = '../data/burnc/burnc.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
-    dataset = BurncDatasetSpeech(cfg, input_dict,pad_len=2150, mode='train')
-    id4,(X,toktimes),Y = dataset.__getitem__(4)
+    dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
+    datagen = data.DataLoader(dataset, **cfg['train_params'])
+    lens = []
+    for id,(x,toktimes),y in datagen:
+        lens.append(x.shape[1])
+    print(max(lens))
     import pdb;pdb.set_trace()
 
 if __name__ == "__main__":
