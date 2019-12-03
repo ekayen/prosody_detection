@@ -85,7 +85,7 @@ class BurncDatasetSpeech(BurncDataset):
                         tmp.append(feats)
                 tok_feats = tmp
             X = torch.cat(tok_feats,dim=0)
-            #X = self.pad_right(X)
+            X = self.pad_right(X)
             Y = torch.tensor(self.input_dict['tok2tone'][id])
             toktimes = [self.input_dict['tok2times'][i][0] for i in tok_ids] + [self.input_dict['tok2times'][tok_ids[-1]][1]]
 

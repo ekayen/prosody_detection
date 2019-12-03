@@ -27,12 +27,11 @@ eval_params:
 
 # model params
 tok_level_pred: False
-batch_size: 32
 include_lstm: False
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
-pad_len: 2150
+pad_len: 420
 num_epochs: 5
 cnn_layers: 2
 lstm_layers: 2

@@ -52,7 +52,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
 
             model.train()
             batch,labels = batch.to(device),labels.to(device)
-            import pdb;pdb.set_trace()
 
             model.zero_grad()
             curr_bat_size = batch.shape[0]
@@ -123,6 +122,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device):
     plot_results(plot_data,model_name,cfg['results_path'])
 
     model_path = os.path.join(cfg['results_path'], model_name + '.pt')
+    print(model_path)
     torch.save(model.state_dict(), model_path)
 
 
