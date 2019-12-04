@@ -41,7 +41,7 @@ cnn_layers: 2
 lstm_layers: 2
 dropout: 0.5
 feat_dim: 6
-context: False
+postlstm_context: False
 weight_decay: 0
 
 seed: 256

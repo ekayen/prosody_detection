@@ -8,16 +8,11 @@ import torch
 import psutil
 import os
 from utils import *
-#UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name,report_hparams,set_seeds
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
-import matplotlib.pyplot as plt
-import random
-import sys
 import yaml
-import math
-import numpy as np
 from model import SpeechEncoder
 import argparse
+import pdb
 
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
@@ -30,18 +25,19 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
     }
     recent_losses = []
 
+    """
     print('Baseline eval....')
     plot_data['dev_acc'].append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
     plot_data['train_acc'].append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
     plot_data['loss'].append(0)
     plot_data['time'].append(0)
     print('done')
+    """
 
     #train_params = cfg['train_params']
 
     traingen = data.DataLoader(trainset, **cfg['train_params'])
     epoch_size = len(trainset)
-    print(epoch_size)
 
     print('Training model ...')
     max_grad = float("-inf")
@@ -49,7 +45,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
     for epoch in range(cfg['num_epochs']):
         timestep = 0
         for id, (batch, toktimes), labels in traingen:
-
             model.train()
             batch,labels = batch.to(device),labels.to(device)
 
@@ -59,7 +54,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
             output,_ = model(batch,toktimes,hidden)
 
             if cfg['tok_level_pred']:
-                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float())
+                #import pdb;pdb.set_trace()
+                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float()) # TODO fix so that padding isn't included in loss calculation
             else:
                 loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
@@ -164,7 +160,7 @@ def main():
 
     set_seeds(seed)
 
-    model = SpeechEncoder(seq_len=cfg['pad_len'],
+    model = SpeechEncoder(seq_len=cfg['frame_pad_len'],
                           batch_size=cfg['train_params']['batch_size'],
                           lstm_layers=cfg['lstm_layers'],
                           bidirectional=cfg['bidirectional'],
@@ -173,8 +169,9 @@ def main():
                           include_lstm=cfg['include_lstm'],
                           tok_level_pred=cfg['tok_level_pred'],
                           feat_dim=cfg['feat_dim'],
-                          context=cfg['context'],
-                          device=device)
+                          postlstm_context=cfg['postlstm_context'],
+                          device=device,
+                          tok_seq_len=cfg['tok_pad_len'])
 
     model.to(device)
 

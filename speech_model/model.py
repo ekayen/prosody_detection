@@ -1,7 +1,9 @@
 from torch import nn
 import torch
+import torch.nn.functional as F
 import math
 import numpy as np
+import pdb
 
 class SpeechEncoder(nn.Module):
 
@@ -16,8 +18,9 @@ class SpeechEncoder(nn.Module):
                  include_lstm=True,
                  tok_level_pred=False,
                  feat_dim=16,
-                 context=False,
-                 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")):
+                 postlstm_context=False,
+                 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+                 tok_seq_len=None):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -28,8 +31,10 @@ class SpeechEncoder(nn.Module):
         self.dropout = dropout
         self.include_lstm = include_lstm
         self.tok_level_pred = tok_level_pred
-        self.context = context
+        self.postlstm_context = postlstm_context
         self.device = device
+
+        self.tok_seq_len = tok_seq_len
 
         self.feat_dim = feat_dim
         self.in_channels = 1
@@ -104,17 +109,30 @@ class SpeechEncoder(nn.Module):
 
 
     def token_split(self,input,toktimes):
-        toktimes = [int(tim) for tim in toktimes.squeeze().tolist()]
-        tokens = []
+        #import pdb;pdb.set_trace() # TODO fix this so that the toktimes tensor also gets chopped up. Test with batch size of 1.
+        #toktimes = [int(tim) for tim in toktimes.squeeze().tolist()]
         batch_size = input.shape[0]
-        for i in range(1,len(toktimes)):
-            #import pdb;pdb.set_trace()
-            idx1 = toktimes[i-1]
-            idx2 = toktimes[i]
-            tok = input[:,:,idx1:idx2,:]
-            tokens.append(tok)
-        tokens = self.token_flatten(tokens)
-        return tokens
+        instances = []
+        for j in range(batch_size):
+            tokens = []
+            instance = input[j:j+1,:,:]
+            curr_toktimes = toktimes[j:j+1,:].squeeze()
+            curr_toktimes = np.trim_zeros(np.array(curr_toktimes,dtype=np.int),trim='b').tolist()
+            for i in range(1,len(curr_toktimes)):
+                idx1 = curr_toktimes[i-1]
+                idx2 = curr_toktimes[i]
+                tok = instance[:,:,idx1:idx2]
+                tokens.append(tok)
+            tokens = self.token_flatten(tokens).unsqueeze(dim=0)
+            if tokens.shape[1] < self.tok_seq_len:
+                dff = self.tok_seq_len - tokens.shape[1]
+                tokens = F.pad(tokens,pad=(0,0,0,dff,0,0),mode='constant')
+            else:
+                tokens = tokens[:,:self.tok_seq_len,:]
+            instances.append(tokens)
+
+        out = torch.cat(instances,dim=0)
+        return out
 
 
     def token_flatten(self,toks):
@@ -122,11 +140,8 @@ class SpeechEncoder(nn.Module):
         for tok in toks:
             summed = tok.sum(dim=2)
             output.append(summed)
-            #print(tok.shape)
-            #maxed = tok.max(dim=2).values
-            #output.append(maxed)
 
-        if self.context:
+        if self.postlstm_context:
             mark_focus = True
             tok_w_context = []
             for i,tok in enumerate(output):
@@ -135,7 +150,6 @@ class SpeechEncoder(nn.Module):
                 tok_w_context.append(torch.cat((t_prev,tok,t_next),dim=0))
             out = tok_w_context
         out = torch.cat(output,dim=0)
-        #print(out.shape)
         return out
 
     def forward(self,x,toktimes,hidden):
@@ -156,9 +170,9 @@ class SpeechEncoder(nn.Module):
             if self.include_lstm:
                 TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
                 if TOKENIZE_FIRST:
+                    x = x.squeeze(dim=-1) # IN: N x C x W x H (where H=1) OUT: N x C x W
                     x = self.token_split(x, toktimes)  # TODO make work with batches
-                    x = x.view(x.shape[0], x.shape[2], x.shape[
-                        1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
+                    x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
                     return x,hidden
