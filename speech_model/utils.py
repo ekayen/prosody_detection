@@ -6,6 +6,18 @@ import pickle
 import pandas as pd
 import yaml
 from tabulate import tabulate
+import random
+import numpy as np
+
+
+def set_seeds(seed):
+    print(f'setting seed to {seed}')
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def print_progress(progress, info='', bar_len=20):

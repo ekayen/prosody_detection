@@ -1,7 +1,7 @@
 # dataloader params
 segmentation: tokens
 context_window: True
-datasplit: ../data/burnc/splits/dummy.yaml
+datasplit: ../data/burnc/splits/debug.yaml
 feats: tok2pros
 bitmark: True
 
@@ -13,7 +13,7 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'dummy'
+model_name: 'replication_debug'
 results_path: 'results/refactor'
 
 train_params:

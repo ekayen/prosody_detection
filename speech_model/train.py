@@ -7,7 +7,8 @@ from torch.utils import data
 import torch
 import psutil
 import os
-from utils import UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name,report_hparams
+from utils import *
+#UttDataset,plot_grad_flow,plot_results,UttDatasetWithId,UttDatasetWithToktimes,BurncDatasetSpeech,print_progress,gen_model_name,report_hparams,set_seeds
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import matplotlib.pyplot as plt
 import random
@@ -127,14 +128,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
     torch.save(model.state_dict(), model_path)
     print('done')
 
-def set_seeds(seed):
-    print(f'setting seed to {seed}')
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
 def main():
 
     parser = argparse.ArgumentParser()
@@ -145,9 +138,7 @@ def main():
     with open(args.config, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
 
-
     seed = cfg['seed']
-
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if args.datasplit:
@@ -161,7 +152,7 @@ def main():
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
-    report_hparams(cfg,datasplit)
+    #report_hparams(cfg,datasplit)
 
     set_seeds(seed)
 

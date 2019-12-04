@@ -106,6 +106,7 @@ class SpeechEncoder(nn.Module):
     def token_split(self,input,toktimes):
         toktimes = [int(tim) for tim in toktimes.squeeze().tolist()]
         tokens = []
+        batch_size = input.shape[0]
         for i in range(1,len(toktimes)):
             #import pdb;pdb.set_trace()
             idx1 = toktimes[i-1]
