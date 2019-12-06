@@ -2,7 +2,6 @@
 segmentation: tokens
 context_window: True
 datasplit: ../data/burnc/splits/tenfold0.yaml
-#datasplit: ../data/burnc/splits/dummy.yaml
 feats: tok2pros
 bitmark: True
 
@@ -14,7 +13,7 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_only_3tok_open_bitmark_seed131'
+model_name: 'replication'
 results_path: 'results/refactor'
 
 train_params:
@@ -33,17 +32,18 @@ include_lstm: False
 bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
-pad_len: 420
+frame_pad_len: 420
+tok_pad_len: None
 # if no context, smaller pad length:
-#pad_len: 373
+#frame_pad_len: 373
 datasource: 'BURNC'
-num_epochs: 25
+num_epochs: 20
 cnn_layers: 2
 lstm_layers: 2
 dropout: 0.2
 feat_dim: 7
 #feat_dim: 6
 postlstm_context: False
-weight_decay: 0
+weight_decay: 0.001
 
 seed: 131

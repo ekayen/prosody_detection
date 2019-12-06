@@ -223,6 +223,11 @@ def gen_model_name(cfg,datasplit):
         name_sections.append(f'lstm{cfg["lstm_layers"]}')
     dropout = int(cfg['dropout']*10)
     name_sections.append(f'd{dropout}')
+    if not cfg['weight_decay']==0:
+        wd = int(cfg['weight_decay']*1000)
+        name_sections.append(f'wd{wd}')
+    name_sections.append(f'f{cfg["frame_filter_size"]}')
+    name_sections.append(f'p{cfg["frame_pad_size"]}')
     return '_'.join(name_sections)
 
 def report_hparams(cfg,datasplit=None):

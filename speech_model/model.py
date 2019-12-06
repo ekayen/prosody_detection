@@ -20,7 +20,11 @@ class SpeechEncoder(nn.Module):
                  feat_dim=16,
                  postlstm_context=False,
                  device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-                 tok_seq_len=None):
+                 tok_seq_len=None,
+                 flatten_method='sum',
+                 frame_filter_size=9,
+                 frame_pad_size=4,
+                 cnn_layers=2):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -33,31 +37,83 @@ class SpeechEncoder(nn.Module):
         self.tok_level_pred = tok_level_pred
         self.postlstm_context = postlstm_context
         self.device = device
+        self.flatten_method = flatten_method
+        self.cnn_layers = cnn_layers
 
         self.tok_seq_len = tok_seq_len
 
+        self.frame_filter_size = frame_filter_size
+        self.frame_pad_size = frame_pad_size
         self.feat_dim = feat_dim
         self.in_channels = 1
         self.hidden_channels = 128
         self.out_channels = 256
-        self.kernel1 = (9,self.feat_dim)
-        self.kernel2 = (9,1)
+        self.kernel1 = (self.frame_filter_size,self.feat_dim)
+        self.kernel2 = (self.frame_filter_size,1)
         self.stride1 = (2,self.feat_dim)
         self.stride2 = (2,1)
-        self.padding = (4,0)
+        self.padding = (self.frame_pad_size,0)
 
-        self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
-                                            padding=self.padding),
-                                  nn.BatchNorm2d(self.hidden_channels),
-                                  #nn.ReLU(inplace=True),
-                                  nn.Hardtanh(inplace=True),
-                                  nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
-                                            padding=self.padding),
-                                  nn.BatchNorm2d(self.out_channels),
-                                  #nn.ReLU(inplace=True)
-                                  nn.Hardtanh(inplace=True)
-                                  )
 
+        if self.cnn_layers==2:
+            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.hidden_channels),
+                                      #nn.ReLU(inplace=True),
+                                      nn.Hardtanh(inplace=True),
+                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      #nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True)
+                                      )
+        elif self.cnn_layers==3:
+            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.hidden_channels),
+                                      #nn.ReLU(inplace=True),
+                                      nn.Hardtanh(inplace=True),
+
+                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      #nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True),
+
+                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      # nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True)
+                                      )
+        elif self.cnn_layers==4:
+            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.hidden_channels),
+                                      #nn.ReLU(inplace=True),
+                                      nn.Hardtanh(inplace=True),
+
+                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      #nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True),
+
+                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      # nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True),
+
+                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                stride=self.stride2,
+                                                padding=self.padding),
+                                      nn.BatchNorm2d(self.out_channels),
+                                      # nn.ReLU(inplace=True)
+                                      nn.Hardtanh(inplace=True)
+                                      )
 
         # RNN VERSION:
         if self.include_lstm:
@@ -80,11 +136,22 @@ class SpeechEncoder(nn.Module):
         else:
             if not self.tok_level_pred:
                 self.maxpool = nn.MaxPool1d(2)
+                # layer 1
                 self.cnn_output_size = math.floor(
                     (self.seq_len - self.kernel1[0] + self.padding[0] * 2) / self.stride1[0]) + 1
+                # layer 2
                 self.cnn_output_size = math.floor(
                     (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
+                # layer 3
+                if self.cnn_layers>=3:
+                    self.cnn_output_size = math.floor(
+                        (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
+                if self.cnn_layers>=4:
+                    self.cnn_output_size = math.floor(
+                        (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
                 self.cnn_output_size = int(((math.floor(self.cnn_output_size / 2) * self.out_channels)))
+
+
 
                 self.fc1_out = 1600
 
@@ -104,7 +171,12 @@ class SpeechEncoder(nn.Module):
         calculate which frame in the encoder output will correspond to the token break.
         '''
         timestamps = torch.floor((timestamps + (2*self.padding[0]) - self.kernel1[0])/self.stride1[0]) + 1
-        timestamps = torch.floor((timestamps + (2*self.padding[0]) - self.kernel2[0])/self.stride2[0]) + 1
+        timestamps = torch.floor((timestamps + (2 * self.padding[0]) - self.kernel2[0]) / self.stride2[0]) + 1
+        if self.cnn_layers>=3:
+            timestamps = torch.floor((timestamps + (2 * self.padding[0]) - self.kernel2[0]) / self.stride2[0]) + 1
+        if self.cnn_layers>=4:
+            timestamps = torch.floor((timestamps + (2 * self.padding[0]) - self.kernel2[0]) / self.stride2[0]) + 1
+
         return timestamps
 
 
@@ -138,7 +210,13 @@ class SpeechEncoder(nn.Module):
     def token_flatten(self,toks):
         output = []
         for tok in toks:
-            summed = tok.sum(dim=2)
+            if self.flatten_method=='sum':
+                summed = tok.sum(dim=2)
+            elif self.flatten_method=='max':
+                if tok.shape[-1]==0:
+                    summed = torch.zeros(tok.shape[0],tok.shape[1]).to(self.device)
+                else:
+                    summed,_ = tok.max(dim=2)
             output.append(summed)
 
         if self.postlstm_context:

@@ -11,6 +11,7 @@ from utils import *
 from evaluate import evaluate,evaluate_lengths,baseline_with_len
 import yaml
 from model import SpeechEncoder
+import numpy as np
 import argparse
 import pdb
 
@@ -44,23 +45,45 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
     min_grad = float("inf")
     for epoch in range(cfg['num_epochs']):
         timestep = 0
+        tot_utts = 0
+        tot_toks = 0
         for id, (batch, toktimes), labels in traingen:
             model.train()
             batch,labels = batch.to(device),labels.to(device)
 
+
             model.zero_grad()
             curr_bat_size = batch.shape[0]
+            tot_utts += curr_bat_size
+
             hidden = model.init_hidden(curr_bat_size)
             output,_ = model(batch,toktimes,hidden)
 
+
             if cfg['tok_level_pred']:
+                num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
+                            range(toktimes.shape[0])] # list of len curr_bat_size, each element is len of that utterance
+                seq_len = cfg['tok_pad_len']
+                # Flatten output and labels:
+                #output = output.view(output.shape[1], output.shape[0])
+                output = output.flatten()
+                labels = labels.flatten()
+                tmp_out = []
+                tmp_lbl = []
+                for i in range(curr_bat_size):
+                    tmp_out.append(output[i * seq_len:i * seq_len + num_toks[i]])
+                    tmp_lbl.append(labels[i * seq_len:i * seq_len + num_toks[i]])
+                out = torch.cat(tmp_out)
+                lbl = torch.cat(tmp_lbl)
+                tot_toks += out.shape[0]
+
                 #import pdb;pdb.set_trace()
-                loss = criterion(output.view(output.shape[1],output.shape[0]), labels.float()) # TODO fix so that padding isn't included in loss calculation
+                loss = criterion(out,lbl.float()) # TODO fix so that padding isn't included in loss calculation
             else:
                 loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
-            #plot_grad_flow(model.named_parameters())
-
+            plot_grad_flow(model.named_parameters())
+            plt.show()
             """
             # Check for exploding gradients
             for n, p in model.named_parameters():
@@ -98,17 +121,18 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
         plot_data['loss'].append(train_loss)
 
         # train acc
-        train_acc = evaluate(trainset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
-        plot_data['train_acc'].append(train_acc)
+        train_results = evaluate(trainset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
+        plot_data['train_acc'].append(train_results[0])
 
         # dev acc
-        dev_acc = evaluate(devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
-        plot_data['dev_acc'].append(dev_acc)
+        dev_results = evaluate(devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
+        plot_data['dev_acc'].append(dev_results[0])
 
         print()
-        print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_acc,5)}\tDev acc:{round(dev_acc,5)}')
-        #if timestep % eval_every == 1 and not timestep==1:
-        #evaluate(devset,eval_params,model,device,tok_level_pred=tok_level_pred)
+        print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
+        #print(f'Total train utts: {train_results[3]}\ttrain toks: {train_results[1]},\ttotal correct: {train_results[2]}')
+        #print(f'Total dev utts: {dev_results[3]}\tdev toks: {dev_results[1]},\ttotal correct: {dev_results[2]}')
+
 
 
     print('done')
@@ -171,7 +195,11 @@ def main():
                           feat_dim=cfg['feat_dim'],
                           postlstm_context=cfg['postlstm_context'],
                           device=device,
-                          tok_seq_len=cfg['tok_pad_len'])
+                          tok_seq_len=cfg['tok_pad_len'],
+                          flatten_method=cfg['flatten_method'],
+                          frame_filter_size=cfg['frame_filter_size'],
+                          frame_pad_size=cfg['frame_pad_size'],
+                          cnn_layers=cfg['cnn_layers'])
 
     model.to(device)
 
