@@ -1,0 +1,53 @@
+# dataloader params
+segmentation: utterances
+context_window: False
+datasplit: ../data/burnc/splits/tenfold0.yaml
+#datasplit: ../data/burnc/splits/fivefold0.yaml
+feats: tok2pros
+bitmark: True
+
+# Debugging params
+VERBOSE: False
+LENGTH_ANALYSIS: False
+print_every: 500
+eval_every:
+
+
+# i/o params
+all_data: '../data/burnc/burnc.pkl'
+model_name: 'cnn_only_pros_gc'
+results_path: 'results/refactor/cnn_only'
+
+train_params:
+  batch_size: 64
+  shuffle: True
+  num_workers: 6
+
+eval_params:
+  batch_size: 64
+  shuffle: True
+  num_workers: 6
+
+# Model params
+tok_level_pred: True
+batch_size: 1
+include_lstm: False
+bidirectional: True
+learning_rate: 0.001
+hidden_size: 512
+pad_len: 2150
+frame_pad_len: 2150
+tok_pad_len: 50
+num_epochs: 25
+cnn_layers: 2
+lstm_layers: 2
+dropout: 0.3
+feat_dim: 6
+postlstm_context: False
+weight_decay: 0
+flatten_method: sum
+frame_filter_size: 9
+frame_pad_size: 4
+
+
+seed: 256
