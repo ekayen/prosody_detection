@@ -221,7 +221,7 @@ def gen_model_name(cfg,datasplit):
     name_sections.append(f'cnn{cfg["cnn_layers"]}')
     if cfg['include_lstm']:
         name_sections.append(f'lstm{cfg["lstm_layers"]}')
-    dropout = int(cfg['dropout']*10)
+    dropout = int(float(cfg['dropout'])*10)
     name_sections.append(f'd{dropout}')
     if not cfg['weight_decay']==0:
         wd = int(cfg['weight_decay']*1000)

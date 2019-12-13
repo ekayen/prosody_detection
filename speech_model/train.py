@@ -153,10 +153,36 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c","--config", help="path to config file", default='conf/cnn_lstm_pros.yaml')
     parser.add_argument('-d','--datasplit', help='optional path to datasplit yaml file to override path specified in config')
-    args = parser.parse_args()
 
+    parser.add_argument('-hid', '--hidden_size', help='hidden size for LSTM -- optional, overrides the one in the config')
+    parser.add_argument('-f', '--frame_filter_size',
+                        help='width of CNN filters -- optional, overrides the one in the config')
+    parser.add_argument('-pad', '--frame_pad_size',
+                        help='width of CNN padding -- optional, overrides the one in the config')
+    parser.add_argument('-cnn', '--cnn_layers', help='number of CNN layers -- optional, overrides the one in the config')
+    parser.add_argument('-l', '--lstm_layers', help='number of LSTM layers -- optional, overrides the one in the config')
+    parser.add_argument('-dr', '--dropout', help='dropout -- optional, overrides the one in the config')
+    parser.add_argument('-wd', '--weight_decay', help='weight decay -- optional, overrides the one in the config')
+    parser.add_argument('-lr', '--learning_rate', help='learning rate -- optional, overrides the one in the config')
+    parser.add_argument('-flat', '--flatten_method', help='method for flattening tokens -- optional, overrides the one in the config')
+
+    args = parser.parse_args()
     with open(args.config, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
+
+    cfg2arg = {'datasplit': args.datasplit,
+               'frame_filter_size': args.frame_filter_size,
+               'frame_pad_size': args.frame_pad_size,
+               'cnn_layers': args.cnn_layers,
+               'lstm_layers': args.lstm_layers,
+               'dropout': args.dropout,
+               'weight_decay': args.weight_decay,
+               'learning_rate': args.learning_rate,
+               'flatten_method': args.flatten_method,
+               }
+
+    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers']
+    float_args = ['dropout','weight_decay','learning_rate']
 
     seed = cfg['seed']
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -165,6 +191,15 @@ def main():
         datasplit = args.datasplit
     else:
         datasplit = cfg['datasplit']
+
+    for arg in cfg2arg:
+        if cfg2arg[arg]:
+            if arg in int_args:
+                cfg[arg] = int(cfg2arg[arg])
+            elif arg in float_args:
+                cfg[arg] = float(cfg2arg[arg])
+            else:
+                cfg[arg] = cfg2arg[arg]
 
     model_name = gen_model_name(cfg,datasplit)
     print(f'Model: {model_name}')
