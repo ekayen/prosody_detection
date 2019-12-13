@@ -203,7 +203,6 @@ class SpeechEncoder(nn.Module):
                 tokens = tokens[:,:self.tok_seq_len,:]
             instances.append(tokens)
 
-        import pdb;pdb.set_trace()
         out = torch.cat(instances,dim=0)
         return out
 
@@ -249,7 +248,7 @@ class SpeechEncoder(nn.Module):
             if self.include_lstm:
                 TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
                 if TOKENIZE_FIRST:
-                    x = x.squeeze(dim=-1) # IN: N x C x W x H (where H=1) OUT: N x C x W
+                    x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                     x = self.token_split(x, toktimes)  # TODO make work with batches
                     x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
@@ -274,8 +273,11 @@ class SpeechEncoder(nn.Module):
 
 
             else:
+                x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                 x = self.token_split(x, toktimes)  # TODO make work with batches
-                x = x.view(x.shape[0], x.shape[2], x.shape[1])  # Comes out of tokens with dims: seq_len, channels, batch. Need seq_len, batch, channels
+                #print(x.shape)
+                x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                #import pdb;pdb.set_trace()
                 x = self.fc1(x)
                 x = self.relu(x)
                 x = self.dropout(x)
@@ -284,8 +286,8 @@ class SpeechEncoder(nn.Module):
 
         else:
             if self.include_lstm:
-                x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
 
+                x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
                 x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
                 # here: W x N x lstm_hidden_size
                 x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
