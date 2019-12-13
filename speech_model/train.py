@@ -176,7 +176,7 @@ def main():
 
     set_seeds(seed)
 
-    trainset = BurncDatasetSpeech(cfg, data_dict, mode='train',datasplit=datasplit)
+    trainset = BurncDatasetSpeech(cfg, data_dict, mode='train', datasplit=datasplit)
     devset = BurncDatasetSpeech(cfg, data_dict, mode='dev',datasplit=datasplit)
 
     print('done')
@@ -211,6 +211,13 @@ def main():
     set_seeds(seed)
 
     train(model, criterion, optimizer, trainset, devset, cfg, device, model_name)
+
+    run_test = False
+
+    if run_test:
+        testset = BurncDatasetSpeech(cfg, data_dict, mode='test', datasplit=datasplit)
+        evaluate(testset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'], noisy=True)
+
 
 if __name__=="__main__":
     main()

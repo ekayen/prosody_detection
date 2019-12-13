@@ -203,6 +203,7 @@ class SpeechEncoder(nn.Module):
                 tokens = tokens[:,:self.tok_seq_len,:]
             instances.append(tokens)
 
+        import pdb;pdb.set_trace()
         out = torch.cat(instances,dim=0)
         return out
 

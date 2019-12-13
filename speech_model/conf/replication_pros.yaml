@@ -45,5 +45,8 @@ feat_dim: 7
 #feat_dim: 6
 postlstm_context: False
 weight_decay: 0.001
+frame_filter_size: 9
+flatten_method: sum
+frame_pad_size: 4
 
 seed: 131

@@ -12,7 +12,8 @@ test_ratio = 0.2
 with open(os.path.join(data_path,dict_file),'rb') as f:
     nested = pickle.load(f)
 
-utt_ids = [utt for para in nested for utt in nested[para]['utterances']]
+utt_ids = list(set([utt for para in nested for utt in nested['utt2toks']]))
+print(f'Total utts: {len(utt_ids)}')
 
 ##################################################################
 # First set of splits:
@@ -20,8 +21,8 @@ utt_ids = [utt for para in nested for utt in nested[para]['utterances']]
 # 10 splits, 0 is default
 ##################################################################
 
-#seeds = [860, 33, 616, 567, 375, 262, 293, 502, 295, 886]
-seeds = [860, 33, 616, 567, 375]#, 262, 293, 502, 295, 886]
+seeds = [860, 33, 616, 567, 375, 262, 293, 502, 295, 886]
+#seeds = [860, 33, 616, 567, 375]#, 262, 293, 502, 295, 886]
 utt_ids = sorted(utt_ids)
 random.seed(seeds[0])
 random.shuffle(utt_ids)
@@ -53,10 +54,10 @@ for i in range(5):
 with open('burnc_speakers.txt','r') as f:
     speakers = [line.strip() for line in f.readlines()]
 
-traindev = []
 devset_size = int(len(utt_ids)*0.2)
 print(f'devset_size: {devset_size}')
 for speaker in speakers:
+    traindev = []
     gender = speaker[0]
     split_ids = {'train': [],
                  'dev': [],
