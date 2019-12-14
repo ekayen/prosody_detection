@@ -228,6 +228,7 @@ def gen_model_name(cfg,datasplit):
         name_sections.append(f'wd{wd}')
     name_sections.append(f'f{cfg["frame_filter_size"]}')
     name_sections.append(f'p{cfg["frame_pad_size"]}')
+    name_sections.append(f'{cfg["flatten_method"]}')
     return '_'.join(name_sections)
 
 def report_hparams(cfg,datasplit=None):

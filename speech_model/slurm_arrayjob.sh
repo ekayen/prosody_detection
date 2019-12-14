@@ -22,14 +22,17 @@
 # #SBATCH --nodes=1
 
 # Megabytes of RAM required. Check `cluster-status` for node configurations
-# #SBATCH --mem=4000
+SBATCH --mem=4000
+
 
 # Number of CPUs to use. Check `cluster-status` for node configurations
-# #SBATCH --cpus-per-task=1
+SBATCH --cpus-per-task=2
 
 # Maximum time for the job to run, format: days-hours:minutes:seconds
-# #SBATCH --time=00:01:00
+SBATCH --time=12:00:00
 
+SBATCH --gres=gpu:1
+SBATCH -p ILCC_GPU
 
 # =====================
 # Logging information
@@ -110,8 +113,8 @@ echo "Command ran successfully!"
 # ======================================
 echo "Moving output data back to DFS"
 
-src_path=${SCRATCH_HOME}/simple/data/output
-dest_path=${proj_home}/experiments/examples/simple/data/output
+src_path=${SCRATCH_HOME}/results
+dest_path=${proj_home}/cluster_results
 rsync --archive --update --compress --progress ${src_path}/ ${dest_path}
 
 

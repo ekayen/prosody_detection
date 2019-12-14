@@ -1,8 +1,7 @@
 # dataloader params
 segmentation: utterances
 context_window: False
-datasplit: ../data/burnc/splits/tenfold0.yaml
-#datasplit: ../data/burnc/splits/fivefold0.yaml
+datasplit: /disk/scratch/s1899827/stars/data/tenfold0.yaml
 feats: tok2pros
 bitmark: True
 
@@ -14,9 +13,9 @@ eval_every:
 
 
 # i/o params
-all_data: '../data/burnc/burnc.pkl'
+all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
 model_name: 'cnn_lstm_pros_gc_bi'
-results_path: 'results/refactor/cnn_lstm'
+results_path: '/disk/scratch/s1899827/results'
 
 train_params:
   batch_size: 64
