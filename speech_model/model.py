@@ -272,6 +272,7 @@ class SpeechEncoder(nn.Module):
                     return x,hidden
 
 
+
             else:
                 x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                 x = self.token_split(x, toktimes)  # TODO make work with batches
