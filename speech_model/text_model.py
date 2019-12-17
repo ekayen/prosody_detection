@@ -4,7 +4,7 @@ from torch import nn
 import torch
 import pandas as pd
 import yaml
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data,load_burnc_spans,set_seeds
+from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data,load_burnc_spans
 from evaluate import evaluate,last_only_evaluate
 import numpy as np
 import sys
@@ -20,8 +20,12 @@ with open(config,'r') as f:
 
 seed = cfg['seed']
 
-set_seeds(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
 
+model_type = 'simpleff'
 #model_type =
 model_type = cfg['model_type']
 

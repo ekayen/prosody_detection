@@ -105,6 +105,31 @@ class BurncDatasetSpeech(BurncDataset):
 
         return id, (X, toktimes), Y
 
+
+class BurncDatasetText(BurncDataset):
+
+    def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
+        super(BurncDatasetText,self).__init__(config, input_dict, mode, datasplit)
+        self.vocab_size = vocab_size
+        self.w2i = self.adjust_vocab_size(w2i)
+
+    def adjust_vocab_size(self,w2i):
+        for wd in w2i:
+            if w2i[wd] > self.vocab_size:
+                w2i[wd] = w2i['UNK']
+        return w2i
+
+    def __getitem__(self, index):
+        if self.segmentation == 'utterance':
+            id = id = self.ids[index]
+            tok_ids = self.input_dict['utt2toks'][id]
+            tok_ints = [self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids]
+            labels = [self.input_dict['tok2tone'][tok] for tok in tok_ids]
+
+        return id, tok_ints, labels
+
+
+
 class SynthDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict):
         self.list_ids = list_ids

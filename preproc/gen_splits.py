@@ -15,6 +15,26 @@ with open(os.path.join(data_path,dict_file),'rb') as f:
 utt_ids = list(set([utt for para in nested for utt in nested['utt2toks']]))
 print(f'Total utts: {len(utt_ids)}')
 
+def gen_vocab(split_dict):
+    w2freq = {}
+    for utt_id in split_dict['train']:
+        tokens = nested['utt2toks'][utt_id]
+        tok_strs = [nested['tok2str'][tok] for tok in tokens]
+        for tok in tok_strs:
+            if tok in w2freq:
+                w2freq[tok] += 1
+            else:
+                w2freq[tok] = 1
+    ordered_toks = [key for key in sorted(w2freq.items(), key=lambda item: item[1],reverse=True)]
+    w2i = {'PAD':0,
+           'UNK':1}
+    i2w = {0:'PAD',
+           1:'UNK'}
+    for i,tok in enumerate(ordered_toks):
+        w2i[tok] = i + 2
+        i2w[i + 2] = tok
+    return w2i,i2w,w2freq
+
 ##################################################################
 # First set of splits:
 # totally random, no consideration of speaker
@@ -22,7 +42,6 @@ print(f'Total utts: {len(utt_ids)}')
 ##################################################################
 
 seeds = [860, 33, 616, 567, 375, 262, 293, 502, 295, 886]
-#seeds = [860, 33, 616, 567, 375]#, 262, 293, 502, 295, 886]
 utt_ids = sorted(utt_ids)
 random.seed(seeds[0])
 random.shuffle(utt_ids)
@@ -43,8 +62,14 @@ for i in range(5):
     split_ids['train'] = other_ids[dev_idx:]
 
     test_start = test_end
+
+    w2i,i2w,w2freq = gen_vocab(split_ids)
+
     with open(os.path.join(data_path,'splits',f'fivefold{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
+    with open(os.path.join(data_path,'splits',f'fivefold{i}.vocab'),'w') as f:
+        yaml.dump((w2i,i2w,w2freq), f)
+
 
 
 ##################################################################
