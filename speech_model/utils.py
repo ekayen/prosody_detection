@@ -41,9 +41,10 @@ class BurncDataset(data.Dataset):
 
 
     def get_context(self,tok_ids):
-        curr_utt = self.input_dict['tok2utt'][id]
-        prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
-        next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
+        iden = tok_ids[0]
+        curr_utt = self.input_dict['tok2utt'][iden]
+        prev_idx = self.input_dict['utt2toks'][curr_utt].index(iden) - 1
+        next_idx = self.input_dict['utt2toks'][curr_utt].index(iden) + 1
         if prev_idx >= 0:
             prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
             tok_ids = [prev_id] + tok_ids
@@ -70,10 +71,10 @@ class BurncDatasetSpeech(BurncDataset):
 
 
     def __getitem__(self, index):
-        id = self.ids[index]
+        iden = self.ids[index]
         #para_id = id.split('-')[0]
         if self.segmentation == 'tokens':
-            tok_ids = [id]
+            tok_ids = [iden]
             if self.context_window:
                 tok_ids = self.get_context(tok_ids)
             tok_feats = [self.input_dict[self.feats][i] for i in tok_ids]
@@ -92,7 +93,7 @@ class BurncDatasetSpeech(BurncDataset):
                 tok_feats = tmp
             X = torch.cat(tok_feats,dim=0)
             X = self.pad_right(X,self.frame_pad_len)
-            Y = torch.tensor(self.input_dict['tok2tone'][id])
+            Y = torch.tensor(self.input_dict['tok2tone'][iden])
             toktimes = [self.input_dict['tok2times'][i][0] for i in tok_ids] + [self.input_dict['tok2times'][tok_ids[-1]][1]]
 
             if self.context_window and len(toktimes)< 4:
@@ -102,15 +103,15 @@ class BurncDatasetSpeech(BurncDataset):
             toktimes = torch.tensor([int(round(100*(tim-initial_time))) for tim in toktimes],dtype=torch.float32)
 
         elif self.segmentation == 'utterances':
-            tok_ids = self.input_dict['utt2toks'][id]
+            tok_ids = self.input_dict['utt2toks'][iden]
             X = torch.cat([self.input_dict[self.feats][tok_id] for tok_id in tok_ids], dim=0)
             X = self.pad_right(X,self.frame_pad_len)
             Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
             Y = self.pad_right(Y,self.tok_pad_len,num_dims=1)
-            toktimes = self.input_dict['utt2frames'][id]
+            toktimes = self.input_dict['utt2frames'][iden]
             toktimes = self.pad_right(toktimes, self.tok_pad_len + 1, num_dims=1)
 
-        return id, (X, toktimes), Y
+        return iden, (X, toktimes), Y
 
 class BurncDatasetText(BurncDataset):
 
@@ -126,22 +127,22 @@ class BurncDatasetText(BurncDataset):
         return w2i
 
     def __getitem__(self, index):
-        id = self.ids[index]
+        iden = self.ids[index]
         if self.segmentation == 'tokens':
-            tok_ids = [id]
+            tok_ids = [iden]
             if self.context_window:
                 tok_ids = self.get_context(tok_ids)
-            labels = torch.tenssor([self.w2i[self.input_dict['tok2str'][id]]])
+            labels = torch.tensor([self.input_dict['tok2tone'][iden]])
                 
         if self.segmentation == 'utterances':
-            id = self.ids[index]
-            tok_ids = self.input_dict['utt2toks'][id]
+            iden = self.ids[index]
+            tok_ids = self.input_dict['utt2toks'][iden]
             labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
             
         tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
         
 
-        return id, tok_ints, labels
+        return iden, tok_ints, labels
 
 class SynthDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict):
@@ -153,9 +154,9 @@ class SynthDataset(data.Dataset):
         return len(self.list_ids)
 
     def __getitem__(self, index):
-        id = self.list_ids[index]
-        X = self.utt_dict[id]
-        y = self.label_dict[id]
+        iden = self.list_ids[index]
+        X = self.utt_dict[iden]
+        y = self.label_dict[iden]
         return X, y
 
 class UttDataset(data.Dataset):
@@ -177,10 +178,10 @@ class UttDataset(data.Dataset):
         return len(self.list_ids)
 
     def __getitem__(self, index):
-        id = self.list_ids[index]
-        X = self.pad_left(self.utt_dict[id])
-        #X = self.utt_dict[id]
-        y = self.label_dict[id]
+        iden = self.list_ids[index]
+        X = self.pad_left(self.utt_dict[iden])
+        #X = self.utt_dict[iden]
+        y = self.label_dict[iden]
         return X, y
 
 class UttDatasetWithToktimes(UttDataset):
@@ -197,20 +198,20 @@ class UttDatasetWithToktimes(UttDataset):
         return arr
 
     def __getitem__(self, index):
-        id = self.list_ids[index]
-        toks = self.pad_right(self.utt_dict[id])
-        toktimes = self.toktimes_dict[id]
+        iden = self.list_ids[index]
+        toks = self.pad_right(self.utt_dict[iden])
+        toktimes = self.toktimes_dict[iden]
         X = (toks,toktimes)
-        y = self.label_dict[id]
-        return id,X,y
+        y = self.label_dict[iden]
+        return iden,X,y
 
 class UttDatasetWithId(UttDataset):
     def __getitem__(self, index):
-        id = self.list_ids[index]
-        X = self.pad_left(self.utt_dict[id])
-        # X = self.utt_dict[id]
-        y = self.label_dict[id]
-        return id, X, y
+        iden = self.list_ids[index]
+        X = self.pad_left(self.utt_dict[iden])
+        # X = self.utt_dict[iden]
+        y = self.label_dict[iden]
+        return iden, X, y
 
 def plot_grad_flow(named_parameters):
     '''
@@ -311,8 +312,8 @@ def print_progress(progress, info='', bar_len=20):
 
 def main():
     # FOR TESTING ONLY
-    #cfg_file = 'conf/replication_debug.yaml'
-    cfg_file = 'conf/cnn_lstm_pros.yaml'
+    cfg_file = 'conf/replication_pros.yaml'
+    #cfg_file = 'conf/cnn_lstm_pros.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     burnc_dict = '../data/burnc/burnc.pkl'
