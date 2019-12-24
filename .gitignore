@@ -10,7 +10,10 @@ data/mac_morpho/m*
 data/mac_morpho/README
 data/speech
 data/cmvn_tensors.pkl
-data/burnc
+data/burnc/burnc_*
+data/burnc/span*
+data/burnc/utt*
+data/burnc/text*
 speech_model/results/refactor/*.pt
 speech_model/results/refactor/replication/*.pt
 speech_model/results/refactor/cnn_lstm/*.pt

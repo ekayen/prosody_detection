@@ -5,9 +5,6 @@ import os
 
 data_path = '../data/burnc'
 dict_file = 'burnc.pkl'
-train_ratio = 0.6
-dev_ratio = 0.2
-test_ratio = 0.2
 
 with open(os.path.join(data_path,dict_file),'rb') as f:
     nested = pickle.load(f)
@@ -25,7 +22,7 @@ def gen_vocab(split_dict):
                 w2freq[tok] += 1
             else:
                 w2freq[tok] = 1
-    ordered_toks = [key for key in sorted(w2freq.items(), key=lambda item: item[1],reverse=True)]
+    ordered_toks = [key for key,value in sorted(w2freq.items(), key=lambda item: item[1],reverse=True)]
     w2i = {'PAD':0,
            'UNK':1}
     i2w = {0:'PAD',
@@ -33,13 +30,19 @@ def gen_vocab(split_dict):
     for i,tok in enumerate(ordered_toks):
         w2i[tok] = i + 2
         i2w[i + 2] = tok
-    return w2i,i2w,w2freq
+    vocab_dict = {'w2i':w2i,
+                  'i2w':i2w,
+                  'w2freq':w2freq}
+    #return w2i,i2w,w2freq
+    return vocab_dict
 
 ##################################################################
 # First set of splits:
 # totally random, no consideration of speaker
 # 10 splits, 0 is default
 ##################################################################
+num_folds = 5
+#num_folds = 10
 
 seeds = [860, 33, 616, 567, 375, 262, 293, 502, 295, 886]
 utt_ids = sorted(utt_ids)
@@ -47,8 +50,18 @@ random.seed(seeds[0])
 random.shuffle(utt_ids)
 test_start = 0
 
+if num_folds==10:
+    train_ratio = 0.8
+    dev_ratio = 0.1
+    test_ratio = 0.1
+    output_name = 'tenfold'
+elif num_folds==5:
+    train_ratio = 0.6
+    dev_ratio = 0.2
+    test_ratio = 0.2
+    output_name = 'fivefold'
 #for i,seed in enumerate(seeds):
-for i in range(5):
+for i in range(num_folds):
     test_end = int(round(test_start + test_ratio* len(utt_ids)))
     print(test_end)
     split_ids = test_start
@@ -63,12 +76,13 @@ for i in range(5):
 
     test_start = test_end
 
-    w2i,i2w,w2freq = gen_vocab(split_ids)
+    vocab_dict = gen_vocab(split_ids)
 
-    with open(os.path.join(data_path,'splits',f'fivefold{i}.yaml'), 'w') as f:
+
+    with open(os.path.join(data_path,'splits',f'{output_name}{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
-    with open(os.path.join(data_path,'splits',f'fivefold{i}.vocab'),'w') as f:
-        yaml.dump((w2i,i2w,w2freq), f)
+    with open(os.path.join(data_path,'splits',f'{output_name}{i}.vocab'),'wb') as f:
+        pickle.dump(vocab_dict, f)
 
 
 
@@ -103,8 +117,16 @@ for speaker in speakers:
             devset += 1
         else:
             split_ids['train'].append(ex)
+
+
+
     with open(os.path.join(data_path, 'splits', f'heldout_{speaker}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
+
+    vocab_dict = gen_vocab(split_ids)
+    with open(os.path.join(data_path,'splits',f'heldout_{speaker}.vocab'),'wb') as f:
+        pickle.dump(vocab_dict, f)
+
 
 ##################################################################
 # Third set of splits:
@@ -125,4 +147,8 @@ for i,seed in enumerate(seeds):
     split_ids['test'] = utt_ids[dev_idx:]
     with open(os.path.join(data_path, 'splits', f'f2b_only{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
+
+    vocab_dict = gen_vocab(split_ids)
+    with open(os.path.join(data_path,'splits',f'f2b_only{i}.vocab'),'wb') as f:
+        pickle.dump(vocab_dict, f)
 

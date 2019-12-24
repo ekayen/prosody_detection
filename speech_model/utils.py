@@ -54,21 +54,25 @@ class BurncDatasetSpeech(BurncDataset):
             arr = arr[:pad_len]
         return arr
 
+    def get_context(self,tok_ids):
+        curr_utt = self.input_dict['tok2utt'][id]
+        prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
+        next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
+        if prev_idx >= 0:
+            prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
+            tok_ids = [prev_id] + tok_ids
+        if next_idx < len(self.input_dict['utt2toks'][curr_utt]):
+            next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
+            tok_ids.append(next_id)
+        return tok_ids
+
     def __getitem__(self, index):
         id = self.ids[index]
         #para_id = id.split('-')[0]
         if self.segmentation == 'tokens':
             tok_ids = [id]
             if self.context_window:
-                curr_utt = self.input_dict['tok2utt'][id]
-                prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
-                next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
-                if prev_idx >= 0:
-                    prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
-                    tok_ids = [prev_id] + tok_ids
-                if next_idx < len(self.input_dict['utt2toks'][curr_utt]):
-                    next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
-                    tok_ids.append(next_id)
+                tok_ids = self.get_context(tok_ids)
             tok_feats = [self.input_dict[self.feats][i] for i in tok_ids]
             if self.context_window and self.bitmark: # TODO this is redundant
                 tmp = []
@@ -105,7 +109,6 @@ class BurncDatasetSpeech(BurncDataset):
 
         return id, (X, toktimes), Y
 
-
 class BurncDatasetText(BurncDataset):
 
     def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
@@ -120,15 +123,15 @@ class BurncDatasetText(BurncDataset):
         return w2i
 
     def __getitem__(self, index):
-        if self.segmentation == 'utterance':
-            id = id = self.ids[index]
+        if self.segmentation == 'tokens':
+
+        if self.segmentation == 'utterances':
+            id = self.ids[index]
             tok_ids = self.input_dict['utt2toks'][id]
-            tok_ints = [self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids]
-            labels = [self.input_dict['tok2tone'][tok] for tok in tok_ids]
+            tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
+            labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
 
         return id, tok_ints, labels
-
-
 
 class SynthDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict):
@@ -283,7 +286,6 @@ def report_hparams(cfg,datasplit=None):
                    headers=['Hparam','Value']))
     print()
 
-
 def set_seeds(seed):
     print(f'setting seed to {seed}')
     np.random.seed(seed)
@@ -293,16 +295,14 @@ def set_seeds(seed):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-
 def print_progress(progress, info='', bar_len=20):
 	filled = int(progress*bar_len)
 	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
 
-
 def main():
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_debug.yaml'
-    cfg_file = 'conf/cnn_lstm_debug.yaml'
+    cfg_file = 'conf/cnn_lstm_pros.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     burnc_dict = '../data/burnc/burnc.pkl'
@@ -310,7 +310,17 @@ def main():
         input_dict = pickle.load(f)
     dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
     item = dataset.__getitem__(4)
+
+    splt = cfg['datasplit'].split('/')[-1].split('.')[0]
+    vocab_file = f'../data/burnc/splits/{splt}.vocab'
+    print(vocab_file)
+    with open(vocab_file,'rb') as f:
+        vocab_dict = pickle.load(f)
+    #import pdb;pdb.set_trace()
+    dataset = BurncDatasetText(cfg, input_dict, vocab_dict['w2i'], vocab_size=3000, mode='train',datasplit=None)
+    item = dataset.__getitem__(4)
     import pdb;pdb.set_trace()
+
 
 if __name__ == "__main__":
     main()
