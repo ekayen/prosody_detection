@@ -39,6 +39,20 @@ class BurncDataset(data.Dataset):
     def __len__(self):
         return len(self.ids)
 
+
+    def get_context(self,tok_ids):
+        curr_utt = self.input_dict['tok2utt'][id]
+        prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
+        next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
+        if prev_idx >= 0:
+            prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
+            tok_ids = [prev_id] + tok_ids
+        if next_idx < len(self.input_dict['utt2toks'][curr_utt]):
+            next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
+            tok_ids.append(next_id)
+        return tok_ids
+
+    
 class BurncDatasetSpeech(BurncDataset):
     def __init__(self, config, input_dict, mode='train',datasplit=None):
         super(BurncDatasetSpeech,self).__init__(config, input_dict, mode, datasplit)
@@ -54,17 +68,6 @@ class BurncDatasetSpeech(BurncDataset):
             arr = arr[:pad_len]
         return arr
 
-    def get_context(self,tok_ids):
-        curr_utt = self.input_dict['tok2utt'][id]
-        prev_idx = self.input_dict['utt2toks'][curr_utt].index(id) - 1
-        next_idx = self.input_dict['utt2toks'][curr_utt].index(id) + 1
-        if prev_idx >= 0:
-            prev_id = self.input_dict['utt2toks'][curr_utt][prev_idx]
-            tok_ids = [prev_id] + tok_ids
-        if next_idx < len(self.input_dict['utt2toks'][curr_utt]):
-            next_id = self.input_dict['utt2toks'][curr_utt][next_idx]
-            tok_ids.append(next_id)
-        return tok_ids
 
     def __getitem__(self, index):
         id = self.ids[index]
@@ -123,13 +126,20 @@ class BurncDatasetText(BurncDataset):
         return w2i
 
     def __getitem__(self, index):
+        id = self.ids[index]
         if self.segmentation == 'tokens':
-
+            tok_ids = [id]
+            if self.context_window:
+                tok_ids = self.get_context(tok_ids)
+            labels = torch.tenssor([self.w2i[self.input_dict['tok2str'][id]]])
+                
         if self.segmentation == 'utterances':
             id = self.ids[index]
             tok_ids = self.input_dict['utt2toks'][id]
-            tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
             labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
+            
+        tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
+        
 
         return id, tok_ints, labels
 
