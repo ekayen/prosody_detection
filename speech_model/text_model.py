@@ -4,8 +4,8 @@ from torch import nn
 import torch
 import pandas as pd
 import yaml
-from utils import load_data,BatchWrapper,to_ints,load_vectors,make_batches,load_libri_data,plot_results,load_burnc_data,load_burnc_spans
-from evaluate import evaluate,last_only_evaluate
+from utils import *
+from evaluate import *
 import numpy as np
 import sys
 import random
@@ -25,9 +25,10 @@ torch.cuda.manual_seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
-model_type = 'simpleff'
-#model_type =
-model_type = cfg['model_type']
+if cfg['include_lstm']:
+    model_type = 'lstm'
+else:
+    model_type = 'simpleff'
 
 print_preds = cfg['print_preds']
 print_dims = cfg['print_dims']
@@ -61,55 +62,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # LOAD THE DATA
 
-def split_data(data,train_ratio=0.6,dev_ratio=0.2):
-    train_idx = int(train_ratio*len(data))
-    dev_idx = int((train_ratio+dev_ratio)*len(data))
-
-    train_data = data[:train_idx]
-    dev_data = data[train_idx:dev_idx]
-    test_data = data[dev_idx:]
-
-    return train_data,dev_data,test_data
-
-if datasource == 'SWBDNXT' or datasource == 'SWBDNXT_UTT':
-
-    data = load_data(datafile,seed=seed,shuffle=True,max_len=max_len)
-
-    train_idx = int(train_ratio*len(data))
-    dev_idx = int((train_ratio+dev_ratio)*len(data))
-
-    train_data = data[:train_idx]
-    dev_data = data[train_idx:dev_idx]
-    test_data = data[dev_idx:]
-
-elif datasource == 'LIBRI':
-
-    libritrain = '../data/libri/train_360.txt'
-    libridev = '../data/libri/dev.txt'
-    train_data = load_libri_data(libritrain,seed=seed,shuffle=True,max_len=max_len)
-    dev_data = load_libri_data(libridev,seed=seed,shuffle=True,max_len=max_len)
-
-elif datasource == 'BURNC':
-
-    burncfeats = datafile
-    data = load_burnc_data(burncfeats,seed=seed)
-
-    train_data,dev_data,test_data = split_data(data,train_ratio,dev_ratio)
-
-
-elif datasource == 'BURNC_SPANS':
-
-    burncspans = datafile
-    data = load_burnc_spans(datafile,seed=seed)
-
-    train_data,dev_data,test_data = split_data(data,train_ratio,dev_ratio)
-    print(train_data[0])
-
-else:
-    print("NO DATA SOURCE GIVEN")
-
-X_train,Y_train,wd_to_i,i_to_wd = to_ints(train_data,vocab_size)
-X_dev,Y_dev,_,_ = to_ints(dev_data,vocab_size,wd_to_i,i_to_wd)
 
 # LOAD VECTORS
 words_found = 0
@@ -160,8 +112,6 @@ class FFModel(nn.Module):
         x = self.fc2(x)
         x = self.sigmoid(x)
         return x
-
-
 
 
 class BiLSTM(nn.Module):
@@ -266,12 +216,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 model.to(device)
 
-# Process data to work with eval library
-Y_train_str = [[str(i) for i in y.tolist()] for y in Y_train]
-Y_dev_str = [[str(i) for i in y.tolist()] for y in Y_dev]
-
-
-
 
 # TRAIN
 recent_losses = []
@@ -282,6 +226,7 @@ train_losses = []
 train_accs = []
 dev_accs = []
 
+"""
 # Add pre-training stats to output:
 train_losses.append(0)
 if not datasource == 'LIBRI':
@@ -294,9 +239,18 @@ _, dev_acc, _ = evaluate(X_dev, Y_dev_str, model, device,i_to_wd,model_type=mode
 #dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
 dev_accs.append(dev_acc)
 timesteps.append(0)
+"""
 
+with open(cfg['all_data'], 'rb') as f:
+    data_dict = pickle.load(f)
+with open(cfg['datasplit'].replace('yaml','vocab'),'rb') as f:
+    vocab_dict = pickle.load(f)
 random.seed(seed)
 
+trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='train', datasplit=datasplit)
+devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='dev',datasplit=datasplit)
+
+import pdb;pdb.set_trace()
 
 #true_labels = []
 
@@ -317,7 +271,7 @@ for epoch in range(num_epochs):
             timestep += 1
             model.zero_grad()
 
-            if model_type=='lstm':
+            if cfg['include_lstm']:
                 hidden = model.init_hidden()
                 tag_scores,_ = model(input,hidden)
             else:
