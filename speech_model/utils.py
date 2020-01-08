@@ -310,6 +310,17 @@ def print_progress(progress, info='', bar_len=20):
 	filled = int(progress*bar_len)
 	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
 
+def load_vectors(vector_file,wd_to_idx):
+    vec_dict = {}
+    with open(vector_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            word = line[0]
+            if word in wd_to_idx:
+                wd_idx = wd_to_idx[word]
+                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
+    return vec_dict
+
 def main():
     # FOR TESTING ONLY
     cfg_file = 'conf/replication_pros.yaml'

@@ -49,5 +49,13 @@ flatten_method: sum
 frame_filter_size: 15
 frame_pad_size: 7
 
+# Text-specific params
+embedding_dim: 300
+use_pretrained: True
+max_len: 80
+vocab_size: 3000
+glove_path: '../data/emb/glove.6B.100d.txt'
+
+
 
 seed: 256

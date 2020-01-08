@@ -30,12 +30,12 @@ if cfg['include_lstm']:
 else:
     model_type = 'simpleff'
 
-print_preds = cfg['print_preds']
-print_dims = cfg['print_dims']
-print_every = int(cfg['print_every'])
-eval_every = int(cfg['eval_every'])
-train_ratio = float(cfg['train_ratio'])
-dev_ratio = float(cfg['dev_ratio'])
+#print_preds = cfg['print_preds']
+#print_dims = cfg['print_dims']
+#print_every = int(cfg['print_every'])
+#eval_every = int(cfg['eval_every'])
+#train_ratio = float(cfg['train_ratio'])
+#dev_ratio = float(cfg['dev_ratio'])
 
 # hyperparameters
 batch_size = int(cfg['batch_size'])
@@ -45,45 +45,20 @@ embedding_dim = int(cfg['embedding_dim'])
 hidden_size = int(cfg['hidden_size'])
 use_pretrained = cfg['use_pretrained']
 max_len = int(cfg['max_len'])
-datasource = cfg['datasource']
+#datasource = cfg['datasource']
 vocab_size = int(cfg['vocab_size'])
 num_epochs = int(cfg['num_epochs'])
-num_layers = int(cfg['num_layers'])
+lstm_layers = int(cfg['lstm_layers']) #num_layers = int(cfg['num_layers'])
 dropout = float(cfg['dropout'])
 
 # Filenames
-datafile = cfg['datafile']
+#datafile = cfg['datafile']
 glove_path = cfg['glove_path']
 model_name = cfg['model_name']
 results_path = cfg['results_path']
 results_file = '{}/{}.txt'.format(results_path,model_name)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-# LOAD THE DATA
-
-
-# LOAD VECTORS
-words_found = 0
-if use_pretrained:
-    vec_dict_pkl = '../data/emb/50d-dict.pkl'
-    if os.path.exists(vec_dict_pkl) and embedding_dim==100:
-        with open(vec_dict_pkl,'rb') as f:
-            i_to_vec = pickle.load(f)
-    else:
-        i_to_vec = load_vectors(glove_path, wd_to_i)
-        with open(vec_dict_pkl, 'wb') as f:
-            pickle.dump(i_to_vec, f)
-
-    weights_matrix = np.zeros((vocab_size+2, embedding_dim))
-    for i in i_to_wd:
-        try:
-            weights_matrix[i] = i_to_vec[i]
-            words_found += 1
-        except:
-            weights_matrix[i] = np.random.normal(scale=0.6, size=(embedding_dim, ))
-
-    weights_matrix = torch.tensor(weights_matrix)
 
 # BUILD THE MODEL
 
@@ -190,17 +165,67 @@ class BiLSTM(nn.Module):
 
         return (h0,c0)
 
+set_seeds(seed)
+
+# LOAD THE DATA
+
+with open(cfg['all_data'], 'rb') as f:
+    data_dict = pickle.load(f)
+with open(cfg['datasplit'].replace('yaml','vocab'),'rb') as f:
+    vocab_dict = pickle.load(f)
+random.seed(seed)
+
+def truncate_dicts(vocab_dict,vocab_size):
+    i2w = {}
+    w2i = {}
+    for i in range(vocab_size+2):
+        w = vocab_dict['i2w'][i]
+        i2w[i] = w
+        w2i[w] = i
+    return w2i,i2w
+
+
+
+w2i,i2w = truncate_dicts(vocab_dict,vocab_size)
+
+
+
+trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='train', datasplit=cfg['datasplit'])
+devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='dev',datasplit=cfg['datasplit'])
+
+
+# LOAD VECTORS
+words_found = 0
+if use_pretrained:
+    vec_dict_pkl = '../data/emb/100d-dict.pkl'
+    if os.path.exists(vec_dict_pkl) and embedding_dim==100:
+        with open(vec_dict_pkl,'rb') as f:
+            i_to_vec = pickle.load(f)
+    else:
+        i_to_vec = load_vectors(glove_path,  w2i)
+        with open(vec_dict_pkl, 'wb') as f:
+            pickle.dump(i_to_vec, f)
+
+    weights_matrix = np.zeros((vocab_size+2, embedding_dim))
+    for i in i2w:
+        try:
+            weights_matrix[i] = i_to_vec[i]
+            words_found += 1
+        except:
+            weights_matrix[i] = np.random.normal(scale=0.6, size=(embedding_dim, ))
+
+    weights_matrix = torch.tensor(weights_matrix)
+
 # INSTANTIATE THE MODEL
 
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+set_seeds(seed)
 
 if model_type == 'lstm':
     model = BiLSTM(batch_size=batch_size,
                    vocab_size=vocab_size+2,
                    tagset_size=2,
                    bidirectional=bidirectional,
-                   lstm_layers=num_layers,
+                   lstm_layers=lstm_layers,
                    embedding_dim=embedding_dim,
                    hidden_size=hidden_size,
                    use_pretrained=use_pretrained,
@@ -241,25 +266,16 @@ dev_accs.append(dev_acc)
 timesteps.append(0)
 """
 
-with open(cfg['all_data'], 'rb') as f:
-    data_dict = pickle.load(f)
-with open(cfg['datasplit'].replace('yaml','vocab'),'rb') as f:
-    vocab_dict = pickle.load(f)
-random.seed(seed)
-
-trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='train', datasplit=datasplit)
-devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='dev',datasplit=datasplit)
-
-import pdb;pdb.set_trace()
-
 #true_labels = []
 
+traingen = data.DataLoader(trainset, **cfg['train_params'])
+
 for epoch in range(num_epochs):
-    # BATCH DATA
-    X_train_batches, Y_train_batches = make_batches(X_train, Y_train, batch_size, device) # Also shuffles input
 
     print("TRAIN================================================================================================")
-    for i in range(len(X_train_batches)):
+    for id, batch, labels in traingen:
+
+        import pdb;pdb.set_trace()
 
         input, labels = X_train_batches[i], Y_train_batches[i]
 
