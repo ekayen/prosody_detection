@@ -15,8 +15,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_lstm_pros_gc_bi'
-results_path: 'results/refactor/cnn_lstm'
+model_name: 'text_lstm_bi'
+results_path: 'results/refactor/text_lstm'
 
 train_params:
   batch_size: 64
@@ -30,7 +30,7 @@ eval_params:
 
 # Model params
 tok_level_pred: True
-batch_size: 1
+batch_size: 64
 include_lstm: True
 bidirectional: True
 learning_rate: 0.001
@@ -38,7 +38,7 @@ hidden_size: 512
 pad_len: 2150
 frame_pad_len: 2150
 tok_pad_len: 50
-num_epochs: 25
+num_epochs: 15
 cnn_layers: 3
 lstm_layers: 2
 dropout: 0.3

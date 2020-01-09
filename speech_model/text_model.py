@@ -141,7 +141,9 @@ class BiLSTM(nn.Module):
         embeds = self.embedding(sent)
         lstm_out, hidden = self.lstm(embeds, hidden)
         tag_space = self.hidden2tag(lstm_out)
-        tag_scores = self.sigmoid(tag_space)
+        tag_scores = tag_space
+        #tag_scores = self.sigmoid(tag_space)
+        print_dims = False
         if print_dims:
             print('sent.shape',sent.shape)
             print('embeds.shape', embeds.shape)
@@ -184,15 +186,12 @@ def truncate_dicts(vocab_dict,vocab_size):
         w2i[w] = i
     return w2i,i2w
 
-
-
 w2i,i2w = truncate_dicts(vocab_dict,vocab_size)
 
-
-
-trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='train', datasplit=cfg['datasplit'])
-devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, mode='dev',datasplit=cfg['datasplit'])
-
+trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, pad_len=cfg['tok_pad_len'],
+                            mode='train', datasplit=cfg['datasplit'])
+devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, pad_len=cfg['tok_pad_len'],
+                          mode='dev',datasplit=cfg['datasplit'])
 
 # LOAD VECTORS
 words_found = 0
@@ -236,7 +235,8 @@ elif model_type == 'simpleff':
     model = FFModel(embedding_dim,vocab_size,bottleneck_feats,use_pretrained=use_pretrained)
 
 
-loss_fn = nn.BCELoss()
+#loss_fn = nn.BCELoss()
+loss_fn = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 model.to(device)
@@ -245,11 +245,15 @@ model.to(device)
 # TRAIN
 recent_losses = []
 timestep = 0
-timesteps = []
+plot_data = {
+        'time': [],
+        'loss': [],
+        'train_acc': [],
+        'dev_acc': [],
+    }
 
-train_losses = []
-train_accs = []
-dev_accs = []
+print_every = 100
+eval_every = 100
 
 """
 # Add pre-training stats to output:
@@ -274,11 +278,13 @@ for epoch in range(num_epochs):
 
     print("TRAIN================================================================================================")
     for id, batch, labels in traingen:
+        model.train()
+        #input, labels = X_train_batches[i], Y_train_batches[i]
+        input = batch.transpose(0,1).to(device)
+        labels = labels.transpose(0,1).to(device)
 
-        import pdb;pdb.set_trace()
-
-        input, labels = X_train_batches[i], Y_train_batches[i]
-
+        curr_bat_size = input.shape[1]
+        #import pdb;pdb.set_trace()
         if not (list(input.shape)[0] == 0):
             """
             if epoch==0:
@@ -288,14 +294,11 @@ for epoch in range(num_epochs):
             model.zero_grad()
 
             if cfg['include_lstm']:
-                hidden = model.init_hidden()
+                hidden = model.init_hidden(curr_bat_size)
                 tag_scores,_ = model(input,hidden)
             else:
                 tag_scores = model(input)
-            #print('pred:',tag_scores.view(labels.shape[0],labels.shape[1]))
-            #print('true:',labels)
-            #print('output:',tag_scores.shape)
-            #print('labels:',labels.shape)
+
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())
             if len(recent_losses) > 50:
@@ -304,25 +307,22 @@ for epoch in range(num_epochs):
             loss.backward()
             optimizer.step()
 
+            avg_loss = sum(recent_losses)/len(recent_losses)
 
-            if i % print_every == 1:
-                avg_loss = sum(recent_losses)/len(recent_losses)
-                print("Epoch: %s Step: %s Loss: %s"%(epoch,i,avg_loss.item())) # TODO could my loss calculation be deceiving?
+    print("Epoch: %s Loss: %s"%(epoch,avg_loss.item()))
+    plot_data['time'].append(epoch)
 
-            if i % eval_every == 1:
-                train_loss = (sum(recent_losses)/len(recent_losses)).item()
-                train_losses.append(train_loss)
-                if not datasource == 'LIBRI':
-                    _,train_acc,_ = evaluate(X_train, Y_train_str, model,device,i_to_wd,model_type=model_type,print_preds=print_preds,timestep=timestep)
-                    #train_acc = last_only_evaluate(X_train, Y_train_str, model, device)
-                    train_accs.append(train_acc)
-                else: # Don't do train acc every time for bigger datasets than SWBDNXT
-                    train_accs.append(0)
-                #dev_acc = last_only_evaluate(X_dev, Y_dev_str, model, device)
-                _,dev_acc,_ = evaluate(X_dev, Y_dev_str, model, device, i_to_wd,model_type=model_type,print_preds=print_preds,timestep=timestep)
-                dev_accs.append(dev_acc)
-                timesteps.append(timestep)
-    """
+    train_loss = (sum(recent_losses)/len(recent_losses)).item()
+    plot_data['loss'].append(train_loss)
+
+    train_results = evaluate(trainset, cfg['train_params'], model, device,
+                             tok_level_pred=cfg['tok_level_pred'], noisy=True,incl_toktimes=False)
+    plot_data['train_acc'].append(train_results[0])
+    dev_results = evaluate(devset, cfg['eval_params'], model, device,
+                             tok_level_pred=cfg['tok_level_pred'], noisy=True,incl_toktimes=False)
+    plot_data['dev_acc'].append(dev_results[0])
+
+"""
     with open('../data/burnc/train_w_true_labels.tsv','w') as f:
         for x,y in true_labels:
             print(x)
@@ -340,24 +340,16 @@ for epoch in range(num_epochs):
                 f.write(' '.join(words)+'\t'+' '.join(labels)+'\n')
     """
 
-train_losses = pd.Series(train_losses)
-train_accs = pd.Series(train_accs)
-dev_accs = pd.Series(dev_accs)
-train_steps = pd.Series(timesteps)
-
-
-plot_results(train_losses,train_accs,dev_accs,train_steps,model_name,results_path)
+plot_results(plot_data,model_name,results_path)
 
 
 print("==============================================")
 print("==============================================")
 print('After training, train:')
-#last_only_evaluate(X_train,Y_train_str,model,device)
-evaluate(X_train,Y_train_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
+#evaluate(X_train,Y_train_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
 
 print('After training, dev: ')
-#last_only_evaluate(X_dev, Y_dev_str,model,device)#,True)
-evaluate(X_dev, Y_dev_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
+#evaluate(X_dev, Y_dev_str,model,device,i_to_wd,model_type=model_type,print_preds=print_preds)
 
 
 

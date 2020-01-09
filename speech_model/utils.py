@@ -39,6 +39,16 @@ class BurncDataset(data.Dataset):
     def __len__(self):
         return len(self.ids)
 
+    def pad_right(self,arr,pad_len,num_dims=2):
+        if arr.shape[0] < pad_len:
+            dff = pad_len - arr.shape[0]
+            if num_dims==2: # For padding 2d speech data
+                arr = F.pad(arr, pad=(0, 0, 0, dff), mode='constant')
+            elif num_dims==1: # For padding 1d string data
+                arr = F.pad(arr, pad=(0, dff), mode='constant')
+        else:
+            arr = arr[:pad_len]
+        return arr
 
     def get_context(self,tok_ids):
         iden = tok_ids[0]
@@ -57,18 +67,6 @@ class BurncDataset(data.Dataset):
 class BurncDatasetSpeech(BurncDataset):
     def __init__(self, config, input_dict, mode='train',datasplit=None):
         super(BurncDatasetSpeech,self).__init__(config, input_dict, mode, datasplit)
-
-    def pad_right(self,arr,pad_len,num_dims=2):
-        if arr.shape[0] < pad_len:
-            dff = pad_len - arr.shape[0]
-            if num_dims==2:
-                arr = F.pad(arr, pad=(0, 0, 0, dff), mode='constant')
-            elif num_dims==1:
-                arr = F.pad(arr, pad=(0, dff), mode='constant')
-        else:
-            arr = arr[:pad_len]
-        return arr
-
 
     def __getitem__(self, index):
         iden = self.ids[index]
@@ -115,10 +113,11 @@ class BurncDatasetSpeech(BurncDataset):
 
 class BurncDatasetText(BurncDataset):
 
-    def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
+    def __init__(self, config, input_dict, w2i, vocab_size=3000, pad_len=80, mode='train',datasplit=None):
         super(BurncDatasetText,self).__init__(config, input_dict, mode, datasplit)
         self.vocab_size = vocab_size
         self.w2i = self.adjust_vocab_size(w2i)
+        self.pad_len = pad_len
 
     def adjust_vocab_size(self,w2i):
         for wd in w2i:
@@ -138,11 +137,20 @@ class BurncDatasetText(BurncDataset):
             iden = self.ids[index]
             tok_ids = self.input_dict['utt2toks'][iden]
             labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
-            
-        tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
-        
 
-        return iden, tok_ints, labels
+        tok_ints = []
+        for tok_id in tok_ids:
+            if self.input_dict['tok2str'][tok_id] in self.w2i:
+                tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
+            else:
+                tok_ints.append(self.w2i['UNK'])
+        tok_ints = torch.tensor(tok_ints)
+        #tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
+
+        tok_ints = self.pad_right(tok_ints,self.pad_len,num_dims=1)
+        labels = self.pad_right(labels,self.pad_len,num_dims=1)
+
+        return iden, tok_ints, labels # TODO OH RIGHT this is a problem because the LSTM is time-major, not batch-major, whereas the CNN is the reverse. Need to get this into non-batch-first mode.
 
 class SynthDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict):
@@ -323,8 +331,8 @@ def load_vectors(vector_file,wd_to_idx):
 
 def main():
     # FOR TESTING ONLY
-    cfg_file = 'conf/replication_pros.yaml'
-    #cfg_file = 'conf/cnn_lstm_pros.yaml'
+    #cfg_file = 'conf/replication_pros.yaml'
+    cfg_file = 'conf/cnn_lstm_pros.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     burnc_dict = '../data/burnc/burnc.pkl'
@@ -338,7 +346,7 @@ def main():
     print(vocab_file)
     with open(vocab_file,'rb') as f:
         vocab_dict = pickle.load(f)
-    #import pdb;pdb.set_trace()
+    import pdb;pdb.set_trace()
     dataset = BurncDatasetText(cfg, input_dict, vocab_dict['w2i'], vocab_size=3000, mode='train',datasplit=None)
     item = dataset.__getitem__(4)
     import pdb;pdb.set_trace()

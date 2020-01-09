@@ -5,45 +5,72 @@ import numpy as np
 import pandas as pd
 from random import randint
 
-def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True):
+def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,incl_toktimes=True):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
     tot_utts = 0
     dataloader = data.DataLoader(dataset, **dataloader_params)
+    count_ones = 0 # TODO TMP
     with torch.no_grad():
         counter = 0
         for id,x,y in dataloader:
-            x,toktimes = x
-            curr_bat_size = x.shape[0]
+            #import pdb;pdb.set_trace()
+            if incl_toktimes: # TODO temporary flag for the text-alone model
+                x,toktimes = x
+                curr_bat_size = x.shape[0]
+            else:
+                x = x.transpose(0,1)# TODO temporary fix for text-alone model
+                y = y.transpose(0,1)
+                curr_bat_size = x.shape[1]
             tot_utts += curr_bat_size
             x,y = x.to(device),y.to(device)
             if recurrent:
                 #hidden = model.init_hidden(dataloader_params['batch_size'])
                 hidden = model.init_hidden(curr_bat_size)
-                output,_ = model(x,toktimes,hidden)
+                if incl_toktimes: # TODO temporary flag for the text-alone model
+                    output, _ = model(x, toktimes, hidden)
+                else:
+                    output, _ = model(x, hidden)
+
             else:
                 output = model(x)
             #print('output shape:',output.shape)
             if tok_level_pred:
-                #output = output.detach().view(dataloader_params['batch_size'],output.shape[0])
                 seq_len = y.shape[1]
-                #import pdb;pdb.set_trace()
-                num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
-                            range(
-                                toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
+                if incl_toktimes:
+                    num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
+                            range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
+                else:
+                    num_toks = [np.trim_zeros(np.array(x[:,i:i+1].cpu()).squeeze(), 'b').shape[0]  for i in range(x.shape[1])]
 
+                #import pdb;pdb.set_trace()
+                #print(f'\noutput shape: {output.shape}')
                 # Flatten output and labels:
-                # output = output.view(output.shape[1], output.shape[0])
+
+                # NEW VERSION: FLIP FIRST:
+                #output = output.detach().squeeze().transpose(0,1).flatten()
+
+                # OLD VERSION: DON'T FLIP:
                 output = output.detach().flatten()
+
                 y = y.flatten()
+
+
+                #import pdb;pdb.set_trace()
                 tmp_out = []
                 tmp_lbl = []
                 for i in range(curr_bat_size):
-                    tmp_out.append(output[i * seq_len:i * seq_len + num_toks[i]])
-                    tmp_lbl.append(y[i * seq_len:i * seq_len + num_toks[i]])
+                    tmp_out.append(output[(i * seq_len):(i * seq_len) + num_toks[i]])
+                    tmp_lbl.append(y[(i * seq_len):(i * seq_len) + num_toks[i]])
+
+                    # Experiment: Don't flatten at all
+                    #tmp_out.append(output[:num_toks[i],i].flatten())
+                    #tmp_lbl.append(y[i,:num_toks[i]].flatten())
+
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
+                #import pdb;pdb.set_trace()
                 output = out
                 y = lbl
                 #output = output.detach().view(curr_bat_size, output.shape[0])
@@ -52,6 +79,8 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
 
             threshold = 0
             prediction = (output > threshold).type(torch.int64) * 1
+            count_ones += prediction.sum().item()
+
             #prediction = torch.tensor(prediction,dtype=torch.int64)
             if tok_level_pred:
                 #total_pred += prediction.shape[1]
@@ -68,6 +97,7 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
         print(f'Accuracy: {round(acc,5)}')
         print(f'Total_pred: {total_pred}')
         print(f'Total correct pred: {true_pos_pred}')
+        print(f'Percent of predicted "1" labels: {count_ones/total_pred}')
     return acc, total_pred, true_pos_pred, tot_utts
 
 def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):
@@ -122,8 +152,6 @@ def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utter
     acc = true_pos_pred/total_pred
     print('Accuracy: ',acc)
     return acc
-
-
 
 def baseline_with_len(dataset,dataloader_params,utterance_file='../data/utterances.txt'):
     # To evaluate if it's using length as a signal, load a dict of the

@@ -60,21 +60,37 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
             output,_ = model(batch,toktimes,hidden)
 
 
+
             if cfg['tok_level_pred']:
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])] # list of len curr_bat_size, each element is len of that utterance
                 seq_len = cfg['tok_pad_len']
+
+                #import pdb;pdb.set_trace()
+
                 # Flatten output and labels:
-                #output = output.view(output.shape[1], output.shape[0])
+
+                # NEW VERSION: FLIP FIRST
+                #output = output.squeeze().transpose(0,1).flatten()
+
+                # OLD VERSION: DON'T FLIP
                 output = output.flatten()
+
                 labels = labels.flatten()
+
                 tmp_out = []
                 tmp_lbl = []
                 for i in range(curr_bat_size):
                     tmp_out.append(output[i * seq_len:i * seq_len + num_toks[i]])
                     tmp_lbl.append(labels[i * seq_len:i * seq_len + num_toks[i]])
+
+                    # Experiment: don't flatten at all
+                    #tmp_out.append(output[:num_toks[i],i].flatten())
+                    #tmp_lbl.append(labels[i,:num_toks[i]].flatten())
+
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
+
                 tot_toks += out.shape[0]
 
                 #import pdb;pdb.set_trace()
@@ -82,8 +98,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
             else:
                 loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
-            plot_grad_flow(model.named_parameters())
-            plt.show()
+            #plot_grad_flow(model.named_parameters())
+            #plt.show()
             """
             # Check for exploding gradients
             for n, p in model.named_parameters():
@@ -121,7 +137,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
         plot_data['loss'].append(train_loss)
 
         # train acc
-        train_results = evaluate(trainset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
+        train_results = evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
+                                 noisy=False)
         plot_data['train_acc'].append(train_results[0])
 
         # dev acc
