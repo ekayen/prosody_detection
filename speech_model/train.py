@@ -70,7 +70,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
                 # Flatten output and labels:
 
-
+                output = output.squeeze().transpose(0,1) ####
                 output = output.flatten()
 
                 labels = labels.flatten()

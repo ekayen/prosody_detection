@@ -250,7 +250,8 @@ class SpeechEncoder(nn.Module):
                 if TOKENIZE_FIRST:
                     x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                     x = self.token_split(x, toktimes)  # TODO make work with batches
-                    x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                    #x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                    x = x.permute(1,0,2) ####
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
                     return x,hidden
@@ -278,7 +279,8 @@ class SpeechEncoder(nn.Module):
                 x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                 x = self.token_split(x, toktimes)  # TODO make work with batches
                 #print(x.shape)
-                x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                #x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                x = x.permute(1,0,2)  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                 #import pdb;pdb.set_trace()
                 x = self.fc1(x)
                 x = self.relu(x)

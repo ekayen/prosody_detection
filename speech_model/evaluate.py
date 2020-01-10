@@ -43,12 +43,10 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
 
-                if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
-                    output = output.squeeze().transpose(0, 1)
+                #if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
+                #    output = output.squeeze().transpose(0, 1)
 
-
-                #print(f'output shape: {output.shape}')
-                #print(f'y shape: {y.shape}')
+                output = output.squeeze().transpose(0, 1)
 
                 output = output.detach().flatten()
                 y = y.flatten()
