@@ -70,7 +70,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
                 # Flatten output and labels:
 
-                output = output.view(output.shape[1], output.shape[0])
 
                 output = output.flatten()
 
