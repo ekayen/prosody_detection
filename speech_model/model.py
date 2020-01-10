@@ -254,6 +254,7 @@ class SpeechEncoder(nn.Module):
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
                     return x,hidden
+
                 else:
 
                     # NOTE: this path is quite inefficiently written right now. If you continue with this model, rewrite.

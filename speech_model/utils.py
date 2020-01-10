@@ -132,11 +132,14 @@ class BurncDatasetText(BurncDataset):
             if self.context_window:
                 tok_ids = self.get_context(tok_ids)
             labels = torch.tensor([self.input_dict['tok2tone'][iden]])
-                
+            # TODO add toktimes
+
         if self.segmentation == 'utterances':
             iden = self.ids[index]
             tok_ids = self.input_dict['utt2toks'][iden]
             labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
+            toktimes = self.input_dict['utt2frames'][iden]
+
 
         tok_ints = []
         for tok_id in tok_ids:
@@ -149,8 +152,9 @@ class BurncDatasetText(BurncDataset):
 
         tok_ints = self.pad_right(tok_ints,self.pad_len,num_dims=1)
         labels = self.pad_right(labels,self.pad_len,num_dims=1)
+        toktimes = self.pad_right(toktimes, self.tok_pad_len + 1, num_dims=1)
 
-        return iden, tok_ints, labels # TODO OH RIGHT this is a problem because the LSTM is time-major, not batch-major, whereas the CNN is the reverse. Need to get this into non-batch-first mode.
+        return iden, (tok_ints,toktimes), labels
 
 class SynthDataset(data.Dataset):
     def __init__(self, list_ids, utt_dict,label_dict):

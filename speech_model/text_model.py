@@ -280,7 +280,7 @@ for epoch in range(num_epochs):
     for id, batch, labels in traingen:
         model.train()
         #input, labels = X_train_batches[i], Y_train_batches[i]
-        input = batch.transpose(0,1).to(device)
+        input = batch[0].transpose(0,1).to(device)
         labels = labels.transpose(0,1).to(device)
 
         curr_bat_size = input.shape[1]
@@ -316,10 +316,10 @@ for epoch in range(num_epochs):
     plot_data['loss'].append(train_loss)
 
     train_results = evaluate(trainset, cfg['train_params'], model, device,
-                             tok_level_pred=cfg['tok_level_pred'], noisy=True,incl_toktimes=False)
+                             tok_level_pred=cfg['tok_level_pred'], noisy=True,text_only=True)
     plot_data['train_acc'].append(train_results[0])
     dev_results = evaluate(devset, cfg['eval_params'], model, device,
-                             tok_level_pred=cfg['tok_level_pred'], noisy=True,incl_toktimes=False)
+                             tok_level_pred=cfg['tok_level_pred'], noisy=True,text_only=True)
     plot_data['dev_acc'].append(dev_results[0])
 
 """

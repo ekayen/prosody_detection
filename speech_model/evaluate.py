@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from random import randint
 
-def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,incl_toktimes=True):
+def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -16,19 +16,20 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
         counter = 0
         for id,x,y in dataloader:
             #import pdb;pdb.set_trace()
-            if incl_toktimes: # TODO temporary flag for the text-alone model
+            if not text_only: # TODO temporary flag for the text-alone model
                 x,toktimes = x
                 curr_bat_size = x.shape[0]
             else:
+                x,toktimes = x
                 x = x.transpose(0,1)# TODO temporary fix for text-alone model
-                y = y.transpose(0,1)
+
                 curr_bat_size = x.shape[1]
             tot_utts += curr_bat_size
             x,y = x.to(device),y.to(device)
             if recurrent:
                 #hidden = model.init_hidden(dataloader_params['batch_size'])
                 hidden = model.init_hidden(curr_bat_size)
-                if incl_toktimes: # TODO temporary flag for the text-alone model
+                if not text_only: # TODO temporary flag for the text-alone model
                     output, _ = model(x, toktimes, hidden)
                 else:
                     output, _ = model(x, hidden)
@@ -38,24 +39,20 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
             #print('output shape:',output.shape)
             if tok_level_pred:
                 seq_len = y.shape[1]
-                if incl_toktimes:
-                    num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
+
+                num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
-                else:
-                    num_toks = [np.trim_zeros(np.array(x[:,i:i+1].cpu()).squeeze(), 'b').shape[0]  for i in range(x.shape[1])]
 
-                #import pdb;pdb.set_trace()
-                #print(f'\noutput shape: {output.shape}')
-                # Flatten output and labels:
 
-                # NEW VERSION: FLIP FIRST:
-                #output = output.detach().squeeze().transpose(0,1).flatten()
+                if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
+                    output = output.squeeze().transpose(0, 1)
+                #output = output.squeeze().transpose(0, 1)
 
-                # OLD VERSION: DON'T FLIP:
+                #print(f'output shape: {output.shape}')
+                #print(f'y shape: {y.shape}')
+
                 output = output.detach().flatten()
-
                 y = y.flatten()
-
 
                 #import pdb;pdb.set_trace()
                 tmp_out = []
@@ -67,9 +64,10 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                     # Experiment: Don't flatten at all
                     #tmp_out.append(output[:num_toks[i],i].flatten())
                     #tmp_lbl.append(y[i,:num_toks[i]].flatten())
-
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
+                #import pdb;pdb.set_trace()
+                assert lbl.sum().item() == y.sum().item()
                 #import pdb;pdb.set_trace()
                 output = out
                 y = lbl
