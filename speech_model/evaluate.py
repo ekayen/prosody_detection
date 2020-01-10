@@ -46,7 +46,10 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
 
                 if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
                     output = output.squeeze().transpose(0, 1)
-                #output = output.squeeze().transpose(0, 1)
+                else:
+                    output = output.view(output.shape[1],output.shape[0])
+
+
 
                 #print(f'output shape: {output.shape}')
                 #print(f'y shape: {y.shape}')
@@ -54,7 +57,6 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 output = output.detach().flatten()
                 y = y.flatten()
 
-                #import pdb;pdb.set_trace()
                 tmp_out = []
                 tmp_lbl = []
                 for i in range(curr_bat_size):

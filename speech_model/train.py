@@ -70,10 +70,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
                 # Flatten output and labels:
 
-                # NEW VERSION: FLIP FIRST
-                #output = output.squeeze().transpose(0,1).flatten()
+                output = output.view(output.shape[1], output.shape[0])
 
-                # OLD VERSION: DON'T FLIP
                 output = output.flatten()
 
                 labels = labels.flatten()
