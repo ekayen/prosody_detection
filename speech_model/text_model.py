@@ -188,9 +188,9 @@ def truncate_dicts(vocab_dict,vocab_size):
 
 w2i,i2w = truncate_dicts(vocab_dict,vocab_size)
 
-trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, pad_len=cfg['tok_pad_len'],
+trainset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size,
                             mode='train', datasplit=cfg['datasplit'])
-devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size, pad_len=cfg['tok_pad_len'],
+devset = BurncDatasetText(cfg, data_dict, w2i, vocab_size=vocab_size,
                           mode='dev',datasplit=cfg['datasplit'])
 
 # LOAD VECTORS

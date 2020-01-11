@@ -17,7 +17,7 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
         for id,x,y in dataloader:
             #import pdb;pdb.set_trace()
             if not text_only: # TODO temporary flag for the text-alone model
-                x,toktimes = x
+                x,text,toktimes = x
                 curr_bat_size = x.shape[0]
             else:
                 x,toktimes = x

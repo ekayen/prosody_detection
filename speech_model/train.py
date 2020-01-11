@@ -47,17 +47,16 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
         timestep = 0
         tot_utts = 0
         tot_toks = 0
-        for id, (batch, toktimes), labels in traingen:
+        for id, (speech,text,toktimes), labels in traingen:
             model.train()
-            batch,labels = batch.to(device),labels.to(device)
-
+            speech,labels = speech.to(device),labels.to(device)
 
             model.zero_grad()
-            curr_bat_size = batch.shape[0]
+            curr_bat_size = speech.shape[0]
             tot_utts += curr_bat_size
 
             hidden = model.init_hidden(curr_bat_size)
-            output,_ = model(batch,toktimes,hidden)
+            output,_ = model(speech,toktimes,hidden)
 
 
 
@@ -109,7 +108,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
             print(f'min/max grad: {min_grad}, {max_grad}')
             """
 
-            if torch.sum(torch.isnan(batch)).item() > 0:
+            if torch.sum(torch.isnan(speech)).item() > 0:
                 print('NaNs!!!!')
                 import pdb;pdb.set_trace()
 
@@ -225,8 +224,29 @@ def main():
 
     set_seeds(seed)
 
-    trainset = BurncDatasetSpeech(cfg, data_dict, mode='train', datasplit=datasplit)
-    devset = BurncDatasetSpeech(cfg, data_dict, mode='dev',datasplit=datasplit)
+    #trainset = BurncDatasetSpeech(cfg, data_dict, mode='train', datasplit=datasplit)
+    #devset = BurncDatasetSpeech(cfg, data_dict, mode='dev',datasplit=datasplit)
+
+
+    # Load text data:
+    with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
+        vocab_dict = pickle.load(f)
+
+    set_seeds(seed)
+
+    def truncate_dicts(vocab_dict, vocab_size):
+        i2w = {}
+        w2i = {}
+        for i in range(vocab_size + 2):
+            w = vocab_dict['i2w'][i]
+            i2w[i] = w
+            w2i[w] = i
+        return w2i, i2w
+
+    w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])
+
+    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit)
+    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit)
 
     print('done')
     print('Building model ...')

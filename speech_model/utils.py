@@ -12,7 +12,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 
 class BurncDataset(data.Dataset):
-    def __init__(self,cfg,input_dict,mode='train',datasplit=None):
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None):
 
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
@@ -23,6 +23,10 @@ class BurncDataset(data.Dataset):
         self.tok_pad_len = cfg['tok_pad_len']
         self.input_dict = input_dict
         self.mode = mode
+
+        self.vocab_size = vocab_size
+        self.w2i = self.adjust_vocab_size(w2i)
+
 
         if not datasplit:
             datasplit = cfg['datasplit']
@@ -132,7 +136,7 @@ class BurncDataset(data.Dataset):
             else:
                 tok_ints.append(self.w2i['UNK'])
         tok_ints = torch.tensor(tok_ints)
-        tok_ints = self.pad_right(tok_ints, self.pad_len, num_dims=1)
+        tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
         return tok_ints
 
     def __getitem__(self, index):
@@ -147,8 +151,8 @@ class BurncDataset(data.Dataset):
 
     
 class BurncDatasetSpeech(BurncDataset):
-    def __init__(self, config, input_dict, mode='train',datasplit=None):
-        super(BurncDatasetSpeech,self).__init__(config, input_dict, mode, datasplit)
+    def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
+        super(BurncDatasetSpeech,self).__init__(config, input_dict, w2i, vocab_size, mode, datasplit)
 
     def __getitem__(self, index):
 
@@ -162,11 +166,9 @@ class BurncDatasetSpeech(BurncDataset):
 
 class BurncDatasetText(BurncDataset):
 
-    def __init__(self, config, input_dict, w2i, vocab_size=3000, pad_len=80, mode='train',datasplit=None):
-        super(BurncDatasetText,self).__init__(config, input_dict, mode, datasplit)
-        self.vocab_size = vocab_size
-        self.w2i = self.adjust_vocab_size(w2i)
-        self.pad_len = pad_len
+    def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
+        super(BurncDatasetText,self).__init__(config, input_dict, w2i, vocab_size, mode, datasplit)
+        self.pad_len = config['tok_pad_len']
 
     def __getitem__(self, index):
         iden = self.ids[index]
