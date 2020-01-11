@@ -63,53 +63,102 @@ class BurncDataset(data.Dataset):
             tok_ids.append(next_id)
         return tok_ids
 
+    def get_toktimes(self,iden,tok_ids):
+        if self.segmentation == 'utterances':
+            toktimes = self.input_dict['utt2frames'][iden]
+            toktimes = self.pad_right(toktimes, self.tok_pad_len + 1, num_dims=1)
+        if self.segmentation == 'tokens':
+            toktimes = [self.input_dict['tok2times'][i][0] for i in tok_ids] + [
+                self.input_dict['tok2times'][tok_ids[-1]][1]]
+
+            if self.context_window and len(toktimes) < 4:
+                while len(toktimes) < 4:
+                    toktimes.append(toktimes[-1])
+            initial_time = toktimes[0]
+            toktimes = torch.tensor([int(round(100 * (tim - initial_time))) for tim in toktimes], dtype=torch.float32)
+        return toktimes
+
+    def get_tok_ids(self,iden):
+        if self.segmentation=='tokens':
+            tok_ids = [iden]
+            if self.context_window:
+                tok_ids = self.get_context(tok_ids)
+        if self.segmentation=='utterances':
+            tok_ids = self.input_dict['utt2toks'][iden]
+        return tok_ids
+
+    def get_speech_feats(self,tok_ids):
+        tok_feats = [self.input_dict[self.feats][tok_id] for tok_id in tok_ids]
+        if self.bitmark and self.segmentation=='tokens':
+            tmp = []
+            for i, feats in enumerate(tok_feats):
+                if i == 1:
+                    ones = torch.ones((feats.shape[0], 1))
+                    feats = torch.cat((feats, ones), dim=1)
+                    tmp.append(feats)
+                else:
+                    zeros = torch.zeros((feats.shape[0], 1))
+
+                    feats = torch.cat((feats, zeros), dim=1)
+                    tmp.append(feats)
+            tok_feats = tmp
+        X = torch.cat(tok_feats, dim=0)
+        if self.frame_pad_len:
+            X = self.pad_right(X, self.frame_pad_len)
+        return X
+
+    def get_labels(self,tok_ids,iden=None):
+        if self.segmentation=='tokens':
+            tok_ids = [iden]
+        Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
+
+        if self.tok_pad_len:
+            Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
+        if self.segmentation=='tokens':
+            Y = Y.squeeze()
+        return Y
+
+    def adjust_vocab_size(self,w2i):
+        for wd in w2i:
+            if w2i[wd] > self.vocab_size:
+                w2i[wd] = w2i['UNK']
+        return w2i
+
+    def get_tokens(self,tok_ids):
+        tok_ints = []
+        for tok_id in tok_ids:
+            if self.input_dict['tok2str'][tok_id] in self.w2i:
+                tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
+            else:
+                tok_ints.append(self.w2i['UNK'])
+        tok_ints = torch.tensor(tok_ints)
+        tok_ints = self.pad_right(tok_ints, self.pad_len, num_dims=1)
+        return tok_ints
+
+    def __getitem__(self, index):
+        iden = self.ids[index]
+        tok_ids = self.get_tok_ids(iden)
+        labels = self.get_labels(tok_ids,iden)
+        toktimes = self.get_toktimes(iden,tok_ids)
+        tok_ints = self.get_tokens(tok_ids)
+        speech_feats = self.get_speech_feats(tok_ids)
+
+        return iden, (speech_feats,tok_ints,toktimes), labels
+
     
 class BurncDatasetSpeech(BurncDataset):
     def __init__(self, config, input_dict, mode='train',datasplit=None):
         super(BurncDatasetSpeech,self).__init__(config, input_dict, mode, datasplit)
 
     def __getitem__(self, index):
+
         iden = self.ids[index]
-        #para_id = id.split('-')[0]
-        if self.segmentation == 'tokens':
-            tok_ids = [iden]
-            if self.context_window:
-                tok_ids = self.get_context(tok_ids)
-            tok_feats = [self.input_dict[self.feats][i] for i in tok_ids]
-            if self.context_window and self.bitmark: # TODO this is redundant
-                tmp = []
-                for i,feats in enumerate(tok_feats):
-                    if i==1:
-                        ones = torch.ones((feats.shape[0],1))
-                        feats = torch.cat((feats,ones),dim=1)
-                        tmp.append(feats)
-                    else:
-                        zeros = torch.zeros((feats.shape[0],1))
+        tok_ids = self.get_tok_ids(iden)
+        speech_feats = self.get_speech_feats(tok_ids)
+        toktimes = self.get_toktimes(iden,tok_ids)
+        labels = self.get_labels(tok_ids, iden)
 
-                        feats = torch.cat((feats,zeros),dim=1)
-                        tmp.append(feats)
-                tok_feats = tmp
-            X = torch.cat(tok_feats,dim=0)
-            X = self.pad_right(X,self.frame_pad_len)
-            Y = torch.tensor(self.input_dict['tok2tone'][iden])
-            toktimes = [self.input_dict['tok2times'][i][0] for i in tok_ids] + [self.input_dict['tok2times'][tok_ids[-1]][1]]
-
-            if self.context_window and len(toktimes)< 4:
-                while len(toktimes) < 4:
-                    toktimes.append(toktimes[-1])
-            initial_time = toktimes[0]
-            toktimes = torch.tensor([int(round(100*(tim-initial_time))) for tim in toktimes],dtype=torch.float32)
-
-        elif self.segmentation == 'utterances':
-            tok_ids = self.input_dict['utt2toks'][iden]
-            X = torch.cat([self.input_dict[self.feats][tok_id] for tok_id in tok_ids], dim=0)
-            X = self.pad_right(X,self.frame_pad_len)
-            Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
-            Y = self.pad_right(Y,self.tok_pad_len,num_dims=1)
-            toktimes = self.input_dict['utt2frames'][iden]
-            toktimes = self.pad_right(toktimes, self.tok_pad_len + 1, num_dims=1)
-
-        return iden, (X, toktimes), Y
+        return iden, (speech_feats, toktimes), labels
 
 class BurncDatasetText(BurncDataset):
 
@@ -119,40 +168,12 @@ class BurncDatasetText(BurncDataset):
         self.w2i = self.adjust_vocab_size(w2i)
         self.pad_len = pad_len
 
-    def adjust_vocab_size(self,w2i):
-        for wd in w2i:
-            if w2i[wd] > self.vocab_size:
-                w2i[wd] = w2i['UNK']
-        return w2i
-
     def __getitem__(self, index):
         iden = self.ids[index]
-        if self.segmentation == 'tokens':
-            tok_ids = [iden]
-            if self.context_window:
-                tok_ids = self.get_context(tok_ids)
-            labels = torch.tensor([self.input_dict['tok2tone'][iden]])
-            # TODO add toktimes
-
-        if self.segmentation == 'utterances':
-            iden = self.ids[index]
-            tok_ids = self.input_dict['utt2toks'][iden]
-            labels = torch.tensor([self.input_dict['tok2tone'][tok] for tok in tok_ids])
-            toktimes = self.input_dict['utt2frames'][iden]
-
-
-        tok_ints = []
-        for tok_id in tok_ids:
-            if self.input_dict['tok2str'][tok_id] in self.w2i:
-                tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
-            else:
-                tok_ints.append(self.w2i['UNK'])
-        tok_ints = torch.tensor(tok_ints)
-        #tok_ints = torch.tensor([self.w2i[self.input_dict['tok2str'][tok]] for tok in tok_ids])
-
-        tok_ints = self.pad_right(tok_ints,self.pad_len,num_dims=1)
-        labels = self.pad_right(labels,self.pad_len,num_dims=1)
-        toktimes = self.pad_right(toktimes, self.tok_pad_len + 1, num_dims=1)
+        tok_ids = self.get_tok_ids(iden)
+        labels = self.get_labels(tok_ids,iden)
+        toktimes = self.get_toktimes(iden,tok_ids)
+        tok_ints = self.get_tokens(tok_ids)
 
         return iden, (tok_ints,toktimes), labels
 

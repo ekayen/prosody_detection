@@ -1,6 +1,6 @@
 # dataloader params
 segmentation: utterances
-context_window: False
+context_window: True
 datasplit: ../data/burnc/splits/tenfold0.yaml
 #datasplit: ../data/burnc/splits/fivefold0.yaml
 feats: tok2pros

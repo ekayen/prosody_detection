@@ -3,7 +3,7 @@ segmentation: utterances
 context_window: False
 datasplit: ../data/burnc/splits/debug.yaml
 feats: tok2pros
-bitmark: True
+bitmark: False
 
 # Debugging params
 VERBOSE: False
