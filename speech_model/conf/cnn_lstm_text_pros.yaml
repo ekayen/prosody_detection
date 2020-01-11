@@ -15,7 +15,7 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_lstm_both_gc_bi'
+model_name: 'cnn_lstm_pros_gc_bi'
 results_path: 'results/refactor/cnn_lstm'
 
 train_params:
@@ -51,14 +51,11 @@ frame_pad_size: 7
 
 
 # Text-specific params
-inputs: speech
-embedding_dim: 300
+inputs: both
+embedding_dim: 100
 use_pretrained: True
 vocab_size: 3000
 glove_path: '../data/emb/glove.6B.100d.txt'
-
-
-
 
 
 

@@ -49,14 +49,14 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
         tot_toks = 0
         for id, (speech,text,toktimes), labels in traingen:
             model.train()
-            speech,labels = speech.to(device),labels.to(device)
+            speech,text,labels = speech.to(device),text.to(device),labels.to(device)
 
             model.zero_grad()
             curr_bat_size = speech.shape[0]
             tot_utts += curr_bat_size
 
             hidden = model.init_hidden(curr_bat_size)
-            output,_ = model(speech,toktimes,hidden)
+            output,_ = model(speech,text,toktimes,hidden)
 
 
 
@@ -268,7 +268,10 @@ def main():
                           flatten_method=cfg['flatten_method'],
                           frame_filter_size=cfg['frame_filter_size'],
                           frame_pad_size=cfg['frame_pad_size'],
-                          cnn_layers=cfg['cnn_layers'])
+                          cnn_layers=cfg['cnn_layers'],
+                          inputs=cfg['inputs'],
+                          embedding_dim=cfg['embedding_dim'],
+                          vocab_size=cfg['vocab_size'])
 
     model.to(device)
 

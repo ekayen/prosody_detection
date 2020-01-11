@@ -24,10 +24,14 @@ class SpeechEncoder(nn.Module):
                  flatten_method='sum',
                  frame_filter_size=9,
                  frame_pad_size=4,
-                 cnn_layers=2):
+                 cnn_layers=2,
+                 inputs='speech',
+                 embedding_dim=100,
+                 vocab_size=3000):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
+
         self.hidden_size = hidden_size
         self.bidirectional = bidirectional
         self.lstm_layers = lstm_layers
@@ -54,6 +58,12 @@ class SpeechEncoder(nn.Module):
         self.stride2 = (2,1)
         self.padding = (self.frame_pad_size,0)
 
+        self.inputs = inputs
+        self.embedding_dim = embedding_dim
+        self.vocab_size = vocab_size
+
+        if inputs=='text' or inputs=='both':
+            self.emb = nn.Embedding(vocab_size+2,embedding_dim)
 
         if self.cnn_layers==2:
             self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
@@ -118,7 +128,12 @@ class SpeechEncoder(nn.Module):
         # RNN VERSION:
         if self.include_lstm:
 
-            rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
+            if self.inputs=='speech':
+                rnn_input_size = self.out_channels # This is what I think the input size of the LSTM should be -- channels, not time dim
+            elif self.inputs=='text':
+                rnn_input_size = self.embedding_dim
+            elif self.inputs=='both':
+                rnn_input_size = self.out_channels + self.embedding_dim
             self.lstm = nn.LSTM(input_size=rnn_input_size,
                                 #batch_first=True,
                                 hidden_size=self.hidden_size,
@@ -230,18 +245,24 @@ class SpeechEncoder(nn.Module):
         out = torch.cat(output,dim=0)
         return out
 
-    def forward(self,x,toktimes,hidden):
+    def forward(self,x,text,toktimes,hidden):
         '''
         N: number of items in a batch
         C: number of channels
         W: number of frames in signal
         H: number of acoustic features in signal
         '''
+
         if self.tok_level_pred:
             toktimes = self.convolve_timestamps(toktimes)
         # in: N x C x W x H
         x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
         # in: N x C x W x H , where W is compressed and H=1
+
+        if self.inputs=='text' or self.inputs=='both':
+            embeddings = self.emb(text)
+            embeddings = embeddings.permute(1,0,2)
+
 
         if self.tok_level_pred:
 
@@ -252,12 +273,15 @@ class SpeechEncoder(nn.Module):
                     x = self.token_split(x, toktimes)  # TODO make work with batches
                     #x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                     x = x.permute(1,0,2) ####
+                    if self.inputs=='both':
+                        x = torch.cat([embeddings,x],dim=2)
+
                     x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
                     return x,hidden
 
                 else:
-
+                    # TODO make it possible to incorporate text here (maybe)
                     # NOTE: this path is quite inefficiently written right now. If you continue with this model, rewrite.
                     # (The main culprit is the two reshapings to make it cooperate with the LSTM which isn't batch-first
                     # that is easy enough to change if this is going to be used more heavily, but didn't want to change the

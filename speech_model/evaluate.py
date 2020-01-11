@@ -25,12 +25,12 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
 
                 curr_bat_size = x.shape[1]
             tot_utts += curr_bat_size
-            x,y = x.to(device),y.to(device)
+            x,text,y = x.to(device),text.to(device),y.to(device)
             if recurrent:
                 #hidden = model.init_hidden(dataloader_params['batch_size'])
                 hidden = model.init_hidden(curr_bat_size)
                 if not text_only: # TODO temporary flag for the text-alone model
-                    output, _ = model(x, toktimes, hidden)
+                    output, _ = model(x, text, toktimes, hidden)
                 else:
                     output, _ = model(x, hidden)
 
