@@ -14,7 +14,7 @@ eval_every:
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
 model_name: 'replication'
-results_path: 'results/refactor'
+results_path: 'results/refactor/replication_both'
 
 train_params:
   batch_size: 32
@@ -33,20 +33,30 @@ bidirectional: False
 learning_rate: 0.001
 hidden_size: 512
 frame_pad_len: 420
-tok_pad_len: None
+tok_pad_len: 3
 # if no context, smaller pad length:
 #frame_pad_len: 373
 datasource: 'BURNC'
 num_epochs: 20
-cnn_layers: 2
+cnn_layers: 3
 lstm_layers: 2
 dropout: 0.2
 feat_dim: 7
 #feat_dim: 6
 postlstm_context: False
 weight_decay: 0.001
-frame_filter_size: 9
+frame_filter_size: 15
 flatten_method: sum
-frame_pad_size: 4
+frame_pad_size: 7
 
 seed: 131
+
+# Text-specific params
+inputs: both
+embedding_dim: 300
+use_pretrained: True
+vocab_size: 3000
+glove_path: '../data/emb/glove.6B.100d.txt'
+
+
+

@@ -220,6 +220,7 @@ if use_pretrained:
 set_seeds(seed)
 
 if model_type == 'lstm':
+    print('complex model')
     model = BiLSTM(batch_size=batch_size,
                    vocab_size=vocab_size+2,
                    tagset_size=2,
@@ -231,6 +232,7 @@ if model_type == 'lstm':
                    dropout=dropout)
 
 elif model_type == 'simpleff':
+    print('simple model')
     bottleneck_feats = cfg['bottleneck_feats']
     model = FFModel(embedding_dim,vocab_size,bottleneck_feats,use_pretrained=use_pretrained)
 
@@ -280,6 +282,8 @@ for epoch in range(num_epochs):
     for id, batch, labels in traingen:
         model.train()
         #input, labels = X_train_batches[i], Y_train_batches[i]
+        if cfg['segmentation']=='tokens':
+            labels = labels.view(labels.shape[0],1)
         input = batch[0].transpose(0,1).to(device)
         labels = labels.transpose(0,1).to(device)
 
@@ -298,6 +302,7 @@ for epoch in range(num_epochs):
                 tag_scores,_ = model(input,hidden)
             else:
                 tag_scores = model(input)
+
 
             loss = loss_fn(tag_scores.view(labels.shape[0],labels.shape[1]), labels.float())
             recent_losses.append(loss.detach())

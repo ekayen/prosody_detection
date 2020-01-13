@@ -116,7 +116,7 @@ class BurncDataset(data.Dataset):
             tok_ids = [iden]
         Y = torch.tensor([self.input_dict['tok2tone'][tok_id] for tok_id in tok_ids])
 
-        if self.tok_pad_len:
+        if self.tok_pad_len and not self.segmentation=='tokens':
             Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
         if self.segmentation=='tokens':
             Y = Y.squeeze()
@@ -136,7 +136,8 @@ class BurncDataset(data.Dataset):
             else:
                 tok_ints.append(self.w2i['UNK'])
         tok_ints = torch.tensor(tok_ints)
-        tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
+        if self.tok_pad_len:
+            tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
         return tok_ints
 
     def __getitem__(self, index):
