@@ -17,9 +17,11 @@ weight_decays = [0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
 flatten_methods = ['sum','max']
 lstm_layers = [2,3]
 cnn_layers = [2,3,4]
-dropout = [0,0.2,0.5,0.7]
+dropout = [0,0.2,0.5]
 frame_filter_size = [9,11,15,17,19,21,23]
 frame_pad_size = [4,5,6,7,8,9,10,11]
+hidden_size = [128,256,512]
+bottleneck_feats = [10,70,100,700,1000,1500,2000]
 
 num_experiments = 100
 
@@ -36,6 +38,8 @@ for exp in range(num_experiments):
     cnn_idx = random.randrange(len(cnn_layers))
     dr_idx = random.randrange(len(dropout))
     filter_idx = random.randrange(len(frame_filter_size))
+    hid_idx = random.randrange(len(hidden_size))
+    btl_idx = random.randrange(len(bottleneck_feats))
     
     expt_call = (
         f"{base_call} "
@@ -46,7 +50,9 @@ for exp in range(num_experiments):
         f"-cnn {cnn_layers[cnn_idx]} "
         f"-dr {dropout[dr_idx]} "
         f"-f {frame_filter_size[filter_idx]} "
-        f"-pad {frame_pad_size[filter_idx]}"                
+        f"-pad {frame_pad_size[filter_idx]} "
+        f"-hid {hidden_size[hid_idx]} "
+        f"-b {bottleneck_feats[btl_idx]}"
     )
     print(expt_call, file=output_file)
 
