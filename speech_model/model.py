@@ -193,10 +193,10 @@ class SpeechEncoder(nn.Module):
                 elif self.inputs=='text':
                     self.fc1_in = self.embedding_dim
 
-                self.fc1 = nn.Linear(self.fc1_in,int(self.out_channels/2)) # TODO make the same as above
+                self.fc1 = nn.Linear(self.fc1_in,self.bottleneck_feats) # TODO make the same as above
                 self.relu = nn.ReLU()
                 self.dropout = nn.Dropout(p=self.dropout)
-                self.fc2 = nn.Linear(int(self.out_channels/2),self.num_classes)
+                self.fc2 = nn.Linear(self.bottleneck_feats,self.num_classes)
 
     def convolve_timestamps(self,timestamps):
         '''

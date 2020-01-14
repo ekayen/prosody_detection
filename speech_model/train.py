@@ -177,7 +177,10 @@ def main():
     parser.add_argument('-dr', '--dropout', help='dropout -- optional, overrides the one in the config')
     parser.add_argument('-wd', '--weight_decay', help='weight decay -- optional, overrides the one in the config')
     parser.add_argument('-lr', '--learning_rate', help='learning rate -- optional, overrides the one in the config')
-    parser.add_argument('-flat', '--flatten_method', help='method for flattening tokens -- optional, overrides the one in the config')
+    parser.add_argument('-flat', '--flatten_method',
+                        help='method for flattening tokens -- optional, overrides the one in the config')
+    parser.add_argument('-b', '--bottleneck_feats',
+                        help='number of bottlneckfeats -- optional, overrides the one in the config')
 
     args = parser.parse_args()
     with open(args.config, 'r') as f:
@@ -192,6 +195,8 @@ def main():
                'weight_decay': args.weight_decay,
                'learning_rate': args.learning_rate,
                'flatten_method': args.flatten_method,
+               'bottleneck_feats': args.bottleneck_feats,
+               'hidden_size': args.hidden_size
                }
 
     int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers']
