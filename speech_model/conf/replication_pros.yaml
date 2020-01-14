@@ -52,7 +52,7 @@ frame_pad_size: 7
 seed: 131
 
 # Text-specific params
-inputs: text
+inputs: both
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

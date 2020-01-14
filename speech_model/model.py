@@ -152,6 +152,10 @@ class SpeechEncoder(nn.Module):
 
         else:
             if not self.tok_level_pred:
+                ##############################################
+                ## REPLICATION OF STEHWIEN ET AL.          ###
+                ##############################################
+
                 self.maxpool = nn.MaxPool1d(2)
                 # layer 1
                 self.cnn_output_size = math.floor(
@@ -208,7 +212,6 @@ class SpeechEncoder(nn.Module):
 
         return timestamps
 
-
     def token_split(self,input,toktimes):
         #import pdb;pdb.set_trace() # TODO fix this so that the toktimes tensor also gets chopped up. Test with batch size of 1.
         #toktimes = [int(tim) for tim in toktimes.squeeze().tolist()]
@@ -234,7 +237,6 @@ class SpeechEncoder(nn.Module):
 
         out = torch.cat(instances,dim=0)
         return out
-
 
     def token_flatten(self,toks):
         output = []
@@ -281,8 +283,14 @@ class SpeechEncoder(nn.Module):
             embeddings = embeddings.permute(1,0,2)
 
         if self.tok_level_pred:
+            ##############################################
+            ## MY MODEL                                ###
+            ##############################################
 
             if self.include_lstm:
+                ################################
+                ### CNN + LSTM                ##
+                ################################
                 #TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
                 #if TOKENIZE_FIRST:
                 if self.inputs=='both' or self.inputs=='speech':
@@ -318,6 +326,9 @@ class SpeechEncoder(nn.Module):
 
 
             else:
+                ################################
+                ### CNN ONLY                  ##
+                ################################
                 if self.inputs=='speech' or self.inputs=='both':
                     x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                     x = self.token_split(x, toktimes)
@@ -345,16 +356,22 @@ class SpeechEncoder(nn.Module):
             else:
             """
             if not self.include_lstm:
+                ##############################################
+                ## REPLICATION OF STEHWIEN ET AL.          ###
+                ##############################################
                 if self.inputs=='speech':
                     x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
                 elif self.inputs=='both':
                     embeddings = embeddings.permute(1, 0, 2)  # TODO make less inefficient
+                    print(x.shape)
                     x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
-                    x = torch.cat(x,embeddings,dim=2) # TODO test
+                    print(x.shape)
+                    import pdb;pdb.set_trace()
+                    x = torch.cat([x,embeddings],dim=2) # TODO test
                 elif self.inputs=='text':
                     embeddings = embeddings.permute(1, 0, 2)  # TODO make less inefficient
                     x = embeddings
-                x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2])) # TODO debug here tomorrow 14 Jan
+                x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2]))
                 x = self.relu(x)
                 x = self.fc2(x)
                 return x, hidden
