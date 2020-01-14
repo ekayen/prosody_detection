@@ -271,7 +271,8 @@ def main():
                           cnn_layers=cfg['cnn_layers'],
                           inputs=cfg['inputs'],
                           embedding_dim=cfg['embedding_dim'],
-                          vocab_size=cfg['vocab_size'])
+                          vocab_size=cfg['vocab_size'],
+                          bottleneck_feats=cfg['bottleneck_feats'])
 
     model.to(device)
 

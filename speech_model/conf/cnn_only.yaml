@@ -51,3 +51,14 @@ frame_pad_size: 4
 
 
 seed: 256
+
+
+# Text-specific params
+inputs: text
+embedding_dim: 300
+use_pretrained: True
+vocab_size: 3000
+glove_path: '../data/emb/glove.6B.100d.txt'
+bottleneck_feats: 1600
+
+

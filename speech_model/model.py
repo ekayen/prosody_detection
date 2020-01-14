@@ -27,7 +27,8 @@ class SpeechEncoder(nn.Module):
                  cnn_layers=2,
                  inputs='speech',
                  embedding_dim=100,
-                 vocab_size=3000):
+                 vocab_size=3000,
+                 bottleneck_feats=10):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -65,65 +66,66 @@ class SpeechEncoder(nn.Module):
         if inputs=='text' or inputs=='both':
             self.emb = nn.Embedding(vocab_size+2,embedding_dim)
 
-        if self.cnn_layers==2:
-            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.hidden_channels),
-                                      #nn.ReLU(inplace=True),
-                                      nn.Hardtanh(inplace=True),
-                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      #nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True)
-                                      )
-        elif self.cnn_layers==3:
-            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.hidden_channels),
-                                      #nn.ReLU(inplace=True),
-                                      nn.Hardtanh(inplace=True),
+        if inputs=='speech' or inputs=='both':
+            if self.cnn_layers==2:
+                self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.hidden_channels),
+                                          #nn.ReLU(inplace=True),
+                                          nn.Hardtanh(inplace=True),
+                                          nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          #nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True)
+                                          )
+            elif self.cnn_layers==3:
+                self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.hidden_channels),
+                                          #nn.ReLU(inplace=True),
+                                          nn.Hardtanh(inplace=True),
 
-                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      #nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True),
+                                          nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          #nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True),
 
-                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
-                                                stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      # nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True)
-                                      )
-        elif self.cnn_layers==4:
-            self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.hidden_channels),
-                                      #nn.ReLU(inplace=True),
-                                      nn.Hardtanh(inplace=True),
+                                          nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                    stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          # nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True)
+                                          )
+            elif self.cnn_layers==4:
+                self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.hidden_channels),
+                                          #nn.ReLU(inplace=True),
+                                          nn.Hardtanh(inplace=True),
 
-                                      nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      #nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True),
+                                          nn.Conv2d(self.hidden_channels, self.out_channels, kernel_size=self.kernel2, stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          #nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True),
 
-                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
-                                                stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      # nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True),
+                                          nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                    stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          # nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True),
 
-                                      nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
-                                                stride=self.stride2,
-                                                padding=self.padding),
-                                      nn.BatchNorm2d(self.out_channels),
-                                      # nn.ReLU(inplace=True)
-                                      nn.Hardtanh(inplace=True)
-                                      )
+                                          nn.Conv2d(self.out_channels, self.out_channels, kernel_size=self.kernel2,
+                                                    stride=self.stride2,
+                                                    padding=self.padding),
+                                          nn.BatchNorm2d(self.out_channels),
+                                          # nn.ReLU(inplace=True)
+                                          nn.Hardtanh(inplace=True)
+                                          )
 
         # RNN VERSION:
         if self.include_lstm:
@@ -166,16 +168,28 @@ class SpeechEncoder(nn.Module):
                         (self.cnn_output_size - self.kernel2[0] + self.padding[0] * 2) / self.stride2[0]) + 1
                 self.cnn_output_size = int(((math.floor(self.cnn_output_size / 2) * self.out_channels)))
 
+                if self.inputs=='speech':
+                    self.fc1_in = self.cnn_output_size
+                elif self.inputs=='both':
+                    self.fc1_in = self.cnn_output_size + (self.embedding_dim * self.tok_seq_len)
+                elif self.inputs=='text':
+                    self.fc1_in = self.embedding_dim * self.tok_seq_len
 
+                self.fc1_out = bottleneck_feats # TODO make the same as below
 
-                self.fc1_out = 1600
-
-                self.fc1 = nn.Linear(self.cnn_output_size, self.fc1_out)#,dropout=self.dropout)
+                self.fc1 = nn.Linear(self.fc1_in, self.fc1_out)#,dropout=self.dropout)
                 self.relu = nn.ReLU()
                 self.fc2 = nn.Linear(self.fc1_out, self.num_classes)
 
             else:
-                self.fc1 = nn.Linear(self.out_channels,int(self.out_channels/2))
+                if self.inputs=='speech':
+                    self.fc1_in = self.out_channels
+                elif self.inputs=='both':
+                    self.fc1_in = self.out_channels + self.embedding_dim
+                elif self.inputs=='text':
+                    self.fc1_in = self.embedding_dim
+
+                self.fc1 = nn.Linear(self.fc1_in,int(self.out_channels/2)) # TODO make the same as above
                 self.relu = nn.ReLU()
                 self.dropout = nn.Dropout(p=self.dropout)
                 self.fc2 = nn.Linear(int(self.out_channels/2),self.num_classes)
@@ -253,33 +267,37 @@ class SpeechEncoder(nn.Module):
         H: number of acoustic features in signal
         '''
 
-        if self.tok_level_pred:
-            toktimes = self.convolve_timestamps(toktimes)
-        # in: N x C x W x H
-        x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
-        # in: N x C x W x H , where W is compressed and H=1
+        if self.inputs=='both' or self.inputs=='speech':
 
-        if self.inputs=='text' or self.inputs=='both':
+            if self.tok_level_pred:
+                toktimes = self.convolve_timestamps(toktimes)
+
+            # in: N x C x W x H
+            x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
+            # in: N x C x W x H , where W is compressed and H=1
+
+        if self.inputs=='both' or self.inputs=='text':
             embeddings = self.emb(text)
             embeddings = embeddings.permute(1,0,2)
-
 
         if self.tok_level_pred:
 
             if self.include_lstm:
-                TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
-                if TOKENIZE_FIRST:
+                #TOKENIZE_FIRST = True # This is the switch to toggle between doing LSTM -> tok vs tok -> LSTM. Not in config file yet.
+                #if TOKENIZE_FIRST:
+                if self.inputs=='both' or self.inputs=='speech':
                     x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
                     x = self.token_split(x, toktimes)  # TODO make work with batches
-                    #x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
-                    x = x.permute(1,0,2) ####
-                    if self.inputs=='both':
-                        x = torch.cat([embeddings,x],dim=2)
+                    x = x.permute(1,0,2) # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                if self.inputs=='both':
+                    x = torch.cat([embeddings,x],dim=2)
+                elif self.inputs=='text':
+                    x = embeddings
 
-                    x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
-                    x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
-                    return x,hidden
-
+                x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
+                x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
+                return x,hidden
+                """
                 else:
                     # TODO make it possible to incorporate text here (maybe)
                     # NOTE: this path is quite inefficiently written right now. If you continue with this model, rewrite.
@@ -296,16 +314,17 @@ class SpeechEncoder(nn.Module):
                     x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
 
                     return x,hidden
-
+                """
 
 
             else:
-                x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
-                x = self.token_split(x, toktimes)  # TODO make work with batches
-                #print(x.shape)
-                #x = x.view(x.shape[1], x.shape[0], x.shape[2])  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
-                x = x.permute(1,0,2)  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
-                #import pdb;pdb.set_trace()
+                if self.inputs=='speech' or self.inputs=='both':
+                    x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
+                    x = self.token_split(x, toktimes)
+                    x = x.permute(1,0,2)  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
+                else:
+                    x = embeddings
+
                 x = self.fc1(x)
                 x = self.relu(x)
                 x = self.dropout(x)
@@ -313,7 +332,8 @@ class SpeechEncoder(nn.Module):
                 return x,hidden
 
         else:
-            if self.include_lstm:
+            """
+            if self.include_lstm: # TODO do I ever use this path?? I think it's the Stehwien task with my model -- kinda weird
 
                 x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
                 x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
@@ -323,8 +343,18 @@ class SpeechEncoder(nn.Module):
                 x = self.fc(x.view(1, x.shape[0], self.lin_input_size))  # in 1 x N? x lstm_hidden_size
                 return x,hidden
             else:
-                x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
-                x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2]))
+            """
+            if not self.include_lstm:
+                if self.inputs=='speech':
+                    x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
+                elif self.inputs=='both':
+                    embeddings = embeddings.permute(1, 0, 2)  # TODO make less inefficient
+                    x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
+                    x = torch.cat(x,embeddings,dim=2) # TODO test
+                elif self.inputs=='text':
+                    embeddings = embeddings.permute(1, 0, 2)  # TODO make less inefficient
+                    x = embeddings
+                x = self.fc1(x.view(x.shape[0], x.shape[1] * x.shape[2])) # TODO debug here tomorrow 14 Jan
                 x = self.relu(x)
                 x = self.fc2(x)
                 return x, hidden

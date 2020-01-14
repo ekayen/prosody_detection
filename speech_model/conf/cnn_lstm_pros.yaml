@@ -51,7 +51,7 @@ frame_pad_size: 7
 
 
 # Text-specific params
-inputs: speech
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

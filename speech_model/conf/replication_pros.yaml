@@ -13,8 +13,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'replication'
-results_path: 'results/refactor/replication_both'
+model_name: 'replication_text'
+results_path: 'results/refactor/replication'
 
 train_params:
   batch_size: 32
@@ -52,11 +52,12 @@ frame_pad_size: 7
 seed: 131
 
 # Text-specific params
-inputs: both
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
 glove_path: '../data/emb/glove.6B.100d.txt'
+bottleneck_feats: 1600
 
 
 
