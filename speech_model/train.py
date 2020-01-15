@@ -243,9 +243,13 @@ def main():
         i2w = {}
         w2i = {}
         for i in range(vocab_size + 2):
-            w = vocab_dict['i2w'][i]
-            i2w[i] = w
-            w2i[w] = i
+            if i in vocab_dict['i2w']:
+                w = vocab_dict['i2w'][i]
+                i2w[i] = w
+                w2i[w] = i
+            else:
+                if cfg['inputs']=='text' or cfg['inputs']=='both':
+                    print("WARNING: vocab size is not smaller than actual vocab")
         return w2i, i2w
 
     w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])
