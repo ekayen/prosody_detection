@@ -44,7 +44,7 @@ lstm_layers: 2
 dropout: 0.5
 feat_dim: 6
 postlstm_context: False
-weight_decay: 0.000001
+weight_decay: 0.00001
 flatten_method: sum
 frame_filter_size: 11
 frame_pad_size: 5
