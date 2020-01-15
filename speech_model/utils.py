@@ -9,7 +9,7 @@ from tabulate import tabulate
 import random
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
-
+from decimal import Decimal
 
 class BurncDataset(data.Dataset):
     def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None):
@@ -300,7 +300,7 @@ def gen_model_name(cfg,datasplit):
     name_sections.append(f'd{dropout}')
     if not cfg['weight_decay']==0:
         #wd = int(cfg['weight_decay']*100000)
-        '{:.2e}'.format(Decimal(cfg['weight_decay']))
+        wd = '{:.0e}'.format(Decimal(cfg['weight_decay']))
         name_sections.append(f'wd{wd}')
     name_sections.append(f'f{cfg["frame_filter_size"]}')
     name_sections.append(f'p{cfg["frame_pad_size"]}')
