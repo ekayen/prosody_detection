@@ -18,15 +18,15 @@ flatten_methods = ['sum','max']
 lstm_layers = [2,3]
 cnn_layers = [2,3,4]
 dropout = [0,0.2,0.5]
-frame_filter_size = [9,11,15,17,19,21,23]
+frame_filter_size = [9,11,13,15,17,19,21,23]
 frame_pad_size = [4,5,6,7,8,9,10,11]
 hidden_size = [128,256,512]
 bottleneck_feats = [10,70,100,700,1000,1500,2000]
 
-num_experiments = 100
+num_experiments = 12
 
 
-output_file = open("experiment.txt", "w")
+output_file = open("experiment13.txt", "w")
 
 random.seed(700)
 
