@@ -16,7 +16,7 @@ eval_every:
 # i/o params
 #all_data: '../data/burnc/burnc.pkl'
 all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
-model_name: 'crossval_cnn_lstm_pros_gc_bi'
+model_name: 'both_cnn_lstm_pros_gc_bi'
 #results_path: 'results/refactor/cnn_lstm'
 results_path: '/disk/scratch/s1899827/results'
 
@@ -53,7 +53,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: speech
+inputs: both
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
