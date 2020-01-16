@@ -10,7 +10,7 @@ SCRATCH_DISK = '/disk/scratch'
 SCRATCH_HOME = f'{SCRATCH_DISK}/{USER}'
 
 DATA_HOME = f'{SCRATCH_HOME}/stars/data'
-base_call = f"python3 train.py -c conf/cnn_lstm_cluster.yaml"
+base_call = f"python3 train.py -c conf/cnn_lstm_pros.yaml"
 
 lstm_layers = [2,3]
 dropout = [0,0.2,0.5]
@@ -34,8 +34,9 @@ for exp in range(num_experiments):
         f"{base_call} "
         f"-l {lstm_layers[lstm_idx]} "
         f"-dr {dropout[dr_idx]} "
-        f"-b {bottleneck_feats[btl_idx]}"
-        f"-e {embedding_dim[emb_idx]}"
+        f"-b {bottleneck_feats[btl_idx]} "
+        f"-e {embedding_dim[emb_idx]} "
+        f" &"
     )
     print(expt_call, file=output_file)
 

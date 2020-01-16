@@ -202,7 +202,7 @@ def main():
                'embedding_dim': args.embedding_dim
                }
 
-    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers']
+    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim']
     float_args = ['dropout','weight_decay','learning_rate']
 
     seed = cfg['seed']
@@ -307,7 +307,7 @@ def main():
                           use_pretrained=cfg['use_pretrained'],
                           weights_matrix=weights_matrix)
 
-    import pdb;pdb.set_trace()
+
     model.to(device)
 
     criterion = nn.BCEWithLogitsLoss()
