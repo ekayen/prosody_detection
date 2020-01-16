@@ -28,7 +28,8 @@ class SpeechEncoder(nn.Module):
                  inputs='speech',
                  embedding_dim=100,
                  vocab_size=3000,
-                 bottleneck_feats=10):
+                 bottleneck_feats=10,
+                 weights_matrix=None):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -62,9 +63,15 @@ class SpeechEncoder(nn.Module):
         self.inputs = inputs
         self.embedding_dim = embedding_dim
         self.vocab_size = vocab_size
+        self.weights_matrix = weights_matrix
 
         if inputs=='text' or inputs=='both':
             self.emb = nn.Embedding(vocab_size+2,embedding_dim)
+            if not self.weights_matrix:
+                self.embedding.load_state_dict({'weight': self.weights_matrix})
+                self.embedding.weight.requires_grad = False
+
+
 
         if inputs=='speech' or inputs=='both':
             if self.cnn_layers==2:

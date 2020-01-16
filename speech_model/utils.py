@@ -361,6 +361,21 @@ def load_vectors(vector_file,wd_to_idx):
                 vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
     return vec_dict
 
+def load_vectors(vector_file,wd_to_idx):
+    '''
+    Load pre-trained embeddings as dict
+    '''
+    vec_dict = {}
+    with open(vector_file, 'rb') as f:
+        for l in f:
+            line = l.decode().split()
+            word = line[0]
+            if word in wd_to_idx:
+                wd_idx = wd_to_idx[word]
+                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
+    return vec_dict
+
+
 def main():
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_pros.yaml'

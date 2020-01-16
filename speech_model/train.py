@@ -254,6 +254,27 @@ def main():
 
     w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])
 
+    if cfg['use_pretrained']:
+        if cfg['embedding_dim']==100:
+            glove_path = cfg['glove_path_100']
+        elif cfg['embedding_dim'] == 300:
+            glove_path = cfg['glove_path_300']
+
+        i2vec = load_vectors(glove_path, w2i)
+
+        weights_matrix = np.zeros((cfg['vocab_size'] + 2, cfg['embedding_dim']))
+        for i in i2w:
+            try:
+                weights_matrix[i] = i_to_vec[i]
+                words_found += 1
+            except:
+                weights_matrix[i] = np.random.normal(scale=0.6, size=(cfg['embedding_dim'],))
+        weights_matrix = torch.tensor(weights_matrix)
+    else:
+        weights_matrix = None
+
+
+
     trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit)
     devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit)
 
@@ -281,7 +302,8 @@ def main():
                           inputs=cfg['inputs'],
                           embedding_dim=cfg['embedding_dim'],
                           vocab_size=cfg['vocab_size'],
-                          bottleneck_feats=cfg['bottleneck_feats'])
+                          bottleneck_feats=cfg['bottleneck_feats'],
+                          weights_matrix=weights_matrix)
 
     model.to(device)
 

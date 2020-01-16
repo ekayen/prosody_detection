@@ -15,8 +15,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_lstm_pros_gc_bi'
-results_path: 'results/refactor/cnn_lstm'
+model_name: 'text_lstm_pros_gc_bi'
+results_path: 'results/refactor/text_lstm'
 
 train_params:
   batch_size: 64
@@ -24,7 +24,7 @@ train_params:
   num_workers: 6
 
 eval_params:
-  batch_size: 1
+  batch_size: 64
   shuffle: True
   num_workers: 6
 
@@ -51,11 +51,12 @@ frame_pad_size: 7
 
 
 # Text-specific params
-inputs: speech
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
-glove_path: '../data/emb/glove.6B.100d.txt'
+glove_path_100: '../data/emb/glove.6B.100d.txt'
+glove_path_300: '../data/emb/glove.6B.300d.txt'
 bottleneck_feats: 1600
 
 
