@@ -56,7 +56,7 @@ embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
 glove_path_100: '../data/emb/glove.6B.100d.txt'
-glove_path_300: '../data/emb/glove.6B.300d.txt'
+glove_path_300: '../data/emb/glove.6B.100d.txt'
 bottleneck_feats: 1600
 
 

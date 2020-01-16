@@ -181,6 +181,8 @@ def main():
                         help='method for flattening tokens -- optional, overrides the one in the config')
     parser.add_argument('-b', '--bottleneck_feats',
                         help='number of bottlneckfeats -- optional, overrides the one in the config')
+    parser.add_argument('-e', '--embedding_dim',
+                        help='number of bottlneckfeats -- optional, overrides the one in the config')
 
     args = parser.parse_args()
     with open(args.config, 'r') as f:
@@ -196,7 +198,8 @@ def main():
                'learning_rate': args.learning_rate,
                'flatten_method': args.flatten_method,
                'bottleneck_feats': args.bottleneck_feats,
-               'hidden_size': args.hidden_size
+               'hidden_size': args.hidden_size,
+               'embedding_dim': args.embedding_dim
                }
 
     int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers']
@@ -270,8 +273,6 @@ def main():
             except:
                 weights_matrix[i] = np.random.normal(scale=0.6, size=(cfg['embedding_dim'],))
         weights_matrix = torch.tensor(weights_matrix)
-    else:
-        weights_matrix = None
 
 
 
@@ -303,8 +304,10 @@ def main():
                           embedding_dim=cfg['embedding_dim'],
                           vocab_size=cfg['vocab_size'],
                           bottleneck_feats=cfg['bottleneck_feats'],
+                          use_pretrained=cfg['use_pretrained'],
                           weights_matrix=weights_matrix)
 
+    import pdb;pdb.set_trace()
     model.to(device)
 
     criterion = nn.BCEWithLogitsLoss()
