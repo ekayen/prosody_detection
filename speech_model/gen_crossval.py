@@ -32,8 +32,8 @@ per_file = 6
 
 calls = []
 for datasplit in datasplits:
-    call = (f'{base_call }'
-            f'-d {datasplit}.yaml')
+    call = (f'{base_call} '
+            f' -d {os.path.join(DATA_HOME,datasplit)}.yaml')
     calls.append(call)
 
 calls = [calls[i:i + per_file] for i in range(0, len(calls), per_file)]

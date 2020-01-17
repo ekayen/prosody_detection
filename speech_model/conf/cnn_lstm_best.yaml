@@ -17,7 +17,7 @@ eval_every:
 all_data: '../data/burnc/burnc.pkl'
 #all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
 model_name: 'both_cnn_lstm_pros_gc_bi'
-results_path: 'results/refactor/both'
+results_path: 'results/refactor/both_crossval'
 #3results_path: '/disk/scratch/s1899827/results'
 
 train_params:
