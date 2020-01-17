@@ -298,6 +298,8 @@ def gen_model_name(cfg,datasplit):
         name_sections.append(f'lstm{cfg["lstm_layers"]}')
     dropout = int(float(cfg['dropout'])*10)
     name_sections.append(f'd{dropout}')
+    lr = '{:.0e}'.format(Decimal(cfg['learning_rate']))
+    name_sections.append(f'lr{lr}')
     if not cfg['weight_decay']==0:
         #wd = int(cfg['weight_decay']*100000)
         wd = '{:.0e}'.format(Decimal(cfg['weight_decay']))
