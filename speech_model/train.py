@@ -239,6 +239,8 @@ def main():
     # Load text data:
     with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
         vocab_dict = pickle.load(f)
+    print(f'Original vocab size: {len(vocab_dict["w2i"])}')
+
 
     set_seeds(seed)
 

@@ -139,12 +139,11 @@ train_idx = int(len(f2b_utts)*train_ratio)
 dev_idx = int(len(f2b_utts)*(train_ratio+dev_ratio))
 seeds = [122, 451, 917, 798, 170, 528, 337, 25, 195, 564]
 for i,seed in enumerate(seeds):
-    f2b_utts = sorted(f2b_utts)
     random.seed(seed)
     random.shuffle(f2b_utts)
-    split_ids['train'] = utt_ids[:train_idx]
-    split_ids['dev'] = utt_ids[train_idx:dev_idx]
-    split_ids['test'] = utt_ids[dev_idx:]
+    split_ids['train'] = f2b_utts[:train_idx]
+    split_ids['dev'] = f2b_utts[train_idx:dev_idx]
+    split_ids['test'] = f2b_utts[dev_idx:]
     with open(os.path.join(data_path, 'splits', f'f2b_only{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
 
