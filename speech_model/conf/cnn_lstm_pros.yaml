@@ -15,8 +15,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'text_lstm_pros_gc_bi'
-results_path: 'results/refactor/text_lstm'
+model_name: 'both'
+results_path: 'results/refactor/both'
 
 train_params:
   batch_size: 64
@@ -41,23 +41,23 @@ tok_pad_len: 50
 num_epochs: 25
 cnn_layers: 3
 lstm_layers: 2
-dropout: 0.3
+dropout: 0.5
 feat_dim: 6
 postlstm_context: False
-weight_decay: 0
+weight_decay: 0.00001
 flatten_method: sum
-frame_filter_size: 15
-frame_pad_size: 7
+frame_filter_size: 11
+frame_pad_size: 5
 
 
 # Text-specific params
-inputs: text
+inputs: both
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
 glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.100d.txt'
-bottleneck_feats: 1600
+bottleneck_feats: 2000
 
 
 
