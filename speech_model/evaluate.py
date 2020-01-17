@@ -46,7 +46,8 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 #if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
                 #    output = output.squeeze().transpose(0, 1)
 
-                output = output.squeeze().transpose(0, 1)
+                #import pdb;pdb.set_trace()
+                output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
 
                 output = output.detach().flatten()
                 y = y.flatten()

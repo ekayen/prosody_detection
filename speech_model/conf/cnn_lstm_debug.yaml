@@ -23,7 +23,7 @@ train_params:
   num_workers: 6
 
 eval_params:
-  batch_size: 5
+  batch_size: 1
   shuffle: True
   num_workers: 6
 
@@ -37,22 +37,25 @@ frame_pad_len: 2150
 tok_pad_len: 50
 pad_len: 2150
 num_epochs: 5
-cnn_layers: 2
+cnn_layers: 3
 lstm_layers: 2
-dropout: 0.5
+dropout: 0.3
 feat_dim: 6
 postlstm_context: False
 context: False
 weight_decay: 0
-flatten_method: max
-frame_filter_size: 9
-frame_pad_size: 4
+flatten_method: sum
+frame_filter_size: 15
+frame_pad_size: 7
 
 # Text-specific params
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
-glove_path: '../data/emb/glove.6B.100d.txt'
+glove_path_100: '../data/emb/glove.6B.100d.txt'
+glove_path_300: '../data/emb/glove.6B.100d.txt'
+bottleneck_feats: 1600
 
 
 

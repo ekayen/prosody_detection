@@ -69,7 +69,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
                 # Flatten output and labels:
 
-                output = output.squeeze().transpose(0,1) ####
+                output = output.view(output.shape[0],output.shape[1]).transpose(0,1) # TODO change so that only the last dim is dropped, not the second (batch dim)
                 output = output.flatten()
 
                 labels = labels.flatten()
