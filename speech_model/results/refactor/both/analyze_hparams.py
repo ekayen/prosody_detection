@@ -38,6 +38,8 @@ print(f'Speed: {speed_dict[top_accs[0][0]]}')
 print('\n')
 print(f'Other top accs: {top_accs[1:]}')
 
+print(f'Top speed: {top_speeds[0]}')
+print(f'Acc: {acc_dict[top_speeds[0][0]]}')
 
 ACC_THRESHOLD = 0.6
 
