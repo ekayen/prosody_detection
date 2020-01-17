@@ -23,9 +23,13 @@ bottleneck_feats = [10,70,100,700,1000,1500,2000,2500,3000]
 num_experiments = 50
 
 
-output_file = open("both_exp.sh", "w")
+output_base = 'both_exp'
 
 random.seed(29)
+
+per_file = 6
+
+calls = []
 
 for exp in range(num_experiments):
     lr_idx = random.randrange(len(learning_rates))
@@ -44,8 +48,15 @@ for exp in range(num_experiments):
         f"-dr {dropout[dr_idx]} "
         f"-hid {hidden_size[hid_idx]} "
         f"-b {bottleneck_feats[btl_idx]} "
-        f" &"
     )
-    print(expt_call, file=output_file)
+    calls.append(expt_call)
+#    print(expt_call, file=output_file)
 
-output_file.close()
+
+calls = [calls[i:i + per_file] for i in range(0, len(calls), per_file)]
+
+for i,call in enumerate(calls):
+    filename = f'{output_base}{i}.sh'
+    print_call = ' &\n'.join(call)
+    with open(filename,'w') as f:
+        f.write(print_call)
