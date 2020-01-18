@@ -6,34 +6,40 @@ base_call = f"python3 train.py -c conf/cnn_lstm_best.yaml"
 
 output_base = 'crossval'
 
-datasplits = ['tenfold0',
-              'tenfold1',
-              'tenfold2',
-              'tenfold3',
-              'tenfold4',
-              'tenfold5',
-              'tenfold6',
-              'tenfold7',
-              'tenfold8',
-              'tenfold9',
-              'f2b_only0',
-              'f2b_only1',
-              'f2b_only2',
-              'f2b_only3',
-              'f2b_only4',
-              'heldout_f1a',
-              'heldout_f2b',
-              'heldout_f3a',
-              'heldout_m1b',
-              'heldout_m2b']
+datasplits = {'tenfold0':3000,
+              'tenfold1':3000,
+              'tenfold2':3000,
+              'tenfold3':3000,
+              'tenfold4':3000,
+              'tenfold5':3000,
+              'tenfold6':3000,
+              'tenfold7':3000,
+              'tenfold8':3000,
+              'tenfold9':3000,
+              'f2b_only0':1700,
+              'f2b_only1':1700,
+              'f2b_only2':1700,
+              'f2b_only3':1700,
+              'f2b_only4':1700,
+              'f2b_only5':1700,
+              'f2b_only6':1700,
+              'f2b_only7':1700,
+              'f2b_only8':1700,
+              'f2b_only9':1700,
+              'heldout_f1a':2600,
+              'heldout_f2b':1600,
+              'heldout_f3a':2800,
+              'heldout_m1b':2700,
+              'heldout_m2b':2700}
 
-per_file = 6
-
+per_file = 8
 
 calls = []
 for datasplit in datasplits:
     call = (f'{base_call} '
-            f' -d {os.path.join(DATA_HOME,datasplit)}.yaml')
+            f' -d {os.path.join(DATA_HOME,datasplit)}.yaml'
+            f' -v {datasplits[datasplit]}'
+    )
     calls.append(call)
 
 calls = [calls[i:i + per_file] for i in range(0, len(calls), per_file)]

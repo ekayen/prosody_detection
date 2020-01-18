@@ -183,7 +183,10 @@ def main():
                         help='number of bottlneckfeats -- optional, overrides the one in the config')
     parser.add_argument('-e', '--embedding_dim',
                         help='number of bottlneckfeats -- optional, overrides the one in the config')
+    parser.add_argument('-v', '--vocab_size',
+                        help='vocab size -- optional, overrides the one in the config')
 
+    
     args = parser.parse_args()
     with open(args.config, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
@@ -199,10 +202,11 @@ def main():
                'flatten_method': args.flatten_method,
                'bottleneck_feats': args.bottleneck_feats,
                'hidden_size': args.hidden_size,
-               'embedding_dim': args.embedding_dim
+               'embedding_dim': args.embedding_dim,
+               'vocab_size': args.vocab_size
                }
 
-    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim']
+    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim','vocab_size']
     float_args = ['dropout','weight_decay','learning_rate']
 
     seed = cfg['seed']
