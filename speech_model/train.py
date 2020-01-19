@@ -279,7 +279,8 @@ def main():
             except:
                 weights_matrix[i] = np.random.normal(scale=0.6, size=(cfg['embedding_dim'],))
         weights_matrix = torch.tensor(weights_matrix)
-
+    else:
+        weights_matrix = None
 
 
     trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit)

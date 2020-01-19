@@ -310,6 +310,7 @@ def gen_model_name(cfg,datasplit):
     name_sections.append(f'b{cfg["bottleneck_feats"]}')
     name_sections.append(f'h{cfg["hidden_size"]}')
     name_sections.append(f'e{cfg["embedding_dim"]}')
+    name_sections.append(f'v{cfg["vocab_size"]}')
     return '_'.join(name_sections)
 
 def report_hparams(cfg,datasplit=None):

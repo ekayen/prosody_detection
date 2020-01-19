@@ -16,9 +16,9 @@ eval_every:
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
 #all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
-model_name: 'both_cnn_lstm_pros_gc_bi'
-results_path: 'results/refactor/both_crossval'
-#3results_path: '/disk/scratch/s1899827/results'
+model_name: 'both_cnn_lstm'
+results_path: 'results/refactor/both_vocab'
+#results_path: '/disk/scratch/s1899827/results'
 
 train_params:
   batch_size: 64
