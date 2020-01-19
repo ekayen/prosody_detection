@@ -236,10 +236,6 @@ def main():
 
     set_seeds(seed)
 
-    #trainset = BurncDatasetSpeech(cfg, data_dict, mode='train', datasplit=datasplit)
-    #devset = BurncDatasetSpeech(cfg, data_dict, mode='dev',datasplit=datasplit)
-
-
     # Load text data:
     with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
         vocab_dict = pickle.load(f)
@@ -282,9 +278,14 @@ def main():
     else:
         weights_matrix = None
 
+    if 'overwrite_speech' in cfg:
+        overwrite_speech = cfg['overwrite_speech']
+    else:
+        overwrite_speech = False
 
-    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit)
-    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit)
+
+    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,overwrite_speech=overwrite_speech)
+    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,overwrite_speech=overwrite_speech)
 
     print('done')
     print('Building model ...')

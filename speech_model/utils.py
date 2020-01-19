@@ -12,7 +12,7 @@ from torch.nn.utils.rnn import pad_sequence
 from decimal import Decimal
 
 class BurncDataset(data.Dataset):
-    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None):
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,stopwords_only=False):
 
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
@@ -27,6 +27,8 @@ class BurncDataset(data.Dataset):
         self.vocab_size = vocab_size
         self.w2i = self.adjust_vocab_size(w2i)
 
+        self.overwrite_speech = overwrite_speech
+        self.stopwords_only = stopwords_only
 
         if not datasplit:
             datasplit = cfg['datasplit']
@@ -107,6 +109,8 @@ class BurncDataset(data.Dataset):
                     tmp.append(feats)
             tok_feats = tmp
         X = torch.cat(tok_feats, dim=0)
+        if self.overwrite_speech:
+            X = torch.ones(X.shape)
         if self.frame_pad_len:
             X = self.pad_right(X, self.frame_pad_len)
         return X
@@ -388,14 +392,19 @@ def main():
     burnc_dict = '../data/burnc/burnc.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
-    dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
-    item = dataset.__getitem__(4)
-
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
     vocab_file = f'../data/burnc/splits/{splt}.vocab'
     print(vocab_file)
-    with open(vocab_file,'rb') as f:
+    with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
+
+    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=3000,mode='train',datasplit=None,overwrite_speech=True,stopwords_only=False)
+    item = dataset.__getitem__(4)
+
+    import pdb;pdb.set_trace()
+    dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
+    item = dataset.__getitem__(4)
+
     import pdb;pdb.set_trace()
     dataset = BurncDatasetText(cfg, input_dict, vocab_dict['w2i'], vocab_size=3000, mode='train',datasplit=None)
     item = dataset.__getitem__(4)
