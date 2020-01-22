@@ -16,8 +16,8 @@ eval_every:
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
 #all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
-model_name: 'both_cnn_lstm'
-results_path: 'results/refactor/both_vocab'
+model_name: 'text_comparison'
+results_path: 'results/refactor/comparison'
 #results_path: '/disk/scratch/s1899827/results'
 
 train_params:
@@ -33,7 +33,7 @@ eval_params:
 # Model params
 tok_level_pred: True
 batch_size: 1
-include_lstm: True
+include_lstm: False
 bidirectional: True
 learning_rate: 0.001
 hidden_size: 128
@@ -53,16 +53,12 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: both
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
 glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.100d.txt'
 bottleneck_feats: 2000
-
-overwrite_speech: True
-
-
 
 seed: 256

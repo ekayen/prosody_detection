@@ -64,6 +64,7 @@ class SpeechEncoder(nn.Module):
         self.inputs = inputs
         self.embedding_dim = embedding_dim
         self.vocab_size = vocab_size
+        self.bottleneck_feats = bottleneck_feats
         self.use_pretrained = use_pretrained
         self.weights_matrix = weights_matrix
 
@@ -188,13 +189,16 @@ class SpeechEncoder(nn.Module):
                 elif self.inputs=='text':
                     self.fc1_in = self.embedding_dim * self.tok_seq_len
 
-                self.fc1_out = bottleneck_feats # TODO make the same as below
+                self.fc1_out = self.bottleneck_feats # TODO make the same as below
 
                 self.fc1 = nn.Linear(self.fc1_in, self.fc1_out)#,dropout=self.dropout)
                 self.relu = nn.ReLU()
                 self.fc2 = nn.Linear(self.fc1_out, self.num_classes)
 
             else:
+                #########################################
+                # CNN-only version of my model        ###
+                #########################################
                 if self.inputs=='speech':
                     self.fc1_in = self.out_channels
                 elif self.inputs=='both':
@@ -344,6 +348,9 @@ class SpeechEncoder(nn.Module):
                     x = x.permute(1,0,2)  # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                 else:
                     x = embeddings
+
+                if self.inputs=='both':
+                    x = torch.cat([x,embeddings],dim=2)
 
                 x = self.fc1(x)
                 x = self.relu(x)

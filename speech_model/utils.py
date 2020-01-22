@@ -12,7 +12,8 @@ from torch.nn.utils.rnn import pad_sequence
 from decimal import Decimal
 
 class BurncDataset(data.Dataset):
-    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,stopwords_only=False):
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
+                 scramble_speech=False,stopwords_only=False):
 
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
@@ -28,6 +29,7 @@ class BurncDataset(data.Dataset):
         self.w2i = self.adjust_vocab_size(w2i)
 
         self.overwrite_speech = overwrite_speech
+        self.scramble_speech = scramble_speech
         self.stopwords_only = stopwords_only
 
         if not datasplit:
@@ -111,6 +113,8 @@ class BurncDataset(data.Dataset):
         X = torch.cat(tok_feats, dim=0)
         if self.overwrite_speech:
             X = torch.ones(X.shape)
+        if self.scramble_speech:
+            X = X[torch.randperm(X.size()[0])]
         if self.frame_pad_len:
             X = self.pad_right(X, self.frame_pad_len)
         return X
@@ -132,6 +136,16 @@ class BurncDataset(data.Dataset):
                 w2i[wd] = w2i['UNK']
         return w2i
 
+    def uniformize_vocab(self,tok_ints):
+        '''
+        Helper fn for doing experiments where the model only gets a 'stopword or not' signal
+        This function takes a token seq and replaces all non-pad, non-UNK tokens with 2
+        '''
+        STOPWD_IDX = 2
+        return [i if i in (self.w2i['PAD'],self.w2i['UNK']) else STOPWD_IDX for i in tok_ints]
+
+
+
     def get_tokens(self,tok_ids):
         tok_ints = []
         for tok_id in tok_ids:
@@ -139,6 +153,8 @@ class BurncDataset(data.Dataset):
                 tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
             else:
                 tok_ints.append(self.w2i['UNK'])
+        if self.stopwords_only:
+            tok_ints  = self.uniformize_vocab(tok_ints)
         tok_ints = torch.tensor(tok_ints)
         if self.tok_pad_len:
             tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
@@ -398,7 +414,7 @@ def main():
     with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
 
-    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=3000,mode='train',datasplit=None,overwrite_speech=True,stopwords_only=False)
+    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True)
     item = dataset.__getitem__(4)
 
     import pdb;pdb.set_trace()

@@ -1,21 +1,23 @@
-from utils import UttDataset
+from utils import *
+import os
 from torch.utils import data
 import torch
 import numpy as np
 import pandas as pd
 from random import randint
 
-def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False):
+def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False,
+             print_predictions=False,vocab_dict=None):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
     tot_utts = 0
     dataloader = data.DataLoader(dataset, **dataloader_params)
     count_ones = 0 # TODO TMP
+    print_lines = []
     with torch.no_grad():
         counter = 0
         for id,x,y in dataloader:
-            #import pdb;pdb.set_trace()
             if not text_only: # TODO temporary flag for the text-alone model
                 x,text,toktimes = x
                 curr_bat_size = x.shape[0]
@@ -43,9 +45,6 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
 
-                #if text_only: # TODO figure out why this doesn't like to be flipped for the speech model.
-                #    output = output.squeeze().transpose(0, 1)
-
                 #import pdb;pdb.set_trace()
                 output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
 
@@ -57,23 +56,37 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
                 for i in range(curr_bat_size):
                     tmp_out.append(output[(i * seq_len):(i * seq_len) + num_toks[i]])
                     tmp_lbl.append(y[(i * seq_len):(i * seq_len) + num_toks[i]])
-
-                    # Experiment: Don't flatten at all
-                    #tmp_out.append(output[:num_toks[i],i].flatten())
-                    #tmp_lbl.append(y[i,:num_toks[i]].flatten())
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
-                #import pdb;pdb.set_trace()
+
                 assert lbl.sum().item() == y.sum().item()
-                #import pdb;pdb.set_trace()
+
                 output = out
                 y = lbl
-                #output = output.detach().view(curr_bat_size, output.shape[0])
+
             else:
                 output = output.detach().view(output.shape[-2])
 
             threshold = 0
             prediction = (output > threshold).type(torch.int64) * 1
+
+            if print_predictions:
+
+                sents = [np.trim_zeros(np.array(text[i:i+1].flatten().cpu()),'b').tolist() for i in range(curr_bat_size)]
+                lens = [len(sent) for sent in sents]
+
+                prediction_list = prediction.tolist()
+                lbl_list = y.tolist()
+                preds = []
+                lbls = []
+                for i,sent in enumerate(sents):
+                    preds.append([str(j) for j in prediction_list[0:lens[i]]])
+                    lbls.append([str(j) for j in lbl_list[0:lens[i]]])
+                    prediction_list = prediction_list[lens[i]:]
+                    lbl_list = lbl_list[lens[i]:]
+
+                print_lines.extend([(sents[i],lbls[i],preds[i]) for i in range(len(sents))])
+
             count_ones += prediction.sum().item()
 
             #prediction = torch.tensor(prediction,dtype=torch.int64)
@@ -93,6 +106,14 @@ def evaluate(dataset,dataloader_params,model,device,recurrent=True,tok_level_pre
         print(f'Total_pred: {total_pred}')
         print(f'Total correct pred: {true_pos_pred}')
         print(f'Percent of predicted "1" labels: {count_ones/total_pred}')
+    if print_predictions:
+        model_name = gen_model_name(cfg,cfg['datasplit'])
+        with open(os.path.join(cfg['results_path'],f'{model_name}.pred'),'w') as f:
+            f.write(f'text\tlabels\tpredicted_labels\n')
+            for line in print_lines:
+                sent = [vocab_dict['i2w'][i] for i in line[0]]
+                f.write(f'{" ".join(sent)}\t{" ".join(line[1])}\t{" ".join(line[2])}')
+                f.write('\n')
     return acc, total_pred, true_pos_pred, tot_utts
 
 def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):

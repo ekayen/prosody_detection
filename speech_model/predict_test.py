@@ -27,6 +27,9 @@ def main():
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
+    with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
+        vocab_dict = pickle.load(f)
+
     model = SpeechEncoder(seq_len=cfg['frame_pad_len'],
                           batch_size=cfg['train_params']['batch_size'],
                           lstm_layers=cfg['lstm_layers'],
@@ -51,7 +54,8 @@ def main():
 
     testset = BurncDatasetSpeech(cfg, data_dict, mode='test', datasplit=datasplit)
     print(datasplit)
-    evaluate(testset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=True)
+    evaluate(cfg,testset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=True,
+             print_predictions=True,vocab_dict=vocab_dict)
 
 
 

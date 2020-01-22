@@ -13,8 +13,9 @@ print(target_dir)
 max_dev_accs = []
 max_train_accs = []
 min_train_losses = []
-for file in glob.glob(target_dir):
-    if file.endswith(".tsv") and subset in file::
+#for file in glob.glob(target_dir):
+for file in os.listdir(target_dir):
+    if file.endswith(".tsv") and subset in file:
         print(file)
         df = pd.read_csv(file, sep='\t')
         dev_accs = df['dev_accs'].tolist()

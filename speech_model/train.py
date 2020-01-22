@@ -16,7 +16,7 @@ import argparse
 import pdb
 
 
-def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
+def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
 
     plot_data = {
         'time': [],
@@ -57,7 +57,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
 
             hidden = model.init_hidden(curr_bat_size)
             output,_ = model(speech,text,toktimes,hidden)
-
 
 
             if cfg['tok_level_pred']:
@@ -133,12 +132,13 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name):
         plot_data['loss'].append(train_loss)
 
         # train acc
-        train_results = evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
-                                 noisy=False)
+        train_results = evaluate(cfg, trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
+                                 noisy=False,print_predictions=True,vocab_dict=vocab_dict)
         plot_data['train_acc'].append(train_results[0])
 
         # dev acc
-        dev_results = evaluate(devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=False)
+        dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],
+                               noisy=False,print_predictions=True,vocab_dict=vocab_dict)
         plot_data['dev_acc'].append(dev_results[0])
 
         print()
@@ -283,9 +283,21 @@ def main():
     else:
         overwrite_speech = False
 
+    if 'scramble_speech' in cfg:
+        scramble_speech = cfg['scramble_speech']
+    else:
+        scramble_speech = False
 
-    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,overwrite_speech=overwrite_speech)
-    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,overwrite_speech=overwrite_speech)
+    if 'stopwords_only' in cfg:
+        stopwords_only = cfg['stopwords_only']
+    else:
+        stopwords_only = False
+
+
+    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only)
+    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,
+                          overwrite_speech=overwrite_speech,stopwords_only=stopwords_only)
 
     print('done')
     print('Building model ...')
@@ -325,13 +337,14 @@ def main():
 
     set_seeds(seed)
 
-    train(model, criterion, optimizer, trainset, devset, cfg, device, model_name)
+    train(model, criterion, optimizer, trainset, devset, cfg, device, model_name,vocab_dict)
 
     run_test = False
 
     if run_test:
         testset = BurncDatasetSpeech(cfg, data_dict, mode='test', datasplit=datasplit)
-        evaluate(testset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'], noisy=True)
+        evaluate(cfg, testset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
+                 noisy=True, print_predictions=True)
 
 
 if __name__=="__main__":

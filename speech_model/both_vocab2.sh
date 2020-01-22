@@ -1,1 +1,0 @@
-python3 train.py -c conf/cnn_lstm_best.yaml -v 5 
