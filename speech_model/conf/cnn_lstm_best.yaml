@@ -2,7 +2,6 @@
 segmentation: utterances
 context_window: False
 datasplit: ../data/burnc/splits/tenfold0.yaml
-#datasplit: ../data/burnc/splits/fivefold0.yaml
 feats: tok2pros
 bitmark: True
 
@@ -15,10 +14,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-#all_data: '/disk/scratch/s1899827/stars/data/burnc.pkl'
-model_name: 'text_comparison'
-results_path: 'results/refactor/comparison'
-#results_path: '/disk/scratch/s1899827/results'
+model_name: 'speech_crossval'
+results_path: 'results/refactor/speech_crossval_2'
 
 train_params:
   batch_size: 64
@@ -33,7 +30,7 @@ eval_params:
 # Model params
 tok_level_pred: True
 batch_size: 1
-include_lstm: False
+include_lstm: True
 bidirectional: True
 learning_rate: 0.001
 hidden_size: 128
@@ -53,7 +50,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: text
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

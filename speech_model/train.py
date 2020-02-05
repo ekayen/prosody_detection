@@ -293,11 +293,21 @@ def main():
     else:
         stopwords_only = False
 
+    if 'binary_vocab' in cfg:
+        binary_vocab = cfg['binary_vocab']
+    else:
+        binary_vocab = False
+
+    if 'ablate_feat' in cfg:
+        ablate_feat = cfg['ablate_feat']
+    else:
+        ablate_feat = None
+
 
     trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
-                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only)
+                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,ablate_feat=ablate_feat)
     devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,
-                          overwrite_speech=overwrite_speech,stopwords_only=stopwords_only)
+                          overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,ablate_feat=ablate_feat)
 
     print('done')
     print('Building model ...')

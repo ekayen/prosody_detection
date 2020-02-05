@@ -13,16 +13,16 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'replication_text'
-results_path: 'results/refactor/replication'
+model_name: 'replication_context_intensity_pitch'
+results_path: 'results/refactor/replication_ablate'
 
 train_params:
-  batch_size: 32
+  batch_size: 64
   shuffle: True
   num_workers: 6
 
 eval_params:
-  batch_size: 32
+  batch_size: 64
   shuffle: True
   num_workers: 6
 
@@ -31,33 +31,34 @@ tok_level_pred: False
 include_lstm: False
 bidirectional: False
 learning_rate: 0.001
-hidden_size: 512
+hidden_size: 128
 frame_pad_len: 420
 tok_pad_len: 3
 # if no context, smaller pad length:
 #frame_pad_len: 373
 datasource: 'BURNC'
-num_epochs: 20
+num_epochs: 25
 cnn_layers: 3
 lstm_layers: 2
-dropout: 0.2
+dropout: 0.5
 feat_dim: 7
 #feat_dim: 6
 postlstm_context: False
-weight_decay: 0.001
-frame_filter_size: 15
+weight_decay: 0.00001
+frame_filter_size: 11
 flatten_method: sum
-frame_pad_size: 7
+frame_pad_size: 5
 
-seed: 131
+seed: 256
 
 # Text-specific params
-inputs: both
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
-glove_path: '../data/emb/glove.6B.100d.txt'
-bottleneck_feats: 1600
+glove_path_100: '../data/emb/glove.6B.100d.txt'
+glove_path_300: '../data/emb/glove.6B.100d.txt'
+bottleneck_feats: 2000
 
-
+ablate_feat: intensity_pitch
 

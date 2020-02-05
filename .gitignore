@@ -28,7 +28,10 @@ speech_model/results/refactor/both_no_pretrain/*.pt
 speech_model/results/refactor/text_no_pretrain/*.pt
 speech_model/results/refactor/both_vocab/*.pt
 speech_model/results/refactor/text_vocab/*.pt
-speech_model/results/refactor/both_over/*.pt
+speech_model/results/refactor/both_*/*.pt
+speech_model/results/refactor/cnn_lstm_3tok*/*.pt
 speech_model/results/refactor/speech_over/*.pt
+speech_model/results/refactor/*/*.pt
+
 speech_model/both_exp*
 speech_model/crossval*

@@ -1,0 +1,1 @@
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_m2b.yaml -v 2700

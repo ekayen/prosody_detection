@@ -31,11 +31,11 @@ class BurncPreprocessor:
         self.filter_para = filter_para
 
         self.pros_feat_names = ['audspec_lengthL1norm_sma',
-                           'voicingFinalUnclipped_sma',
-                           'pcm_RMSenergy_sma',
-                           'logHNR_sma',
-                           'F0final_sma',
-                           'pcm_zcr_sma']
+                                'voicingFinalUnclipped_sma',
+                                'pcm_RMSenergy_sma',
+                                'logHNR_sma',
+                                'F0final_sma',
+                                'pcm_zcr_sma']
 
         self.para_ids = []
         self.three_tok_spans = []

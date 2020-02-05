@@ -1,0 +1,9 @@
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/f2b_only6.yaml -v 1700 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/f2b_only7.yaml -v 1700 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/f2b_only8.yaml -v 1700 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/f2b_only9.yaml -v 1700 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_f1a.yaml -v 2600 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_f2b.yaml -v 1600 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_f3a.yaml -v 2800 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_m1b.yaml -v 2700 &
+python3 train.py -c conf/cnn_lstm_best.yaml  -d ../data/burnc/splits/heldout_m2b.yaml -v 2700

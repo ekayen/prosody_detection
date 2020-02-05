@@ -10,10 +10,15 @@ import random
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 from decimal import Decimal
+import nltk
+from nltk.corpus import stopwords,cmudict
+nltk.download('stopwords')
+nltk.download('cmudict')
+
 
 class BurncDataset(data.Dataset):
     def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
-                 scramble_speech=False,stopwords_only=False):
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None):
 
         self.segmentation = cfg['segmentation']
         self.context_window = cfg['context_window']
@@ -31,6 +36,34 @@ class BurncDataset(data.Dataset):
         self.overwrite_speech = overwrite_speech
         self.scramble_speech = scramble_speech
         self.stopwords_only = stopwords_only
+        self.binary_vocab = binary_vocab
+
+        self.stopwords = set(stopwords.words('english'))
+        if self.stopwords_only:
+            self.w2i = {word:2 for word in self.stopwords}
+            self.w2i['PAD'] = 0
+            self.w2i['UNK'] = 1
+
+        self.ablate_feat = ablate_feat # set to intensity, pitch, or voicing in order to ablate the corresponding features
+        self.ablate_dict = {'intensity':[0,2],
+                            'voicing':[1,3,5],
+                            'pitch':[4],
+                            'intensity_pitch': [0, 2, 4],
+                            'pitch_intensity': [0, 2, 4],
+                            'voicing_pitch': [1, 3, 4, 5],
+                            'pitch_voicing': [1, 3, 4, 5],
+                            'intensity_voicing': [0, 1, 2, 3, 5],
+                            'voicing_intensity': [0, 1, 2, 3, 5],
+                            'IS_energy': [0,2,5],
+                            'IS_voicing': [1,3,4]
+                            } # maps feature to columns in the feature tensor that need to be zeroed out
+        # 0: audspec_lengthL1norm_sma
+        # 1: voicingFinalUnclipped_sma
+        # 2: pcm_RMSenergy_sma
+        # 3: logHNR_sma
+        # 4: F0final_sma
+        # 5: pcm_zcr_sma
+
 
         if not datasplit:
             datasplit = cfg['datasplit']
@@ -111,6 +144,10 @@ class BurncDataset(data.Dataset):
                     tmp.append(feats)
             tok_feats = tmp
         X = torch.cat(tok_feats, dim=0)
+        if self.ablate_feat:
+            for feat_col in self.ablate_dict[self.ablate_feat]:
+                X[:,feat_col:feat_col+1] = 0
+
         if self.overwrite_speech:
             X = torch.ones(X.shape)
         if self.scramble_speech:
@@ -144,8 +181,6 @@ class BurncDataset(data.Dataset):
         STOPWD_IDX = 2
         return [i if i in (self.w2i['PAD'],self.w2i['UNK']) else STOPWD_IDX for i in tok_ints]
 
-
-
     def get_tokens(self,tok_ids):
         tok_ints = []
         for tok_id in tok_ids:
@@ -153,12 +188,25 @@ class BurncDataset(data.Dataset):
                 tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
             else:
                 tok_ints.append(self.w2i['UNK'])
-        if self.stopwords_only:
+        if self.binary_vocab:
             tok_ints  = self.uniformize_vocab(tok_ints)
         tok_ints = torch.tensor(tok_ints)
         if self.tok_pad_len:
             tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
         return tok_ints
+
+    def get_syl_num(self,word):
+        word = word.lower()
+        syl_dict_path = '../data/burnc/syl_dict.pkl'
+        cmu_dict = cmudict.dict()
+        with open(syl_dict_path, 'rb') as f:
+            syl_dict = pickle.load(f)
+        if word in syl_dict:
+            return syl_dict[word]
+        elif word in cmu_dict:
+            return [len(list(y for y in x if y[-1].isdigit())) for x in cmu_dict[word.lower()]][0]
+        else:
+            raise Exception('Unknown number of syllables!')
 
     def __getitem__(self, index):
         iden = self.ids[index]
@@ -399,7 +447,11 @@ def load_vectors(vector_file,wd_to_idx):
     return vec_dict
 
 
+
 def main():
+
+    syl1 = get_syl_num('boston')
+    syl2 = get_syl_num('Madagascar')
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_pros.yaml'
     cfg_file = 'conf/cnn_lstm_pros.yaml'
@@ -413,8 +465,10 @@ def main():
     print(vocab_file)
     with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
+    list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
-    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True)
+
+    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
     item = dataset.__getitem__(4)
 
     import pdb;pdb.set_trace()
@@ -425,6 +479,7 @@ def main():
     dataset = BurncDatasetText(cfg, input_dict, vocab_dict['w2i'], vocab_size=3000, mode='train',datasplit=None)
     item = dataset.__getitem__(4)
     import pdb;pdb.set_trace()
+
 
 
 if __name__ == "__main__":

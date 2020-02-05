@@ -308,7 +308,7 @@ class SpeechEncoder(nn.Module):
                 #if TOKENIZE_FIRST:
                 if self.inputs=='both' or self.inputs=='speech':
                     x = x.squeeze(dim=-1)  # IN: N x C x W x H (where H=1) OUT: N x C x W
-                    x = self.token_split(x, toktimes)  # TODO make work with batches
+                    x = self.token_split(x, toktimes)
                     x = x.permute(1,0,2) # Comes out of tokens with dims: batch, seq_len, channels. Need seq_len, batch, channels
                 if self.inputs=='both':
                     x = torch.cat([embeddings,x],dim=2)
@@ -359,25 +359,27 @@ class SpeechEncoder(nn.Module):
                 return x,hidden
 
         else:
-            """
-            if self.include_lstm: # TODO do I ever use this path?? I think it's the Stehwien task with my model -- kinda weird
+            ########################################################
+            # Dummy task: from sequence, predict one item's tag    #
+            ########################################################
+            if self.include_lstm:
 
                 x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
                 x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
                 # here: W x N x lstm_hidden_size
-                x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
-                #x = torch.mean(x,0)
+                #x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
+                x = torch.mean(x,0)
                 x = self.fc(x.view(1, x.shape[0], self.lin_input_size))  # in 1 x N? x lstm_hidden_size
                 return x,hidden
-            else:
-            """
-            if not self.include_lstm:
+
+            elif not self.include_lstm:
                 ##############################################
                 ## REPLICATION OF STEHWIEN ET AL.          ###
                 ##############################################
                 if self.inputs=='speech':
                     x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
                 elif self.inputs=='both':
+                    # TODO make this path work the rest of the way
                     embeddings = embeddings.permute(1, 0, 2)  # TODO make less inefficient
                     print(x.shape)
                     x = self.maxpool(x.view(x.shape[0], x.shape[1], x.shape[2]))
