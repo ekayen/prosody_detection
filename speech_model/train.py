@@ -260,6 +260,7 @@ def main():
     w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])
 
     if cfg['use_pretrained']:
+        print('using pretrained')
         if cfg['embedding_dim']==100:
             glove_path = cfg['glove_path_100']
         elif cfg['embedding_dim'] == 300:
@@ -270,8 +271,8 @@ def main():
         weights_matrix = np.zeros((cfg['vocab_size'] + 2, cfg['embedding_dim']))
         for i in i2w:
             try:
-                weights_matrix[i] = i_to_vec[i]
-                words_found += 1
+                weights_matrix[i] = i2vec[i]
+
             except:
                 weights_matrix[i] = np.random.normal(scale=0.6, size=(cfg['embedding_dim'],))
         weights_matrix = torch.tensor(weights_matrix)
