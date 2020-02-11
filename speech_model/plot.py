@@ -1,6 +1,48 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Bar plot:
+
+
+# set width of bar
+barWidth = 0.20
+
+# set height of bar
+
+full_cnn_lstm = [83.9,89.2,89.4,88.4,85.6,83.4]
+full_cnn_only = [83.4,87.0,88.0,86.7,84.1,82.4]
+threetok_cnn_lstm = [84.2,88.6,88.4,88.2,85.4,83.5]
+threetok_cnn_only = [83.1,86.5,87.2,86.4,84.6,82.7]
+
+buffer = 1
+# Set position of bar on X axis
+r1 = np.arange(len(full_cnn_lstm))
+r2 = [x + barWidth for x in r1]
+r3 = [x + barWidth for x in r2]
+r4 = [x + barWidth for x in r3]
+
+# Make the plot
+plt.bar(r1, full_cnn_lstm, color='darkblue', width=barWidth, edgecolor='white', label='Utterance-level context, CNN+LSTM')
+plt.bar(r2, full_cnn_only, color='blue', width=barWidth, edgecolor='white', label='Utterance-level context, CNN only')
+plt.bar(r3, threetok_cnn_lstm, color='darkred', width=barWidth, edgecolor='white', label='3-token context, CNN+LSTM')
+plt.bar(r4, threetok_cnn_only, color='red', width=barWidth, edgecolor='white', label='3-token context, CNN only')
+plt.ylim(80,90)
+# Add xticks on the middle of the group bars
+plt.xlabel('', fontweight='bold')
+plt.xticks([r + barWidth for r in range(len(full_cnn_lstm))], ['Intensity & voicing','Pitch & intensity','Pitch & voicing','Pitch','Intensity','Voicing'],fontsize='x-large')
+
+
+
+
+
+# Create legend & Show graphic
+plt.legend(fontsize='x-large')
+plt.show()
+
+##########################################################################
+
+# Line plot for hparams:
+
 filter_x = [5,7,9,11,13,15,17,19,21,23]
 filter_y = [88.9,89.3,89.2,89.1,89.1,89.1,89.2,89.1,89.1,88.9]
 
@@ -45,9 +87,9 @@ plt.show()
 
 font = {'family' : 'normal',
         'weight' : 'normal',
-        'size'   : 22}
+        'size'   : 14}
 
-plt.rc('font', **font)
+#plt.rc('font', **font)
 
 vocab_x = [5, 10, 25, 50, 100, 250, 500, 750, 1000]#, 1500, 2000]#, 2500, 3000]
 performance_y = [70.5, 75.6, 79.4, 82.7, 84.6, 85.0, 84.9, 84.5, 84.5]#, 85.3, 85.2]#, 84.9, 85.1]
@@ -58,12 +100,12 @@ def epsilon_distort(x,epsilon):
 epsilon = 0.1
 plt.xscale('log')
 #plt.xticks(epsilon_distort(vocab_x,epsilon),labels=vocab_x)
-plt.xticks(vocab_x,labels=vocab_x)
+plt.xticks(vocab_x,labels=vocab_x,fontsize='small')
 plt.ylabel('Accuracy',fontsize='x-large')
-plt.xlabel('Vocabulary size',fontsize='large')
+plt.xlabel('Vocabulary size',fontsize='x-large')
 #plt.plot(epsilon_distort(vocab_x,epsilon),performance_y,'bo-')
 plt.plot(vocab_x,performance_y,'bo-')
 plt.axhline(y=82.4,color='r', linestyle='dashed',label='Stopword-only baseline')
-plt.text(110,82.5,'Stopword-only baseline',color='r')
+plt.text(110,82.5,'Stopword-only baseline',color='r',fontdict=font)
 plt.grid(linestyle='--')
 plt.show()

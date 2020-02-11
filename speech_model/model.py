@@ -30,7 +30,8 @@ class SpeechEncoder(nn.Module):
                  vocab_size=3000,
                  bottleneck_feats=10,
                  use_pretrained=False,
-                 weights_matrix=None):
+                 weights_matrix=None,
+                 return_prefinal=False):
         super(SpeechEncoder,self).__init__()
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -67,6 +68,8 @@ class SpeechEncoder(nn.Module):
         self.bottleneck_feats = bottleneck_feats
         self.use_pretrained = use_pretrained
         self.weights_matrix = weights_matrix
+
+        self.return_prefinal = return_prefinal # return the output of the network before softmax etc. -- used for probing
 
         if inputs=='text' or inputs=='both':
             self.emb = nn.Embedding(vocab_size+2,embedding_dim)
@@ -290,6 +293,7 @@ class SpeechEncoder(nn.Module):
             # in: N x C x W x H
             x = self.conv(x.view(x.shape[0], 1, x.shape[1], x.shape[2]))
             # in: N x C x W x H , where W is compressed and H=1
+            post_cnn_feats = x
 
         if self.inputs=='both' or self.inputs=='text':
             embeddings = self.emb(text)
@@ -316,8 +320,13 @@ class SpeechEncoder(nn.Module):
                     x = embeddings
 
                 x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
+                post_lstm_feats = x
                 x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
-                return x,hidden
+
+                if self.return_prefinal:
+                    return x,hidden,post_cnn_feats,post_lstm_feats
+                else:
+                    return x, hidden
                 """
                 else:
                     # TODO make it possible to incorporate text here (maybe)

@@ -7,7 +7,7 @@ import pandas as pd
 from random import randint
 
 def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False,
-             print_predictions=False,vocab_dict=None):
+             print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -38,7 +38,14 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
 
             else:
                 output = model(x)
-            #print('output shape:',output.shape)
+            # Stopword baseline here: just labels stopwords/padding 0 and all else 1:
+            if stopword_baseline:
+                text_list = text.tolist()
+                text_list = [[0 if tok in stopword_list else 1 for tok in lst] for lst in text_list]
+                output = torch.tensor(text_list,dtype=torch.int64)
+                output = output.transpose(0,1)
+                output = output.view(output.shape[0],output.shape[1],1).to(device)
+                #import pdb;pdb.set_trace()
             if tok_level_pred:
                 seq_len = y.shape[1]
 

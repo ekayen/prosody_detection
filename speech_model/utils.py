@@ -10,7 +10,9 @@ import random
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 from decimal import Decimal
+import syllables
 import nltk
+import time
 from nltk.corpus import stopwords,cmudict
 nltk.download('stopwords')
 nltk.download('cmudict')
@@ -195,18 +197,6 @@ class BurncDataset(data.Dataset):
             tok_ints = self.pad_right(tok_ints, self.tok_pad_len, num_dims=1)
         return tok_ints
 
-    def get_syl_num(self,word):
-        word = word.lower()
-        syl_dict_path = '../data/burnc/syl_dict.pkl'
-        cmu_dict = cmudict.dict()
-        with open(syl_dict_path, 'rb') as f:
-            syl_dict = pickle.load(f)
-        if word in syl_dict:
-            return syl_dict[word]
-        elif word in cmu_dict:
-            return [len(list(y for y in x if y[-1].isdigit())) for x in cmu_dict[word.lower()]][0]
-        else:
-            raise Exception('Unknown number of syllables!')
 
     def __getitem__(self, index):
         iden = self.ids[index]
@@ -218,6 +208,80 @@ class BurncDataset(data.Dataset):
 
         return iden, (speech_feats,tok_ints,toktimes), labels
 
+class BurncDatasetSyl(BurncDataset):
+    '''
+    Extension of dataset object that also outputs a value for speaking rate; canNOT be used for batching.
+    '''
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None):
+        super(BurncDatasetSyl, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
+                                                 overwrite_speech,scramble_speech,stopwords_only,
+                                                 binary_vocab,ablate_feat)
+        self.vocab_dict = vocab_dict
+        self.i2w = vocab_dict['i2w']
+        syl_dict_path = '../data/burnc/syl_dict.pkl'
+        self.cmu_dict = cmudict.dict()
+        with open(syl_dict_path, 'rb') as f:
+            self.syl_dict = pickle.load(f)
+
+    def get_syl(self,word):
+        word = word.lower()
+        if word in self.syl_dict:
+            return self.syl_dict[word]
+        elif word in self.cmu_dict:
+            return [len(list(y for y in x if y[-1].isdigit())) for x in self.cmu_dict[word.lower()]][0]
+        else:
+            return syllables.estimate(word)
+
+    def get_total_syl(self,tok_ids):
+        toks = [self.input_dict['tok2str'][i]for i in tok_ids]
+        return sum([self.get_syl(t) for t in toks])
+
+    def get_total_frames(self,speech_feats):
+        return speech_feats.shape[0]
+
+    def get_speech_feats(self,tok_ids):
+        tok_feats = [self.input_dict[self.feats][tok_id] for tok_id in tok_ids]
+        if self.bitmark and self.segmentation=='tokens':
+            tmp = []
+            for i, feats in enumerate(tok_feats):
+                if i == 1:
+                    ones = torch.ones((feats.shape[0], 1))
+                    feats = torch.cat((feats, ones), dim=1)
+                    tmp.append(feats)
+                else:
+                    zeros = torch.zeros((feats.shape[0], 1))
+
+                    feats = torch.cat((feats, zeros), dim=1)
+                    tmp.append(feats)
+            tok_feats = tmp
+        X = torch.cat(tok_feats, dim=0)
+        if self.ablate_feat:
+            for feat_col in self.ablate_dict[self.ablate_feat]:
+                X[:,feat_col:feat_col+1] = 0
+
+        if self.overwrite_speech:
+            X = torch.ones(X.shape)
+        if self.scramble_speech:
+            X = X[torch.randperm(X.size()[0])]
+        length = X.shape[0]
+        if self.frame_pad_len:
+            X = self.pad_right(X, self.frame_pad_len)
+        return X,length
+
+
+    def __getitem__(self, index):
+        iden = self.ids[index]
+        tok_ids = self.get_tok_ids(iden)
+        labels = self.get_labels(tok_ids, iden)
+        toktimes = self.get_toktimes(iden, tok_ids)
+        tok_ints = self.get_tokens(tok_ids)
+        speech_feats,num_frames = self.get_speech_feats(tok_ids)
+        num_syl = self.get_total_syl(tok_ids)
+        secs = num_frames/100
+        rate = num_syl/secs
+
+        return iden, (speech_feats, tok_ints, toktimes), labels, rate
     
 class BurncDatasetSpeech(BurncDataset):
     def __init__(self, config, input_dict, w2i, vocab_size=3000, mode='train',datasplit=None):
@@ -447,11 +511,8 @@ def load_vectors(vector_file,wd_to_idx):
     return vec_dict
 
 
-
 def main():
 
-    syl1 = get_syl_num('boston')
-    syl2 = get_syl_num('Madagascar')
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_pros.yaml'
     cfg_file = 'conf/cnn_lstm_pros.yaml'
@@ -460,6 +521,7 @@ def main():
     burnc_dict = '../data/burnc/burnc.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
+    cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
     vocab_file = f'../data/burnc/splits/{splt}.vocab'
     print(vocab_file)
@@ -467,6 +529,11 @@ def main():
         vocab_dict = pickle.load(f)
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
+    dataset = BurncDatasetSyl(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity',vocab_dict= vocab_dict)
+    item = dataset.__getitem__(4)
+    #for i in range(1377):
+    #    print(dataset.__getitem__(i))
+    import pdb;pdb.set_trace()
 
     dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
     item = dataset.__getitem__(4)
