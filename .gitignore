@@ -10,10 +10,14 @@ data/mac_morpho/m*
 data/mac_morpho/README
 data/speech
 data/cmvn_tensors.pkl
-data/burnc/burnc_*
+data/burnc/burnc*
+data/burnc/syl_dict.pkl
 data/burnc/span*
 data/burnc/utt*
 data/burnc/text*
+data/emb/*
+data/*.pkl
+data/*.pkl
 speech_model/results/refactor/*.pt
 speech_model/results/refactor/cnn_only/*.pt
 speech_model/results/refactor/replication/*.pt
@@ -32,6 +36,6 @@ speech_model/results/refactor/both_*/*.pt
 speech_model/results/refactor/cnn_lstm_3tok*/*.pt
 speech_model/results/refactor/speech_over/*.pt
 speech_model/results/refactor/*/*.pt
-
+speech_model/results/refactor/*/*.png
 speech_model/both_exp*
 speech_model/crossval*
