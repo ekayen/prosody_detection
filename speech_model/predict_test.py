@@ -36,7 +36,9 @@ def main():
                         help='number of bottlneckfeats -- optional, overrides the one in the config')
     parser.add_argument('-v', '--vocab_size',
                         help='vocab size -- optional, overrides the one in the config')
-    parser.add_argument('-s', '--stopword_baseline',action='store_true', default=False)
+    parser.add_argument('-s', '--stopword_baseline', action='store_true', default=False)
+    parser.add_argument('-o', '--output_file', help='name of output file')
+    parser.add_argument('-rs', '--seed', help='random seed -- optional, overrides the one in the config')
 
     args = parser.parse_args()
     with open(args.config, 'r') as f:
@@ -57,14 +59,15 @@ def main():
                'bottleneck_feats': args.bottleneck_feats,
                'hidden_size': args.hidden_size,
                'embedding_dim': args.embedding_dim,
-               'vocab_size': args.vocab_size
+               'vocab_size': args.vocab_size,
+               'seed': args.seed
                }
 
     int_args = ['frame_filter_size', 'frame_pad_size', 'cnn_layers', 'lstm_layers', 'bottleneck_feats', 'hidden_size',
-                'embedding_dim', 'vocab_size']
+                'embedding_dim', 'vocab_size','seed']
     float_args = ['dropout', 'weight_decay', 'learning_rate']
 
-    seed = cfg['seed']
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if args.datasplit:
@@ -81,6 +84,7 @@ def main():
             else:
                 cfg[arg] = cfg2arg[arg]
 
+    seed = cfg['seed']
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
@@ -189,6 +193,10 @@ def main():
                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,
                            ablate_feat=ablate_feat)
 
+    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,
+                           overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,
+                           ablate_feat=ablate_feat)
+
 
     ### Stopword baseline here:
     with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
@@ -199,7 +207,7 @@ def main():
 
     datasplit_name = os.path.split(datasplit)[-1].split('.')[0]
 
-    out_path = os.path.join(os.path.dirname(args.saved_model),f'test_{datasplit_name}.tsv')
+    out_path = os.path.join(os.path.dirname(args.saved_model),f'{args.output_file}_{datasplit_name}.tsv')
     with open(out_path,'w') as f:
         f.write(f'\tepochs\ttrain_losses\ttrain_accs\tdev_accs\n')
         f.write(f'0\t0\t0\t0\t{acc[0]}')

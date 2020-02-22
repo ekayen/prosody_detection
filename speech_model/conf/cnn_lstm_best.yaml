@@ -14,8 +14,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'speech_crossval'
-results_path: 'results/refactor/speech_crossval_2'
+model_name: 'text_crossval'
+results_path: 'results/refactor/crossval_seeds'
 
 train_params:
   batch_size: 64

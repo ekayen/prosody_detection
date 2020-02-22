@@ -13,8 +13,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_lstm_3tok_voicing_pitch'
-results_path: 'results/refactor/cnn_lstm_3tok_ablate'
+model_name: 'cnn_lstm_3tok_overwrite'
+results_path: 'results/refactor/speech_cnn_lstm_3tok_overwrite'
 
 train_params:
   batch_size: 64
@@ -61,4 +61,4 @@ glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.100d.txt'
 bottleneck_feats: 2000
 
-ablate_feat: voicing_pitch
+overwrite_speech: True

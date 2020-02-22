@@ -28,3 +28,20 @@ for file in os.listdir(target_dir):
 
 
 print(f'Average of best:\t train_loss: {sum(min_train_losses)/len(min_train_losses)}\t train_acc: {sum(max_train_accs)/len(max_train_accs)}\t dev_acc:{sum(max_dev_accs)/len(max_dev_accs)}\t')
+
+from scipy.stats import sem, t
+from scipy import mean
+
+confidence = 0.95
+
+data = max_dev_accs
+
+n = len(data)
+m = mean(data)
+std_err = sem(data)
+h = std_err * t.ppf((1 + confidence) / 2, n - 1)
+
+start = m - h
+end = m + h
+print(f'95 % confidence interval: {start}, {end}')
+print(f'standard error: {std_err}')

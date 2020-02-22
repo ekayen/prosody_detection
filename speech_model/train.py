@@ -14,7 +14,7 @@ from model import SpeechEncoder
 import numpy as np
 import argparse
 import pdb
-
+from torchsummary import summary
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
 
@@ -57,7 +57,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
 
             hidden = model.init_hidden(curr_bat_size)
             output,_ = model(speech,text,toktimes,hidden)
-
 
             if cfg['tok_level_pred']:
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
@@ -185,7 +184,8 @@ def main():
                         help='number of bottlneckfeats -- optional, overrides the one in the config')
     parser.add_argument('-v', '--vocab_size',
                         help='vocab size -- optional, overrides the one in the config')
-
+    parser.add_argument('-s', '--seed',
+                        help='seed -- optional, overrides the one in the config')
     
     args = parser.parse_args()
     with open(args.config, 'r') as f:
@@ -203,10 +203,11 @@ def main():
                'bottleneck_feats': args.bottleneck_feats,
                'hidden_size': args.hidden_size,
                'embedding_dim': args.embedding_dim,
-               'vocab_size': args.vocab_size
+               'vocab_size': args.vocab_size,
+               'seed': args.seed
                }
 
-    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim','vocab_size']
+    int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim','vocab_size','seed']
     float_args = ['dropout','weight_decay','learning_rate']
 
     seed = cfg['seed']

@@ -9,10 +9,10 @@ barWidth = 0.20
 
 # set height of bar
 
-full_cnn_lstm = [83.9,89.2,89.4,88.4,85.6,83.4]
-full_cnn_only = [83.4,87.0,88.0,86.7,84.1,82.4]
-threetok_cnn_lstm = [84.2,88.6,88.4,88.2,85.4,83.5]
-threetok_cnn_only = [83.1,86.5,87.2,86.4,84.6,82.7]
+full_cnn_lstm = [89.1,83.9,89.2,89.4,88.4,85.6,83.4,81.1]
+full_cnn_only = [87.9,83.4,87.0,88.0,86.7,84.1,82.4,79.6]
+threetok_cnn_lstm = [88.6,84.2,88.6,88.4,88.2,85.4,83.5,59.0]
+threetok_cnn_only = [87.3,83.1,86.5,87.2,86.4,84.6,82.7,59.0]
 
 buffer = 1
 # Set position of bar on X axis
@@ -26,10 +26,10 @@ plt.bar(r1, full_cnn_lstm, color='darkblue', width=barWidth, edgecolor='white', 
 plt.bar(r2, full_cnn_only, color='blue', width=barWidth, edgecolor='white', label='Utterance-level context, CNN only')
 plt.bar(r3, threetok_cnn_lstm, color='darkred', width=barWidth, edgecolor='white', label='3-token context, CNN+LSTM')
 plt.bar(r4, threetok_cnn_only, color='red', width=barWidth, edgecolor='white', label='3-token context, CNN only')
-plt.ylim(80,90)
+plt.ylim(58,90)
 # Add xticks on the middle of the group bars
 plt.xlabel('', fontweight='bold')
-plt.xticks([r + barWidth for r in range(len(full_cnn_lstm))], ['Intensity & voicing','Pitch & intensity','Pitch & voicing','Pitch','Intensity','Voicing'],fontsize='x-large')
+plt.xticks([r + barWidth for r in range(len(full_cnn_lstm))], ['All features','Intensity & voicing','Pitch & intensity','Pitch & voicing','Pitch','Intensity','Voicing','No features'],fontsize='x-large')
 
 
 
@@ -105,7 +105,7 @@ plt.ylabel('Accuracy',fontsize='x-large')
 plt.xlabel('Vocabulary size',fontsize='x-large')
 #plt.plot(epsilon_distort(vocab_x,epsilon),performance_y,'bo-')
 plt.plot(vocab_x,performance_y,'bo-')
-plt.axhline(y=82.4,color='r', linestyle='dashed',label='Stopword-only baseline')
-plt.text(110,82.5,'Stopword-only baseline',color='r',fontdict=font)
+plt.axhline(y=82.9,color='r', linestyle='dashed',label='Content word baseline')
+plt.text(110,83.1,'Content word baseline',color='r',fontdict=font)
 plt.grid(linestyle='--')
 plt.show()
