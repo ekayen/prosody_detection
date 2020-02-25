@@ -14,7 +14,7 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'text_crossval'
+model_name: 'both_precision_recall'
 results_path: 'results/refactor/crossval_seeds'
 
 train_params:
@@ -50,7 +50,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: speech
+inputs: both
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

@@ -405,7 +405,12 @@ def plot_results(plot_data,model_name,results_path):
     df = pd.DataFrame(dict(epochs=plot_data['time'],
                            train_losses=plot_data['loss'],
                            train_accs=plot_data['train_acc'],
-                           dev_accs=plot_data['dev_acc']))
+                           dev_accs=plot_data['dev_acc'],
+                           non_default_accs=plot_data['non_default_acc'],
+                           non_default_precision_0=plot_data['non_default_precision_0'],
+                           non_default_precision_1 = plot_data['non_default_precision_1'],
+                           non_default_recall_0 = plot_data['non_default_recall_0'],
+                           non_default_recall_1 = plot_data['non_default_recall_1']))
 
     with open("tmp.pkl", 'wb') as f:
         pickle.dump(df, f)

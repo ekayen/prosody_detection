@@ -13,6 +13,11 @@ print(target_dir)
 max_dev_accs = []
 max_train_accs = []
 min_train_losses = []
+non_default_accs = []
+non_default_precision_0 = []
+non_default_precision_1 = []
+non_default_recall_0 = []
+non_default_recall_1 = []
 #for file in glob.glob(target_dir):
 for file in os.listdir(target_dir):
     if file.endswith(".tsv") and subset in file:
@@ -23,11 +28,41 @@ for file in os.listdir(target_dir):
         train_losses = df['train_losses'].tolist()
         
         max_dev_accs.append(max(dev_accs))
+
+        if 'non_default_accs' in df.columns:
+
+            row_idx = df.index[df['dev_accs'] == max_dev_accs[-1]]
+            #import pdb;pdb.set_trace()
+
+            nd_acc = next(iter(df.iloc[row_idx]['non_default_accs']))
+            non_default_accs.append(nd_acc)
+
+            nd_prec_0 = next(iter(df.iloc[row_idx]['non_default_precision_0']))
+            non_default_precision_0.append(nd_prec_0)
+
+            nd_prec_1 = next(iter(df.iloc[row_idx]['non_default_precision_1']))
+            non_default_precision_1.append(nd_prec_1)
+
+            nd_rec_0 = next(iter(df.iloc[row_idx]['non_default_recall_0']))
+            non_default_recall_0.append(nd_rec_0)
+
+            nd_rec_1 = next(iter(df.iloc[row_idx]['non_default_recall_1']))
+            non_default_recall_1.append(nd_rec_1)
+
+
+
         max_train_accs.append(max(train_accs))
         min_train_losses.append(min(train_losses))
 
+#import pdb;pdb.set_trace()
 
 print(f'Average of best:\t train_loss: {sum(min_train_losses)/len(min_train_losses)}\t train_acc: {sum(max_train_accs)/len(max_train_accs)}\t dev_acc:{sum(max_dev_accs)/len(max_dev_accs)}\t')
+if 'non_default_accs' in df.columns:
+    print(f'Average of non-default accuracy: {sum(non_default_accs) / len(non_default_accs)}')
+    print(f'Average of non-default precision on class 0: {sum(non_default_precision_0) / len(non_default_precision_0)}')
+    print(f'Average of non-default precision on class 1: {sum(non_default_precision_1) / len(non_default_precision_1)}')
+    print(f'Average of non-default recall on class 0: {sum(non_default_recall_0) / len(non_default_recall_0)}')
+    print(f'Average of non-default recall on class 1: {sum(non_default_recall_1) / len(non_default_recall_1)}')
 
 from scipy.stats import sem, t
 from scipy import mean

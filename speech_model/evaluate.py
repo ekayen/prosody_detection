@@ -5,9 +5,10 @@ import torch
 import numpy as np
 import pandas as pd
 from random import randint
+from sklearn.metrics import precision_recall_fscore_support
 
 def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False,
-             print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False):
+             print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False,non_default_only=False):
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -39,13 +40,16 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
             else:
                 output = model(x)
             # Stopword baseline here: just labels stopwords/padding 0 and all else 1:
-            if stopword_baseline:
+            if stopword_baseline or non_default_only:
                 text_list = text.tolist()
                 text_list = [[0 if tok in stopword_list else 1 for tok in lst] for lst in text_list]
-                output = torch.tensor(text_list,dtype=torch.int64)
-                output = output.transpose(0,1)
-                output = output.view(output.shape[0],output.shape[1],1).to(device)
+                content_baseline = torch.tensor(text_list,dtype=torch.int64)
+                content_baseline = content_baseline.transpose(0,1)
+                content_baseline = content_baseline.view(content_baseline.shape[0],content_baseline.shape[1],1).to(device)
                 #import pdb;pdb.set_trace()
+                if stopword_baseline:
+                    output = content_baseline
+
             if tok_level_pred:
                 seq_len = y.shape[1]
 
@@ -54,19 +58,34 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
 
                 #import pdb;pdb.set_trace()
                 output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
+                if non_default_only:
+                    content_baseline = content_baseline.view(content_baseline.shape[0],
+                                                             content_baseline.shape[1]).transpose(0, 1).flatten()
 
                 output = output.detach().flatten()
                 y = y.flatten()
 
+
                 tmp_out = []
                 tmp_lbl = []
+                tmp_cont_baseline = []
                 for i in range(curr_bat_size):
                     tmp_out.append(output[(i * seq_len):(i * seq_len) + num_toks[i]])
                     tmp_lbl.append(y[(i * seq_len):(i * seq_len) + num_toks[i]])
+                    if non_default_only:
+                        tmp_cont_baseline.append(content_baseline[(i * seq_len):(i * seq_len) + num_toks[i]])
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
 
-                assert lbl.sum().item() == y.sum().item()
+
+                if non_default_only:
+                    content_baseline = torch.cat(tmp_cont_baseline)
+                    mask = content_baseline != lbl
+                    out = out[mask]
+                    lbl = lbl[mask]
+
+
+                #assert lbl.sum().item() == y.sum().item()
 
                 output = out
                 y = lbl
@@ -121,6 +140,13 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 sent = [vocab_dict['i2w'][i] for i in line[0]]
                 f.write(f'{" ".join(sent)}\t{" ".join(line[1])}\t{" ".join(line[2])}')
                 f.write('\n')
+    if non_default_only:
+        precision,recall,fscore,support = precision_recall_fscore_support(prediction.cpu(),y.cpu())
+        #print()
+        #print(f'precision: {precision}')
+        #print(f'recall: {recall}')
+        #print(f'support: {support}')
+        return acc, total_pred, true_pos_pred, tot_utts, precision[0], precision[1], recall[0], recall[1]
     return acc, total_pred, true_pos_pred, tot_utts
 
 def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):

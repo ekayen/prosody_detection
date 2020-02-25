@@ -23,6 +23,11 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         'loss': [],
         'train_acc': [],
         'dev_acc': [],
+        'non_default_acc': [],
+        'non_default_precision_0': [],
+        'non_default_precision_1': [],
+        'non_default_recall_0': [],
+        'non_default_recall_1': []
     }
     recent_losses = []
 
@@ -136,10 +141,28 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         plot_data['train_acc'].append(train_results[0])
 
         # dev acc
+        with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
+            stopword_list = pickle.load(f)
+
         dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],
-                               noisy=False,print_predictions=True,vocab_dict=vocab_dict)
+                               noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list)
         plot_data['dev_acc'].append(dev_results[0])
 
+        # Also record precision and recall for non-default words (that is, unaccented content words and accented fn words)
+        non_default_acc,_,_,_, precision_0, precision_1, recall_0, recall_1 = evaluate(cfg, devset, cfg['eval_params'],
+                                                                                       model, device,
+                                                                                       tok_level_pred=cfg['tok_level_pred'],
+                                                                                       noisy=False,
+                                                                                       print_predictions=True,
+                                                                                       vocab_dict=vocab_dict,
+                                                                                       non_default_only=True,
+                                                                                       stopword_list=stopword_list)
+
+        plot_data['non_default_acc'].append(non_default_acc)
+        plot_data['non_default_precision_0'].append(precision_0)
+        plot_data['non_default_precision_1'].append(precision_1)
+        plot_data['non_default_recall_0'].append(recall_0)
+        plot_data['non_default_recall_1'].append(recall_1)
         print()
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
         #print(f'Total train utts: {train_results[3]}\ttrain toks: {train_results[1]},\ttotal correct: {train_results[2]}')
