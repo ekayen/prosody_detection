@@ -1,18 +1,18 @@
-import re
 import os
 from string import punctuation
-import nltk
-import kaldi_io
 import pickle
-nltk.download('punkt')
-import pandas as pd
 import torch
 from bs4 import BeautifulSoup
+import pandas as pd
+
+
 
 class SwbdPreprocessor:
     def __init__(self,swbd_dir,pros_feat_dir,save_dir,
                  annotated_files='/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'):
 
+        self.gap_threshold = 0.25
+        self.nested = {}
         self.swbd_dir = swbd_dir
         self.save_dir = save_dir
         self.pros_feat_dir = pros_feat_dir
@@ -25,7 +25,11 @@ class SwbdPreprocessor:
                                 'F0final_sma',
                                 'pcm_zcr_sma']
 
-        self.utterances = []
+        self.conv2utt = {}
+        self.utt2conv = {}
+        self.tok2conv = {}
+        self.conv2tok = {}
+
         self.utt2text = {}
         self.utt2spk = {}
         self.utt2recording = {}
@@ -36,13 +40,18 @@ class SwbdPreprocessor:
         self.utt2frames = {}
 
         self.utt2toks = {}
+        self.tok2spk = {}
         self.tok2utt = {}
         self.tok2tone = {}
         self.tok2times = {}
         self.tok2tokstr = {}
-        self.tok2prosfeats = {}
-        self.tok2mfccfeats = {}
         self.tok2infostat = {}
+
+        self.tok2prosfeats = {}
+
+        self.correction = {'sw2370_ms33B_pw107':140.302000}
+
+
 
     def get_pros_feats(self):
         pass
@@ -86,51 +95,261 @@ class SwbdPreprocessor:
         #      store terminal in tok2str
         #      also store toktimes in tok2toktimes, and utt2frames
         #
-        #      utt ids = sw<conversation ID>s<sentence number>
-        #      tok ids = terminal ids in the corpus: sw<conversation_id>s<sentence_number>_<token number>
+        #      utt ids = sw<conversation ID>_s<sentence number>
+        #      tok ids = terminal ids in the corpus: sw<conversation_id>_s<sentence_number>_<token number>
+
+    def save_nested(self,save_dir=None,name='swbd.pkl'):
+        if not save_dir: save_dir = self.save_dir
+        with open(os.path.join(save_dir,name),'wb') as f:
+            pickle.dump(self.nested,f)
+
+    @staticmethod
+    def text_reg(word):
+        remove = punctuation.replace('-','').replace('<','').replace('>','')
+        word = word.lower().replace("'s","").replace("n't","").replace('/n','').replace('/v','')
+        word = word.translate(str.maketrans('', '', remove))
+        return word
+
+    @staticmethod
+    def get_id(conversation,num):
+        return '_'.join([conversation,num])
+
+    @staticmethod
+    def extract_id_from_href(href):
+        return href.split('(')[1].split(')')[0]
+
+
+    def increment_id(self,id):
+        id_elements = id.split('_')
+        id_num = int(id_elements.pop())
+        id_next = id_num + 1
+        id_elements.append(str(id_next))
+        return '_'.join(id_elements)
+
+    def decrement_id(self,id):
+        id_elements = id.split('_')
+        id_num = int(id_elements.pop())
+        id_next = id_num - 1
+        id_elements.append(str(id_next))
+        return '_'.join(id_elements)
+
+    def utt_id_incr(self,utt_id):
+        parts = utt_id.split('_')
+        if len(parts) == 2:
+            parts.append('a')
+        elif len(parts) == 3:
+            letter = parts.pop()
+            letter = ord(letter[0])
+            letter += 1
+            letter = chr(letter)
+            parts.append(letter)
+        return '_'.join(parts)
 
     def text_preproc(self,file_list):
         '''
         Create the following:
-        self.utterances
-        self.utt2text
-        self.utt2spk
-        self.utt2startend
-        self.utt2tokentimes
-        self.utt2tones
+
+        (can get from the sentence file alone)
         self.utt_ids
-        self.utt2frames
-        self.utt2toks
+        self.utt2spk
+        self.tok2spk
         self.tok2utt
-        self.tok2tone
+        self.utt2toks
+
+        (can get from terminal file alone)
         self.tok2times
         self.tok2tokstr
+
+        (have to use info from both)
+        self.utt2text
+        self.utt2startend
+        self.utt2tokentimes
+        self.utt2frames
+
+        (annotation files)
+        self.tok2tone
+        self.utt2tones
         self.tok2infostat
         '''
+        pw2term = {}
+        term2pw = {}
+
         for file in file_list:
+
             conversation,speaker,_,_ = file.strip().split('.')
-            syntax_path = os.path.join(self.swbd_dir, 'syntax', '.'.join([conversation,speaker,'syntax','xml']))
-            term_path = os.path.join(self.swbd_dir, 'terminals', '.'.join([conversation,speaker,'terminals','xml']))
+
+            # Map from terminals to phonwords
+            term_path = os.path.join(self.swbd_dir, 'terminals', '.'.join([conversation, speaker, 'terminals', 'xml']))
+            term_file = open(term_path, "r")
+            term_contents = term_file.read()
+            term_soup = BeautifulSoup(term_contents, 'lxml')
+            terminals = term_soup.find_all('word')
+            for terminal in terminals:
+                terminal_num = terminal['nite:id']
+                start = terminal['nite:start']
+                if not start=='non-aligned':
+                    term_id = SwbdPreprocessor.get_id(conversation, terminal_num)
+                    #self.tok2tokstr[term_id] = SwbdPreprocessor.text_reg(terminal['orth'])
+                    #self.tok2times[term_id] = (start,end) # If it's a [start, n/a] token, then add the following token and use its end time
+                    phonwords = terminal.find_all('nite:pointer')
+                    if phonwords:
+                        pw_num = SwbdPreprocessor.extract_id_from_href(phonwords[0]['href'])
+                        pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
+                        pw2term[pw_id] = term_id
+                        term2pw[term_id] = pw_id
+
+            # Put all the phonwords in the appropriate dictionaries. Ignore terminals that are not aligned with phonwords
+            pw_path = os.path.join(self.swbd_dir, 'phonwords', '.'.join([conversation, speaker, 'phonwords', 'xml']))
+            pw_file = open(pw_path,'r')
+            pw_contents = pw_file.read()
+            pw_soup = BeautifulSoup(pw_contents, 'lxml')
+            pws = pw_soup.find_all('phonword')
+            for pw in pws:
+                pw_num = pw['nite:id']
+                pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
+                self.tok2tokstr[pw_id] = SwbdPreprocessor.text_reg(pw['orth'])
+                self.tok2times[pw_id] = (float(pw['nite:start']),float(pw['nite:end']))
+                if pw_id in self.correction:
+                    self.tok2times[pw_id] = (float(self.correction[pw_id]),float(pw['nite:end']))
+                self.tok2conv[pw_id] = conversation
+                if conversation in self.conv2tok:
+                    self.conv2tok[conversation].append(pw_id)
+                else:
+                    self.conv2tok[conversation] = [pw_id]
+
+            syntax_path = os.path.join(self.swbd_dir, 'syntax', '.'.join([conversation, speaker, 'syntax', 'xml']))
             syn_file = open(syntax_path, "r")
             syn_contents = syn_file.read()
             syn_soup = BeautifulSoup(syn_contents, 'lxml')
-            sentences = syn_soup.find_all('parse') # TODO paused here with the sentences loaded but unprocessed.
-            # TODO Next thing to do is go through them, generate the utt ids, the tok ids, and all the dicts that
-            # TODO are possible to build a this point
+            sentences = syn_soup.find_all('parse')
+
+            # Open the sentence file, and pull out all the sentences and tokens in those sentences
+            for sentence in sentences:
+                sentence_num = sentence['nite:id']
+                utt_id = SwbdPreprocessor.get_id(conversation,sentence_num)
+                sentence_terminals = sentence.find_all('nite:child')
+                for terminal in sentence_terminals:
+                    terminal_num = SwbdPreprocessor.extract_id_from_href(terminal['href'])
+                    term_id =  SwbdPreprocessor.get_id(conversation,terminal_num)
+                    if term_id in term2pw:
+                        pw_id = term2pw[term_id]
+                        if utt_id in self.utt2toks:
+                            gap = self.tok2times[pw_id][0] - self.tok2times[self.utt2toks[utt_id][-1]][-1]
+                            if gap > self.gap_threshold:
+                                utt_id = self.utt_id_incr(utt_id)
+                                self.utt2spk[utt_id] = speaker
+                                self.utt2conv[utt_id] = conversation
+                                if conversation in self.conv2utt:
+                                    self.conv2utt[conversation].append(utt_id)
+                                else:
+                                    self.conv2utt[conversation] = [utt_id]
+                        if pw_id in self.tok2tokstr: # check that it's a word, not a silence or a contraction
+                            self.tok2spk[pw_id] = speaker
+                            if utt_id in self.utt2toks:
+                                self.utt2toks[utt_id].append(pw_id)
+                            else:
+                                self.utt2toks[utt_id] = [pw_id]
+                            self.tok2utt[pw_id] = utt_id
+
+
+            # Now find infostatus for tokens
+
+            # First use the syntax file to map non-terminals to terminals
+            nt2term = {}
+            syn_non_terminals = syn_soup.find_all('nt')
+            for nt in syn_non_terminals:
+                nt_id = nt['nite:id']
+                terms = nt.find_all('nite:child')
+                for term in terms:
+                    term_num = SwbdPreprocessor.extract_id_from_href(term['href'])
+                    term_id = SwbdPreprocessor.get_id(conversation,term_num)
+                    if nt_id in nt2term:
+                        nt2term[nt_id].append(term_id)
+                    else:
+                        nt2term[nt_id] = [term_id]
+
+            # Then go through the markables files and assign the infostat to terminals
+            infostruc_path = os.path.join(self.swbd_dir, 'markable', '.'.join([conversation, speaker, 'markable', 'xml']))
+            infostruc_file = open(infostruc_path,'r')
+            infostruc_contents = infostruc_file.read()
+            infostruc_soup = BeautifulSoup(infostruc_contents,'lxml')
+            markables = infostruc_soup.find_all('markable')
+            for markable in markables:
+                try:
+                    infostat = markable['status']
+                except:
+                    infostat = None
+                syn_nt = SwbdPreprocessor.extract_id_from_href(markable.find_all('nite:pointer')[0]['href'])
+                if syn_nt in nt2term:
+                    for term in nt2term[syn_nt]:
+                        if term in term2pw:
+                            self.tok2infostat[term2pw[term]] = infostat
+                elif syn_nt in term2pw: # sometimes the markable is marked on a terminal, not a non-terminal
+                    self.tok2infostat[term2pw[syn_nt]] = infostat
+            for tok in self.conv2tok[conversation]:
+                if tok not in self.tok2infostat:
+                    self.tok2infostat[tok] = None
+
+            accent_path = os.path.join(self.swbd_dir, 'accent', '.'.join([conversation, speaker, 'accents', 'xml']))
+            if os.path.exists(accent_path):
+                accent_file = open(accent_path,'r')
+                accent_contents = accent_file.read()
+                accent_soup = BeautifulSoup(accent_contents,'lxml')
+                accents = accent_soup.find_all('accent')
+                for accent in accents:
+                    pw_num = SwbdPreprocessor.extract_id_from_href(accent.find_all('nite:pointer')[0]['href'])
+                    pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
+                    self.tok2tone[pw_id] = 1
+                for pw in self.conv2tok[conversation]:
+                    if pw not in self.tok2tone:
+                        self.tok2tone[pw] = 0
+
+        self.utt_ids = list(self.utt2toks.keys())
+        broken_toks = []
+        for tok in self.tok2times:
+            if self.tok2times[tok][0]==self.tok2times[tok][1]:
+                broken_toks.append(tok)
+
+        for utt_id in self.utt2toks:
+            self.utt2tokentimes[utt_id] = [float(self.tok2times[tok][0]) for tok in self.utt2toks[utt_id]] + [self.tok2times[self.utt2toks[utt_id][-1]][-1]]
+            self.utt2startend[utt_id] = (self.utt2tokentimes[utt_id][0],self.utt2tokentimes[utt_id][-1])
+            self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]
+            self.utt2frames[utt_id] = torch.tensor([int(round(float(tim)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
+
+
+
+
+
+    def get_tok_feats(self,df,start,end):
+        tok_df = df.loc[df['frameTime'] >= start]
+        tok_df = tok_df.loc[tok_df['frameTime'] < end]
+        tok_df = tok_df[self.pros_feat_names]
+        if len(tok_df)==0:
+            return torch.tensor([])
+        feat_tensors = []
+        for i, row in tok_df.iterrows():
+            tens = torch.tensor(row.tolist()).view(1, len(row.tolist()))
+            feat_tensors.append(tens)
+        try:
+            return torch.cat(feat_tensors,dim=0)
+        except:
             import pdb;pdb.set_trace()
 
-            #term_file = open(term_path, "r")
-            #term_contents = term_file.read()
-            #term_soup = BeautifulSoup(term_contents, 'lxml')
-            #import pdb;pdb.set_trace()
-
-
-
     def load_opensmile_feats(self):
-        pass
+        for conv in self.conv2utt:
+            filename = '.'.join([conv,'is13','csv'])
+            feat_df = pd.read_csv(os.path.join(self.pros_feat_dir, filename), sep=';')
+            feat_df = feat_df[['frameTime'] + self.pros_feat_names]
+            for utt in self.conv2utt[conv]:
+                for tok in self.utt2toks[utt]:
+                    print(tok)
+                    tok_start = self.tok2times[tok][0]
+                    tok_end = self.tok2times[tok][1]
+                    self.tok2prosfeats[tok] = self.get_tok_feats(feat_df, tok_start, tok_end)
 
     def acoustic_preproc(self):
         self.load_opensmile_feats()
+
 
 
     def preproc(self,write_dict=True,out_file='swbd.pkl'):
@@ -143,7 +362,6 @@ class SwbdPreprocessor:
             self.save_nested(name=out_file)
 
 
-
 def main():
     swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
     pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
@@ -151,6 +369,7 @@ def main():
     annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
     preprocessor.preproc()
+    import pdb;pdb.set_trace()
 
 if __name__=="__main__":
     main()
