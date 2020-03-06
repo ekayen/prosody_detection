@@ -86,7 +86,11 @@ class BurncDataset(data.Dataset):
         if arr.shape[0] < pad_len:
             dff = pad_len - arr.shape[0]
             if num_dims==2: # For padding 2d speech data
-                arr = F.pad(arr, pad=(0, 0, 0, dff), mode='constant')
+                try:
+                    arr = F.pad(arr, pad=(0, 0, 0, dff), mode='constant')
+                except:
+                    print(arr.shape)
+                    print(dff)
             elif num_dims==1: # For padding 1d string data
                 arr = F.pad(arr, pad=(0, dff), mode='constant')
         else:
@@ -327,60 +331,6 @@ class SynthDataset(data.Dataset):
         y = self.label_dict[iden]
         return X, y
 
-class UttDataset(data.Dataset):
-    def __init__(self, list_ids, utt_dict,label_dict,pad_len):
-        self.list_ids = list_ids
-        self.utt_dict = utt_dict
-        self.label_dict = label_dict
-        self.pad_len = pad_len
-
-    def pad_left(self,arr):
-        if arr.shape[0] < self.pad_len:
-            dff = self.pad_len - arr.shape[0]
-            arr = F.pad(arr,pad=(0,0,dff,0),mode='constant')
-        else:
-            arr = arr[arr.shape[0]-self.pad_len:]
-        return arr
-
-    def __len__(self):
-        return len(self.list_ids)
-
-    def __getitem__(self, index):
-        iden = self.list_ids[index]
-        X = self.pad_left(self.utt_dict[iden])
-        #X = self.utt_dict[iden]
-        y = self.label_dict[iden]
-        return X, y
-
-class UttDatasetWithToktimes(UttDataset):
-    def __init__(self,list_ids,utt_dict,label_dict,toktimes_dict,pad_len):
-        super(UttDatasetWithToktimes,self).__init__(list_ids, utt_dict,label_dict,pad_len)
-        self.toktimes_dict = toktimes_dict
-
-    def pad_right(self,arr):
-        if arr.shape[0] < self.pad_len:
-            dff = self.pad_len - arr.shape[0]
-            arr = F.pad(arr,pad=(0,0,0,dff),mode='constant')
-        else:
-            arr = arr[:self.pad_len]
-        return arr
-
-    def __getitem__(self, index):
-        iden = self.list_ids[index]
-        toks = self.pad_right(self.utt_dict[iden])
-        toktimes = self.toktimes_dict[iden]
-        X = (toks,toktimes)
-        y = self.label_dict[iden]
-        return iden,X,y
-
-class UttDatasetWithId(UttDataset):
-    def __getitem__(self, index):
-        iden = self.list_ids[index]
-        X = self.pad_left(self.utt_dict[iden])
-        # X = self.utt_dict[iden]
-        y = self.label_dict[iden]
-        return iden, X, y
-
 def plot_grad_flow(named_parameters):
     '''
     From user RoshanRone here:
@@ -520,29 +470,40 @@ def main():
 
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_pros.yaml'
-    cfg_file = 'conf/cnn_lstm_pros.yaml'
+    #cfg_file = 'conf/cnn_lstm_pros.yaml'
+    cfg_file = 'conf/swbd.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
-    burnc_dict = '../data/burnc/burnc.pkl'
+    #burnc_dict = '../data/burnc/burnc.pkl'
+    burnc_dict = '../data/swbd/swbd_acc.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
-    cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
+    #cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
+    cfg['datasplit'] = '../data/swbd/splits/tenfold1.yaml'
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
-    vocab_file = f'../data/burnc/splits/{splt}.vocab'
+    #vocab_file = f'../data/burnc/splits/{splt}.vocab'
+    vocab_file = f'../data/swbd/splits/{splt}.vocab'
     print(vocab_file)
     with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
-    dataset = BurncDatasetSyl(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity',vocab_dict= vocab_dict)
-    item = dataset.__getitem__(4)
-    #for i in range(1377):
-    #    print(dataset.__getitem__(i))
-    import pdb;pdb.set_trace()
 
     dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
-    item = dataset.__getitem__(4)
 
+    num_utt = len(dataset)
+    for i in range(num_utt):
+        try:
+            item = dataset.__getitem__(i)
+            assert item[1][0].shape[0] == 2150
+            assert item[1][0].shape[1] == 6
+            assert item[1][1].shape[0] == 50
+            assert item[1][2].shape[0] == 51
+        except:
+            print("can't get item")
+            import pdb;pdb.set_trace()
+
+    print('finished loop')
     import pdb;pdb.set_trace()
     dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
     item = dataset.__getitem__(4)

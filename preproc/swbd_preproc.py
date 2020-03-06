@@ -56,7 +56,24 @@ class SwbdPreprocessor:
     def get_pros_feats(self):
         pass
 
-    def gen_nested_dict(self):
+    def del_tok(self,tok):
+        if tok in self.tok2times: del self.tok2times[tok]
+        if tok in self.tok2infostat: del self.tok2infostat[tok]
+        if tok in self.tok2tokstr: del self.tok2tokstr[tok]
+        if tok in self.tok2spk: del self.tok2spk[tok]
+        if tok in self.tok2utt: del self.tok2utt[tok]
+        if tok in self.tok2conv: del self.tok2conv[tok]
+
+    def del_utt(self,utt):
+        if utt in self.utt2toks: del self.utt2toks[utt]
+        if utt in self.utt2tokentimes: del self.utt2tokentimes[utt]
+        if utt in self.utt2startend: del self.utt2startend[utt]
+        if utt in self.utt2conv: del self.utt2conv[utt]
+        if utt in self.utt2frames: del self.utt2frames[utt]
+        if utt in self.utt2spk: del self.utt2spk[utt]
+        if utt in self.utt_ids: self.utt_ids.remove(utt)
+
+    def gen_nested_dict(self,acc_only=False):
         print('generating nested dict ...')
         """
         for para in self.para2utt:
@@ -74,7 +91,40 @@ class SwbdPreprocessor:
                 'tok2utt': dict([(tok,self.tok2utt[tok]) for utt_id in self.para2utt[para] for tok in self.utt2toks[utt_id]]),
             }
         """
-        # DECISION: use sentences as designated in syntax file.
+
+        if acc_only:
+            all_tok = set(self.tok2utt.keys())
+            acc_tok = set(self.tok2tone.keys())
+            non_acc_tok = all_tok - acc_tok
+
+            for tok in non_acc_tok:
+                utt = self.tok2utt[tok]
+                self.del_tok(tok)
+                self.del_utt(utt)
+
+        # Weed out utterances with no speech feats:
+        del_utts = []
+        del_toks = []
+        for utt in self.utt2toks:
+            if len(self.utt2toks[utt])==1:# and self.utt2tokentimes[utt][1]-self.utt2tokentimes[utt][1]:
+                tok = self.utt2toks[utt][0]
+                del_utts.append(utt)
+                del_toks.append(tok)
+
+        for utt in del_utts:
+            self.del_utt(utt)
+        for tok in del_toks:
+            self.del_tok(tok)
+
+
+        self.nested['conv2utt'] = self.conv2utt
+        self.nested['utt2conv'] = self.utt2conv
+        self.nested['utt2toktimes'] = self.utt2tokentimes
+        self.nested['utt2spk'] = self.utt2spk
+        self.nested['tok2infostat'] = self.tok2infostat
+        self.nested['tok2spk'] = self.tok2spk
+        self.nested['tok2conv'] = self.tok2conv
+
         self.nested['utt2toks'] = self.utt2toks
         self.nested['tok2pros'] = self.tok2prosfeats
         self.nested['tok2str'] = self.tok2tokstr
@@ -117,7 +167,6 @@ class SwbdPreprocessor:
     @staticmethod
     def extract_id_from_href(href):
         return href.split('(')[1].split(')')[0]
-
 
     def increment_id(self,id):
         id_elements = id.split('_')
@@ -189,8 +238,6 @@ class SwbdPreprocessor:
                 start = terminal['nite:start']
                 if not start=='non-aligned':
                     term_id = SwbdPreprocessor.get_id(conversation, terminal_num)
-                    #self.tok2tokstr[term_id] = SwbdPreprocessor.text_reg(terminal['orth'])
-                    #self.tok2times[term_id] = (start,end) # If it's a [start, n/a] token, then add the following token and use its end time
                     phonwords = terminal.find_all('nite:pointer')
                     if phonwords:
                         pw_num = SwbdPreprocessor.extract_id_from_href(phonwords[0]['href'])
@@ -207,15 +254,18 @@ class SwbdPreprocessor:
             for pw in pws:
                 pw_num = pw['nite:id']
                 pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
-                self.tok2tokstr[pw_id] = SwbdPreprocessor.text_reg(pw['orth'])
-                self.tok2times[pw_id] = (float(pw['nite:start']),float(pw['nite:end']))
-                if pw_id in self.correction:
-                    self.tok2times[pw_id] = (float(self.correction[pw_id]),float(pw['nite:end']))
-                self.tok2conv[pw_id] = conversation
-                if conversation in self.conv2tok:
-                    self.conv2tok[conversation].append(pw_id)
-                else:
-                    self.conv2tok[conversation] = [pw_id]
+
+                if pw_id in pw2term:
+                    self.tok2tokstr[pw_id] = SwbdPreprocessor.text_reg(pw['orth'])
+                    self.tok2times[pw_id] = (float(pw['nite:start']),float(pw['nite:end']))
+
+                    if pw_id in self.correction:
+                        self.tok2times[pw_id] = (float(self.correction[pw_id]),float(pw['nite:end']))
+                    self.tok2conv[pw_id] = conversation
+                    if conversation in self.conv2tok:
+                        self.conv2tok[conversation].append(pw_id)
+                    else:
+                        self.conv2tok[conversation] = [pw_id]
 
             syntax_path = os.path.join(self.swbd_dir, 'syntax', '.'.join([conversation, speaker, 'syntax', 'xml']))
             syn_file = open(syntax_path, "r")
@@ -237,12 +287,15 @@ class SwbdPreprocessor:
                             gap = self.tok2times[pw_id][0] - self.tok2times[self.utt2toks[utt_id][-1]][-1]
                             if gap > self.gap_threshold:
                                 utt_id = self.utt_id_incr(utt_id)
-                                self.utt2spk[utt_id] = speaker
-                                self.utt2conv[utt_id] = conversation
-                                if conversation in self.conv2utt:
-                                    self.conv2utt[conversation].append(utt_id)
-                                else:
-                                    self.conv2utt[conversation] = [utt_id]
+                        if conversation in self.conv2utt:
+                            if not utt_id == self.conv2utt[conversation][-1]:
+                                self.conv2utt[conversation].append(utt_id)
+                        else:
+                            self.conv2utt[conversation] = [utt_id]
+
+                        self.utt2spk[utt_id] = speaker
+                        self.utt2conv[utt_id] = conversation
+
                         if pw_id in self.tok2tokstr: # check that it's a word, not a silence or a contraction
                             self.tok2spk[pw_id] = speaker
                             if utt_id in self.utt2toks:
@@ -283,11 +336,11 @@ class SwbdPreprocessor:
                 if syn_nt in nt2term:
                     for term in nt2term[syn_nt]:
                         if term in term2pw:
-                            self.tok2infostat[term2pw[term]] = infostat
+                            if term2pw[term] in self.tok2utt: self.tok2infostat[term2pw[term]] = infostat
                 elif syn_nt in term2pw: # sometimes the markable is marked on a terminal, not a non-terminal
-                    self.tok2infostat[term2pw[syn_nt]] = infostat
+                    if term2pw[term] in self.tok2utt: self.tok2infostat[term2pw[syn_nt]] = infostat  # added condition that tok has to be in tok2utt
             for tok in self.conv2tok[conversation]:
-                if tok not in self.tok2infostat:
+                if tok not in self.tok2infostat and tok in self.tok2utt: # added condition that tok has to be in tok2utt
                     self.tok2infostat[tok] = None
 
             accent_path = os.path.join(self.swbd_dir, 'accent', '.'.join([conversation, speaker, 'accents', 'xml']))
@@ -299,10 +352,10 @@ class SwbdPreprocessor:
                 for accent in accents:
                     pw_num = SwbdPreprocessor.extract_id_from_href(accent.find_all('nite:pointer')[0]['href'])
                     pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
-                    self.tok2tone[pw_id] = 1
+                    if pw_id in self.tok2utt: self.tok2tone[pw_id] = 1  # added condition that tok has to be in tok2utt
                 for pw in self.conv2tok[conversation]:
                     if pw not in self.tok2tone:
-                        self.tok2tone[pw] = 0
+                        if pw_id in self.tok2utt: self.tok2tone[pw] = 0  # added condition that tok has to be in tok2utt
 
         self.utt_ids = list(self.utt2toks.keys())
         broken_toks = []
@@ -315,7 +368,6 @@ class SwbdPreprocessor:
             self.utt2startend[utt_id] = (self.utt2tokentimes[utt_id][0],self.utt2tokentimes[utt_id][-1])
             self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]
             self.utt2frames[utt_id] = torch.tensor([int(round(float(tim)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
-
 
 
 
@@ -352,24 +404,26 @@ class SwbdPreprocessor:
 
 
 
-    def preproc(self,write_dict=True,out_file='swbd.pkl'):
+    def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False):
         with open(self.annotated_files,'r') as f:
             file_list = f.readlines()
         self.text_preproc(file_list)
         self.acoustic_preproc()
-        self.gen_nested_dict()
+        self.gen_nested_dict(acc_only)
         if write_dict:
             self.save_nested(name=out_file)
 
 
 def main():
-    swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
+    #swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
+    swbd_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
     pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
     save_dir = '../data/swbd'
     annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
-    preprocessor.preproc()
-    import pdb;pdb.set_trace()
+    preprocessor.preproc(acc_only=True,out_file='swbd_acc.pkl')
+    #preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
+    #import pdb;pdb.set_trace()
 
 if __name__=="__main__":
     main()

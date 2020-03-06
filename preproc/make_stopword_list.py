@@ -23,7 +23,8 @@ def text_reg(word):
 
     return word
 
-vocab_path = '../data/burnc/splits'
+#vocab_path = '../data/burnc/splits'
+vocab_path = '../data/swbd/splits'
 
 vocab_name = sys.argv[1]
 
@@ -45,6 +46,7 @@ for word in stopwords:
 stopwords_idx.add(vocab_dict['w2i']['PAD'])
 
 out_pth = os.path.join(vocab_path,f'{vocab_name}.stop')
+print(f'outpath = {out_pth}')
 with open(out_pth,'wb') as f:
     pickle.dump(stopwords_idx,f)
 
