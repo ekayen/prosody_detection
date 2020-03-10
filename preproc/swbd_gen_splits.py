@@ -4,8 +4,8 @@ import random
 import os
 
 data_path = '../data/swbd'
-#dict_file = 'swbd.pkl'
-dict_file = 'swbd_acc.pkl'
+dict_file = 'swbd.pkl'
+#dict_file = 'swbd_acc.pkl'
 
 
 with open(os.path.join(data_path,dict_file),'rb') as f:
@@ -16,14 +16,28 @@ print(f'Total utts: {len(utt_ids)}')
 
 def gen_vocab(split_dict):
     w2freq = {}
+    labels = set()
     for utt_id in split_dict['train']:
         tokens = nested['utt2toks'][utt_id]
         tok_strs = [nested['tok2str'][tok] for tok in tokens]
+
+
         for tok in tok_strs:
             if tok in w2freq:
                 w2freq[tok] += 1
             else:
                 w2freq[tok] = 1
+        #TODO: add something like:
+        #import pdb;pdb.set_trace()
+        labels.update(set(nested['utt2bio'][utt_id]))
+
+    i2lbl = {0:'PAD'}
+    lbl2i = {'PAD':0}
+    for i,lbl in enumerate(labels):
+       lbl2i[lbl] = i + 1
+       i2lbl[i+1] = lbl
+
+
     ordered_toks = [key for key,value in sorted(w2freq.items(), key=lambda item: item[1],reverse=True)]
     w2i = {'PAD':0,
            'UNK':1}
@@ -34,7 +48,9 @@ def gen_vocab(split_dict):
         i2w[i + 2] = tok
     vocab_dict = {'w2i':w2i,
                   'i2w':i2w,
-                  'w2freq':w2freq}
+                  'w2freq':w2freq,
+                  'i2lbl':i2lbl,
+                  'lbl2i':lbl2i}
     #return w2i,i2w,w2freq
     return vocab_dict
 

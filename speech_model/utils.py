@@ -10,7 +10,7 @@ import random
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 from decimal import Decimal
-import syllables
+#import syllables
 import nltk
 import time
 from nltk.corpus import stopwords,cmudict
@@ -211,6 +211,41 @@ class BurncDataset(data.Dataset):
         speech_feats = self.get_speech_feats(tok_ids)
 
         return iden, (speech_feats,tok_ints,toktimes), labels
+
+class SwbdDatasetInfostruc(BurncDataset):
+    '''
+    '''
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None,bio=True):
+        super(SwbdDatasetInfostruc, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
+                                                 overwrite_speech,scramble_speech,stopwords_only,
+                                                 binary_vocab,ablate_feat)
+        self.i2w = vocab_dict['i2w']
+        self.w2i = vocab_dict['w2i']
+        self.i2lbl = vocab_dict['i2lbl']
+        self.lbl2i = vocab_dict['lbl2i']
+        self.bio = bio
+
+    def get_labels(self,iden):
+        if self.bio:
+            Y = torch.tensor([self.lbl2i[lbl] for lbl in self.input_dict['utt2bio'][iden]])
+        if self.tok_pad_len and not self.segmentation == 'tokens':
+            Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
+        return Y
+        # TODO Have various settings -- bio and non-bio
+
+
+    def __getitem__(self, index):
+        iden = self.ids[index]
+        tok_ids = self.get_tok_ids(iden)
+        labels = self.get_labels(iden)
+        toktimes = self.get_toktimes(iden,tok_ids)
+        tok_ints = self.get_tokens(tok_ids)
+        speech_feats = self.get_speech_feats(tok_ids)
+
+        return iden, (speech_feats,tok_ints,toktimes), labels
+
+
 
 class BurncDatasetSyl(BurncDataset):
     '''
@@ -475,11 +510,12 @@ def main():
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     #burnc_dict = '../data/burnc/burnc.pkl'
-    burnc_dict = '../data/swbd/swbd_acc.pkl'
+    #burnc_dict = '../data/swbd/swbd_acc.pkl'
+    burnc_dict = '../data/swbd/swbd.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
     #cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
-    cfg['datasplit'] = '../data/swbd/splits/tenfold1.yaml'
+    cfg['datasplit'] = '../data/swbd/splits/tenfold0.yaml'
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
     #vocab_file = f'../data/burnc/splits/{splt}.vocab'
     vocab_file = f'../data/swbd/splits/{splt}.vocab'
@@ -489,8 +525,11 @@ def main():
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
 
-    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
+    dataset = SwbdDatasetInfostruc(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,vocab_dict=vocab_dict,bio=True)
+    item = dataset.__getitem__(4)
+    import pdb;pdb.set_trace()
 
+    """
     num_utt = len(dataset)
     for i in range(num_utt):
         try:
@@ -502,9 +541,31 @@ def main():
         except:
             print("can't get item")
             import pdb;pdb.set_trace()
+    """
 
-    print('finished loop')
+    
+    cfg_file = 'conf/cnn_lstm_pros.yaml'
+    with open(cfg_file, 'r') as f:
+        cfg = yaml.load(f, yaml.FullLoader)
+    burnc_dict = '../data/burnc/burnc.pkl'
+    with open(burnc_dict,'rb') as f:
+        input_dict = pickle.load(f)
+    cfg['datasplit'] = '../data/burnc/splits/tenfold0.yaml'
+    splt = cfg['datasplit'].split('/')[-1].split('.')[0]
+    vocab_file = f'../data/burnc/splits/{splt}.vocab'
+    print(vocab_file)
+    with open(vocab_file, 'rb') as f:
+        vocab_dict = pickle.load(f)
+    list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
+
+    
+    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
+
+    
+
+    item2 = dataset.__getitem__(4)
     import pdb;pdb.set_trace()
+
     dataset = BurncDatasetSpeech(cfg, input_dict, mode='dev')
     item = dataset.__getitem__(4)
 

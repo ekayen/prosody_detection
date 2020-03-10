@@ -51,6 +51,10 @@ class SwbdPreprocessor:
 
         self.correction = {'sw2370_ms33B_pw107':140.302000}
 
+        self.utt2bio = {}
+
+        self.allowed_infostats = set(['old','med','new'])
+
 
 
     def get_pros_feats(self):
@@ -133,6 +137,7 @@ class SwbdPreprocessor:
         self.nested['utt_ids'] = self.utt_ids
         self.nested['tok2utt'] = self.tok2utt
         self.nested['utt2frames'] = self.utt2frames
+        self.nested['utt2bio'] = self.utt2bio
 
         # Go through things in annotated_files.txt in the pros_feat_dir
         #   Find corresponding syntax file
@@ -330,6 +335,8 @@ class SwbdPreprocessor:
             for markable in markables:
                 try:
                     infostat = markable['status']
+                    if not infostat in self.allowed_infostats:
+                        infostat = None
                 except:
                     infostat = None
                 syn_nt = SwbdPreprocessor.extract_id_from_href(markable.find_all('nite:pointer')[0]['href'])
@@ -364,10 +371,34 @@ class SwbdPreprocessor:
                 broken_toks.append(tok)
 
         for utt_id in self.utt2toks:
+            utt_start = self.tok2times[self.utt2toks[utt_id][0]]
             self.utt2tokentimes[utt_id] = [float(self.tok2times[tok][0]) for tok in self.utt2toks[utt_id]] + [self.tok2times[self.utt2toks[utt_id][-1]][-1]]
             self.utt2startend[utt_id] = (self.utt2tokentimes[utt_id][0],self.utt2tokentimes[utt_id][-1])
             self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]
-            self.utt2frames[utt_id] = torch.tensor([int(round(float(tim)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
+            self.utt2frames[utt_id] = torch.tensor([int(round(float(tim-utt_start)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
+
+        self.make_BIO()
+
+    def make_BIO(self):
+        for utt in self.utt2toks:
+            b = 'B-'
+            i = 'I-'
+            o = 'O'
+            toks = [tok for tok in self.utt2toks[utt]]
+            tags = [self.tok2infostat[tok] for tok in toks]
+            if tags[0]==None:
+                bio_tags = [o]
+            else:
+                bio_tags = [b+tags[0]]
+            for j in range(1,len(tags)):
+                if tags[j] == None:
+                    bio_tags.append(o)
+                elif tags[j] == tags[j-1]:
+                    bio_tags.append(i+tags[j])
+                else:
+                    bio_tags.append(b+tags[j])
+
+            self.utt2bio[utt] = bio_tags
 
 
 
@@ -416,13 +447,16 @@ class SwbdPreprocessor:
 
 def main():
     #swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
-    swbd_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
-    pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
+    #swbd_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
+    swbd_dir = '/afs/inf.ed.ac.uk/user/s18/s1899827/xml'
+    #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
+    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/swbd'
     save_dir = '../data/swbd'
-    annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
+    #annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
+    annotated_files = '../data/swbd/annotated_files.txt'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
-    preprocessor.preproc(acc_only=True,out_file='swbd_acc.pkl')
-    #preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
+    #preprocessor.preproc(acc_only=True,out_file='swbd_acc.pkl')
+    preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
     #import pdb;pdb.set_trace()
 
 if __name__=="__main__":

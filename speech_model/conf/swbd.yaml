@@ -13,8 +13,8 @@ eval_every:
 
 
 # i/o params
-all_data: '../data/swbd/swbd_acc.pkl'
-model_name: 'swbd_both'
+all_data: '../data/swbd/swbd.pkl'
+model_name: 'swbd_speech'
 results_path: 'results/refactor/swbd'
 
 train_params:
@@ -50,7 +50,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: both
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
