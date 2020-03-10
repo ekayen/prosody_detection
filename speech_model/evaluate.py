@@ -56,13 +56,14 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
 
-                #import pdb;pdb.set_trace()
-                output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
+                #output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
+                output = output.transpose(0, 1)
+                output = output.detach().reshape(output.shape[0]*output.shape[1],output.shape[2])
                 if non_default_only:
                     content_baseline = content_baseline.view(content_baseline.shape[0],
                                                              content_baseline.shape[1]).transpose(0, 1).flatten()
 
-                output = output.detach().flatten()
+                #output = output.detach().flatten()
                 y = y.flatten()
 
 
@@ -94,7 +95,9 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 output = output.detach().view(output.shape[-2])
 
             threshold = 0
-            prediction = (output > threshold).type(torch.int64) * 1
+            #prediction = (output > threshold).type(torch.int64) * 1
+            #import pdb;pdb.set_trace()
+            prediction = output.argmax(-1)
 
             if print_predictions:
 

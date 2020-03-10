@@ -371,7 +371,7 @@ class SwbdPreprocessor:
                 broken_toks.append(tok)
 
         for utt_id in self.utt2toks:
-            utt_start = self.tok2times[self.utt2toks[utt_id][0]]
+            utt_start = self.tok2times[self.utt2toks[utt_id][0]][0]
             self.utt2tokentimes[utt_id] = [float(self.tok2times[tok][0]) for tok in self.utt2toks[utt_id]] + [self.tok2times[self.utt2toks[utt_id][-1]][-1]]
             self.utt2startend[utt_id] = (self.utt2tokentimes[utt_id][0],self.utt2tokentimes[utt_id][-1])
             self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]

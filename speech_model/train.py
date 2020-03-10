@@ -18,20 +18,22 @@ from torchsummary import summary
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
 
+
     plot_data = {
         'time': [],
         'loss': [],
         'train_acc': [],
-        'dev_acc': [],
-        'non_default_acc': [],
-        'non_default_precision_0': [],
-        'non_default_precision_1': [],
-        'non_default_recall_0': [],
-        'non_default_recall_1': []
+        'dev_acc': []#,
+       # 'non_default_acc': [],
+       # 'non_default_precision_0': [],
+       # 'non_default_precision_1': [],
+       # 'non_default_recall_0': [],
+       # 'non_default_recall_1': []
     }
-    recent_losses = []
 
+    recent_losses = []
     """
+
     print('Baseline eval....')
     plot_data['dev_acc'].append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
     plot_data['train_acc'].append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
@@ -72,15 +74,18 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
 
                 # Flatten output and labels:
 
-                output = output.view(output.shape[0],output.shape[1]).transpose(0,1) # TODO change so that only the last dim is dropped, not the second (batch dim)
-                output = output.flatten()
+
+                #output = output.view(output.shape[0], output.shape[1]).transpose(0,1)
+                output = output.transpose(0,1)
+                output = output.reshape(output.shape[0]*output.shape[1],output.shape[2])
 
                 labels = labels.flatten()
 
                 tmp_out = []
                 tmp_lbl = []
                 for i in range(curr_bat_size):
-                    tmp_out.append(output[i * seq_len:i * seq_len + num_toks[i]])
+                    output_seg = output[i * seq_len:i * seq_len + num_toks[i]]
+                    tmp_out.append(output_seg)
                     tmp_lbl.append(labels[i * seq_len:i * seq_len + num_toks[i]])
 
                     # Experiment: don't flatten at all
@@ -90,10 +95,12 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
 
+
                 tot_toks += out.shape[0]
 
                 #import pdb;pdb.set_trace()
-                loss = criterion(out,lbl.float()) # TODO fix so that padding isn't included in loss calculation
+                #loss = criterion(out, lbl.float())
+                loss = criterion(out, lbl)
             else:
                 loss = criterion(output.view(curr_bat_size), labels.float())
             loss.backward()
@@ -165,8 +172,9 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         plot_data['non_default_precision_1'].append(precision_1)
         plot_data['non_default_recall_0'].append(recall_0)
         plot_data['non_default_recall_1'].append(recall_1)
-        print()
+
         """
+        print()
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
         #print(f'Total train utts: {train_results[3]}\ttrain toks: {train_results[1]},\ttotal correct: {train_results[2]}')
         #print(f'Total dev utts: {dev_results[3]}\tdev toks: {dev_results[1]},\ttotal correct: {dev_results[2]}')
@@ -178,6 +186,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     process = psutil.Process(os.getpid())
     print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
+    #plot_results(plot_data,model_name,cfg['results_path'],p_r_scores=True)
     plot_results(plot_data,model_name,cfg['results_path'])
 
     print('Saving model ...')
@@ -346,7 +355,8 @@ def main():
                           batch_size=cfg['train_params']['batch_size'],
                           lstm_layers=cfg['lstm_layers'],
                           bidirectional=cfg['bidirectional'],
-                          num_classes=1,
+                          #num_classes=1, # TODO ! change to 2 for binary, n for n-ary
+                          num_classes=2,
                           dropout=cfg['dropout'],
                           include_lstm=cfg['include_lstm'],
                           tok_level_pred=cfg['tok_level_pred'],
@@ -368,7 +378,8 @@ def main():
 
     model.to(device)
 
-    criterion = nn.BCEWithLogitsLoss()
+    #criterion = nn.BCEWithLogitsLoss() # TODO ! Change to cross entropy loss (which is softmax + nllloss)
+    criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(),
                                  lr=cfg['learning_rate'],
                                  weight_decay=cfg['weight_decay'])

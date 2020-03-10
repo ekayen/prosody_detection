@@ -323,6 +323,7 @@ class SpeechEncoder(nn.Module):
                 post_lstm_feats = x
                 x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
 
+                
                 if self.return_prefinal:
                     return x,hidden,post_cnn_feats,post_lstm_feats
                 else:

@@ -14,8 +14,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'both_precision_recall'
-results_path: 'results/refactor/crossval_seeds'
+model_name: 'CELoss'
+results_path: 'results/baseline'
 
 train_params:
   batch_size: 64
@@ -50,7 +50,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: both
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

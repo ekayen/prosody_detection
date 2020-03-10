@@ -386,8 +386,9 @@ def plot_grad_flow(named_parameters):
     plt.title("Gradient flow")
     plt.grid(True)
 
-def plot_results(plot_data,model_name,results_path):
-    df = pd.DataFrame(dict(epochs=plot_data['time'],
+def plot_results(plot_data,model_name,results_path,p_r_scores=False):
+    if p_r_scores:
+        df = pd.DataFrame(dict(epochs=plot_data['time'],
                            train_losses=plot_data['loss'],
                            train_accs=plot_data['train_acc'],
                            dev_accs=plot_data['dev_acc'],
@@ -396,6 +397,11 @@ def plot_results(plot_data,model_name,results_path):
                            non_default_precision_1 = plot_data['non_default_precision_1'],
                            non_default_recall_0 = plot_data['non_default_recall_0'],
                            non_default_recall_1 = plot_data['non_default_recall_1']))
+    else:
+        df = pd.DataFrame(dict(epochs=plot_data['time'],
+                           train_losses=plot_data['loss'],
+                           train_accs=plot_data['train_acc'],
+                           dev_accs=plot_data['dev_acc']))
 
     with open("tmp.pkl", 'wb') as f:
         pickle.dump(df, f)
