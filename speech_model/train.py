@@ -45,6 +45,17 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     #train_params = cfg['train_params']
 
     traingen = data.DataLoader(trainset, **cfg['train_params'])
+
+    """
+    for item in traingen:
+        tok_ints = item[1][1]
+        tok_ints = tok_ints.flatten().tolist()
+        for i in tok_ints:
+            if i > cfg['vocab_size'] + 2:
+                print('token out of bounds')
+                import pdb;pdb.set_trace()
+    """
+
     epoch_size = len(trainset)
 
     print('Training model ...')
@@ -221,7 +232,7 @@ def main():
                         help='vocab size -- optional, overrides the one in the config')
     parser.add_argument('-s', '--seed',
                         help='seed -- optional, overrides the one in the config')
-    
+
     args = parser.parse_args()
     with open(args.config, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
@@ -278,6 +289,7 @@ def main():
     print(f'Original vocab size: {len(vocab_dict["w2i"])}')
 
 
+
     set_seeds(seed)
 
     def truncate_dicts(vocab_dict, vocab_size):
@@ -294,6 +306,7 @@ def main():
         return w2i, i2w
 
     w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])
+
 
     if cfg['use_pretrained']:
         print('using pretrained')
@@ -340,23 +353,47 @@ def main():
     else:
         ablate_feat = None
 
+    if 'predict' in cfg:
+        if cfg['predict'] == 'infostruc':
+            trainset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+                                    overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat,bio=cfg['bio'],vocab_dict=vocab_dict)
+            devset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
+                                  overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,bio=cfg['bio'],vocab_dict=vocab_dict)
+        else:
 
-    trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
-                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,ablate_feat=ablate_feat)
-    devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,
-                          overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,ablate_feat=ablate_feat)
+            trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+                                    overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+            devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
+                                  overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+
+    else:
+
+        trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+                                overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+        devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
+                              overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                              binary_vocab=binary_vocab, ablate_feat=ablate_feat)
 
     print('done')
+
+
+
     print('Building model ...')
 
     set_seeds(seed)
+
 
     model = SpeechEncoder(seq_len=cfg['frame_pad_len'],
                           batch_size=cfg['train_params']['batch_size'],
                           lstm_layers=cfg['lstm_layers'],
                           bidirectional=cfg['bidirectional'],
                           #num_classes=1, # TODO ! change to 2 for binary, n for n-ary
-                          num_classes=2,
+                          num_classes=cfg['num_classes'],
                           dropout=cfg['dropout'],
                           include_lstm=cfg['include_lstm'],
                           tok_level_pred=cfg['tok_level_pred'],

@@ -52,6 +52,7 @@ class SwbdPreprocessor:
         self.correction = {'sw2370_ms33B_pw107':140.302000}
 
         self.utt2bio = {}
+        self.utt2new = {}
 
         self.allowed_infostats = set(['old','med','new'])
 
@@ -138,6 +139,7 @@ class SwbdPreprocessor:
         self.nested['tok2utt'] = self.tok2utt
         self.nested['utt2frames'] = self.utt2frames
         self.nested['utt2bio'] = self.utt2bio
+        self.nested['utt2new'] = self.utt2new
 
         # Go through things in annotated_files.txt in the pros_feat_dir
         #   Find corresponding syntax file
@@ -378,6 +380,14 @@ class SwbdPreprocessor:
             self.utt2frames[utt_id] = torch.tensor([int(round(float(tim-utt_start)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
 
         self.make_BIO()
+        self.make_new_tags()
+
+    def make_new_tags(self):
+        for utt in self.utt2toks:
+            toks = [tok for tok in self.utt2toks[utt]]
+            tags = [self.tok2infostat[tok] for tok in toks]
+            newness = [1 if tag=='new' else 0 for tag in tags]
+            self.utt2new[utt] = newness
 
     def make_BIO(self):
         for utt in self.utt2toks:

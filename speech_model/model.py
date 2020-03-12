@@ -72,6 +72,7 @@ class SpeechEncoder(nn.Module):
         self.return_prefinal = return_prefinal # return the output of the network before softmax etc. -- used for probing
 
         if inputs=='text' or inputs=='both':
+
             self.emb = nn.Embedding(vocab_size+2,embedding_dim)
             if self.use_pretrained:
                 self.emb.load_state_dict({'weight': self.weights_matrix})

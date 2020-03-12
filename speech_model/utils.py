@@ -194,6 +194,7 @@ class BurncDataset(data.Dataset):
                 tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
             else:
                 tok_ints.append(self.w2i['UNK'])
+
         if self.binary_vocab:
             tok_ints  = self.uniformize_vocab(tok_ints)
         tok_ints = torch.tensor(tok_ints)
@@ -220,8 +221,7 @@ class SwbdDatasetInfostruc(BurncDataset):
         super(SwbdDatasetInfostruc, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
                                                  overwrite_speech,scramble_speech,stopwords_only,
                                                  binary_vocab,ablate_feat)
-        self.i2w = vocab_dict['i2w']
-        self.w2i = vocab_dict['w2i']
+        self.w2i = w2i
         self.i2lbl = vocab_dict['i2lbl']
         self.lbl2i = vocab_dict['lbl2i']
         self.bio = bio
@@ -229,6 +229,8 @@ class SwbdDatasetInfostruc(BurncDataset):
     def get_labels(self,iden):
         if self.bio:
             Y = torch.tensor([self.lbl2i[lbl] for lbl in self.input_dict['utt2bio'][iden]])
+        else:
+            Y = torch.tensor(self.input_dict['utt2new'][iden])
         if self.tok_pad_len and not self.segmentation == 'tokens':
             Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
         return Y
@@ -531,7 +533,7 @@ def main():
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
 
-    dataset = SwbdDatasetInfostruc(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,vocab_dict=vocab_dict,bio=True)
+    dataset = SwbdDatasetInfostruc(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,vocab_dict=vocab_dict,bio=False)
     item = dataset.__getitem__(4)
     import pdb;pdb.set_trace()
 
