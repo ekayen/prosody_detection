@@ -78,8 +78,6 @@ class SpeechEncoder(nn.Module):
                 self.emb.load_state_dict({'weight': self.weights_matrix})
                 self.emb.weight.requires_grad = False
 
-
-
         if inputs=='speech' or inputs=='both':
             if self.cnn_layers==2:
                 self.conv = nn.Sequential(nn.Conv2d(self.in_channels, self.hidden_channels, kernel_size=self.kernel1, stride=self.stride1,
@@ -374,14 +372,16 @@ class SpeechEncoder(nn.Module):
             # Dummy task: from sequence, predict one item's tag    #
             ########################################################
             if self.include_lstm:
-
-                x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
+                if self.inputs=='speech':
+                    x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0, 1).contiguous() # here: W x N x C
+                elif self.inputs=='text':
+                    x = embeddings
                 x, hidden = self.lstm(x.view(x.shape[0], x.shape[1], x.shape[2]), hidden)
                 # here: W x N x lstm_hidden_size
-                #x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
-                x = torch.mean(x,0)
+                # x = x[-1,:,:] # TAKE LAST TIMESTEP # here: 1 x N x lstm_hidden_size
+                x = torch.mean(x, 0)
                 x = self.fc(x.view(1, x.shape[0], self.lin_input_size))  # in 1 x N? x lstm_hidden_size
-                return x,hidden
+                return x, hidden
 
             elif not self.include_lstm:
                 ##############################################

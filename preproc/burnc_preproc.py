@@ -403,6 +403,7 @@ class BurncPreprocessor:
         for i, row in tok_df.iterrows():
             tens = torch.tensor(row.tolist()).view(1, len(row.tolist()))
             feat_tensors.append(tens)
+
         return torch.cat(feat_tensors,dim=0)
 
     def load_opensmile_feats(self):
@@ -486,7 +487,8 @@ class BurncPreprocessor:
 def main():
     speakers_file = 'burnc_speakers.txt'
     burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
-    pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
+    #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
+    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/burnc'
     mfcc_dir = '/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
     kaldi_dir = 'tmp'
     save_dir = 'tmp'

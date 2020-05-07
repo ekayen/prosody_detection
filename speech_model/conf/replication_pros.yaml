@@ -1,6 +1,6 @@
 # dataloader params
 segmentation: tokens
-context_window: True
+context_window: False
 datasplit: ../data/burnc/splits/tenfold0.yaml
 feats: tok2pros
 bitmark: True
@@ -13,8 +13,8 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'cnn_only_3tok_overwrite'
-results_path: 'results/refactor/speech_cnn_only_3tok_overwrite'
+model_name: 'replication_text_1tok'
+results_path: 'results/refactor/replication_text'
 
 train_params:
   batch_size: 64
@@ -48,11 +48,11 @@ weight_decay: 0.00001
 frame_filter_size: 11
 flatten_method: sum
 frame_pad_size: 5
-
+num_classes: 2
 seed: 256
 
 # Text-specific params
-inputs: speech
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000

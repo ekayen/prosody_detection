@@ -24,7 +24,10 @@ def text_reg(word):
     return word
 
 #vocab_path = '../data/burnc/splits'
-vocab_path = '../data/swbd/splits'
+#vocab_path = '../data/swbd/splits'
+#vocab_path = '../data/swbd_acc/splits'
+#vocab_path = '../data/swbd_new_only/splits'
+vocab_path = '../data/swbd_kontrast/splits'
 
 vocab_name = sys.argv[1]
 

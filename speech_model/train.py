@@ -15,6 +15,9 @@ import numpy as np
 import argparse
 import pdb
 from torchsummary import summary
+import time
+
+print_time = True
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
 
@@ -23,7 +26,10 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         'time': [],
         'loss': [],
         'train_acc': [],
-        'dev_acc': []#,
+        'dev_acc': [],
+        'dev_prec': [],
+        'dev_rec': [],
+        'dev_f': []
        # 'non_default_acc': [],
        # 'non_default_precision_0': [],
        # 'non_default_precision_1': [],
@@ -32,8 +38,9 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     }
 
     recent_losses = []
-    """
 
+
+    """
     print('Baseline eval....')
     plot_data['dev_acc'].append(evaluate(devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
     plot_data['train_acc'].append(evaluate(trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred']))
@@ -42,26 +49,25 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     print('done')
     """
 
+    #"""
+    # Majority baseline:
+    dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
+                           noisy=True, print_predictions=True, vocab_dict=vocab_dict,
+                           prf=True,maj_baseline=True)
+    #"""
+
     #train_params = cfg['train_params']
 
     traingen = data.DataLoader(trainset, **cfg['train_params'])
 
-    """
-    for item in traingen:
-        tok_ints = item[1][1]
-        tok_ints = tok_ints.flatten().tolist()
-        for i in tok_ints:
-            if i > cfg['vocab_size'] + 2:
-                print('token out of bounds')
-                import pdb;pdb.set_trace()
-    """
-
     epoch_size = len(trainset)
-
+    print(f'Epoch size: {epoch_size}')
+    
     print('Training model ...')
     max_grad = float("-inf")
     min_grad = float("inf")
     for epoch in range(cfg['num_epochs']):
+        t1 = time.time()
         timestep = 0
         tot_utts = 0
         tot_toks = 0
@@ -75,6 +81,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
 
             hidden = model.init_hidden(curr_bat_size)
             output,_ = model(speech,text,toktimes,hidden)
+
+            #import pdb;pdb.set_trace()
 
             if cfg['tok_level_pred']:
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
@@ -113,7 +121,9 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
                 #loss = criterion(out, lbl.float())
                 loss = criterion(out, lbl)
             else:
-                loss = criterion(output.view(curr_bat_size), labels.float())
+                #loss = criterion(output.view(curr_bat_size), labels.float())
+                #import pdb;pdb.set_trace()
+                loss = criterion(output.view(output.shape[-2],output.shape[-1]), labels)#.float())
             loss.backward()
             #plot_grad_flow(model.named_parameters())
             #plt.show()
@@ -163,8 +173,11 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
             stopword_list = pickle.load(f)
 
         dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],
-                               noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list)
+                               noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list,prf=True)
         plot_data['dev_acc'].append(dev_results[0])
+        plot_data['dev_prec'].append(dev_results[4])
+        plot_data['dev_rec'].append(dev_results[5])
+        plot_data['dev_f'].append(dev_results[6])
 
         """
         # Also record precision and recall for non-default words (that is, unaccented content words and accented fn words)
@@ -189,7 +202,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
         #print(f'Total train utts: {train_results[3]}\ttrain toks: {train_results[1]},\ttotal correct: {train_results[2]}')
         #print(f'Total dev utts: {dev_results[3]}\tdev toks: {dev_results[1]},\ttotal correct: {dev_results[2]}')
-
+        t2 = time.time()
+        if print_time: print(f'Epoch time: {t2-t1}')
 
 
     print('done')
@@ -197,8 +211,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     process = psutil.Process(os.getpid())
     print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
-    #plot_results(plot_data,model_name,cfg['results_path'],p_r_scores=True)
-    plot_results(plot_data,model_name,cfg['results_path'])
+    plot_results(plot_data,model_name,cfg['results_path'],p_r_scores=True)
+    #plot_results(plot_data,model_name,cfg['results_path'])
 
     print('Saving model ...')
     model_path = os.path.join(cfg['results_path'], model_name + '.pt')
@@ -284,11 +298,21 @@ def main():
     set_seeds(seed)
 
     # Load text data:
-    with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
-        vocab_dict = pickle.load(f)
-    print(f'Original vocab size: {len(vocab_dict["w2i"])}')
-
-
+    if 'pos_only' in cfg:
+        if not cfg['pos_only']:
+            with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
+                vocab_dict = pickle.load(f)
+            print(f'Original vocab size: {len(vocab_dict["w2i"])}')
+        else:
+            with open(cfg['datasplit'].replace('yaml', 'posvocab'), 'rb') as f:
+                vocab_dict = pickle.load(f)
+            print(f'Original pos_vocab size: {len(vocab_dict["w2i"])}')
+    else:
+        with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
+            vocab_dict = pickle.load(f)
+        print(f'Original vocab size: {len(vocab_dict["w2i"])}')
+        
+        
 
     set_seeds(seed)
 
@@ -357,10 +381,10 @@ def main():
         if cfg['predict'] == 'infostruc':
             trainset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
                                     overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat,bio=cfg['bio'],vocab_dict=vocab_dict)
+                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat,labelling=cfg['labelling'],vocab_dict=vocab_dict)
             devset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
                                   overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,bio=cfg['bio'],vocab_dict=vocab_dict)
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,labelling=cfg['labelling'],vocab_dict=vocab_dict)
         else:
 
             trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
@@ -422,6 +446,12 @@ def main():
                                  weight_decay=cfg['weight_decay'])
 
     set_seeds(seed)
+
+    print('stopword_baseline')
+    with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
+        stopword_list = pickle.load(f)
+
+    evaluate(cfg,devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'], stopword_baseline=True, stopword_list=stopword_list)
 
     train(model, criterion, optimizer, trainset, devset, cfg, device, model_name,vocab_dict)
 

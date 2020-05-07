@@ -53,10 +53,13 @@ class SwbdPreprocessor:
 
         self.utt2bio = {}
         self.utt2new = {}
+        self.utt2old = {}
 
         self.allowed_infostats = set(['old','med','new'])
 
-
+        self.tok2pos = {}
+        self.tok2kontrast = {}
+        self.utt2kontrast = {}
 
     def get_pros_feats(self):
         pass
@@ -78,7 +81,7 @@ class SwbdPreprocessor:
         if utt in self.utt2spk: del self.utt2spk[utt]
         if utt in self.utt_ids: self.utt_ids.remove(utt)
 
-    def gen_nested_dict(self,acc_only=False):
+    def gen_nested_dict(self,acc_only=False,kontrast_only=False):
         print('generating nested dict ...')
         """
         for para in self.para2utt:
@@ -106,6 +109,17 @@ class SwbdPreprocessor:
                 utt = self.tok2utt[tok]
                 self.del_tok(tok)
                 self.del_utt(utt)
+
+        if kontrast_only:
+            all_tok = set(self.tok2utt.keys())
+            kontrast_tok = set(self.tok2kontrast.keys())
+            non_kontrast_tok = all_tok - kontrast_tok
+
+            for tok in non_kontrast_tok:
+                utt = self.tok2utt[tok]
+                self.del_tok(tok)
+                self.del_utt(utt)
+
 
         # Weed out utterances with no speech feats:
         del_utts = []
@@ -140,6 +154,10 @@ class SwbdPreprocessor:
         self.nested['utt2frames'] = self.utt2frames
         self.nested['utt2bio'] = self.utt2bio
         self.nested['utt2new'] = self.utt2new
+        self.nested['utt2old'] = self.utt2old
+        self.nested['tok2pos'] = self.tok2pos
+        self.nested['tok2kontrast'] = self.tok2kontrast
+        self.nested['utt2kontrast'] = self.utt2kontrast
 
         # Go through things in annotated_files.txt in the pros_feat_dir
         #   Find corresponding syntax file
@@ -230,6 +248,7 @@ class SwbdPreprocessor:
         pw2term = {}
         term2pw = {}
 
+
         for file in file_list:
 
             conversation,speaker,_,_ = file.strip().split('.')
@@ -243,6 +262,7 @@ class SwbdPreprocessor:
             for terminal in terminals:
                 terminal_num = terminal['nite:id']
                 start = terminal['nite:start']
+                pos = terminal['pos']
                 if not start=='non-aligned':
                     term_id = SwbdPreprocessor.get_id(conversation, terminal_num)
                     phonwords = terminal.find_all('nite:pointer')
@@ -251,6 +271,7 @@ class SwbdPreprocessor:
                         pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
                         pw2term[pw_id] = term_id
                         term2pw[term_id] = pw_id
+                        self.tok2pos[pw_id] = pos
 
             # Put all the phonwords in the appropriate dictionaries. Ignore terminals that are not aligned with phonwords
             pw_path = os.path.join(self.swbd_dir, 'phonwords', '.'.join([conversation, speaker, 'phonwords', 'xml']))
@@ -366,6 +387,30 @@ class SwbdPreprocessor:
                     if pw not in self.tok2tone:
                         if pw_id in self.tok2utt: self.tok2tone[pw] = 0  # added condition that tok has to be in tok2utt
 
+            kontrast_path = os.path.join(self.swbd_dir, 'kontrast', '.'.join([conversation, 'kontrast', 'xml']))
+
+            found = 0
+            not_found = 0
+            if os.path.exists(kontrast_path):
+                kontrast_file = open(kontrast_path, 'r')
+                kontrast_contents = kontrast_file.read()
+                kontrast_soup = BeautifulSoup(kontrast_contents, 'lxml')
+                kontrasts = kontrast_soup.find_all('kontrast')
+                for kontrast in kontrasts:
+                    kontrast_type = kontrast['type']
+                    terms = kontrast.find_all('nite:child')
+                    term_ids = ['_'.join([conversation,SwbdPreprocessor.extract_id_from_href(term['href'])]) for term in terms]
+                    for term_id in term_ids:
+                        if term_id in term2pw:
+                            self.tok2kontrast[term2pw[term_id]] = kontrast_type
+
+                for tok in self.conv2tok[conversation]:
+                    if conversation == 'sw2295':
+                        import pdb;pdb.set_trace()
+                    if tok not in self.tok2kontrast and tok in self.tok2utt:  # added condition that tok has to be in tok2utt
+                        self.tok2kontrast[tok] = None
+
+
         self.utt_ids = list(self.utt2toks.keys())
         broken_toks = []
         for tok in self.tok2times:
@@ -381,6 +426,8 @@ class SwbdPreprocessor:
 
         self.make_BIO()
         self.make_new_tags()
+        self.make_old_tags()
+        self.make_kontrast_tags()
 
     def make_new_tags(self):
         for utt in self.utt2toks:
@@ -388,6 +435,13 @@ class SwbdPreprocessor:
             tags = [self.tok2infostat[tok] for tok in toks]
             newness = [1 if tag=='new' else 0 for tag in tags]
             self.utt2new[utt] = newness
+
+    def make_old_tags(self):
+        for utt in self.utt2toks:
+            toks = [tok for tok in self.utt2toks[utt]]
+            tags = [self.tok2infostat[tok] for tok in toks]
+            oldness = [1 if tag=='old' else 0 for tag in tags]
+            self.utt2old[utt] = oldness
 
     def make_BIO(self):
         for utt in self.utt2toks:
@@ -410,12 +464,19 @@ class SwbdPreprocessor:
 
             self.utt2bio[utt] = bio_tags
 
-
-
+    def make_kontrast_tags(self):
+        for utt in self.utt2toks:
+            conv = self.utt2conv[utt]
+            kontrast_path = f'{self.swbd_dir}/kontrast/{conv}.kontrast.xml'
+            if os.path.exists(kontrast_path):
+                kontrasts = [self.tok2kontrast[tok] for tok in self.utt2toks[utt]]
+                kontrast_tags = [0 if kontrast=='background' or kontrast==None else 1 for kontrast in kontrasts]
+                self.utt2kontrast[utt] = kontrast_tags
 
     def get_tok_feats(self,df,start,end):
         tok_df = df.loc[df['frameTime'] >= start]
         tok_df = tok_df.loc[tok_df['frameTime'] < end]
+        #import pdb;pdb.set_trace()
         tok_df = tok_df[self.pros_feat_names]
         if len(tok_df)==0:
             return torch.tensor([])
@@ -445,12 +506,12 @@ class SwbdPreprocessor:
 
 
 
-    def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False):
+    def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False,kontrast_only=False):
         with open(self.annotated_files,'r') as f:
             file_list = f.readlines()
         self.text_preproc(file_list)
         self.acoustic_preproc()
-        self.gen_nested_dict(acc_only)
+        self.gen_nested_dict(acc_only,kontrast_only)
         if write_dict:
             self.save_nested(name=out_file)
 
@@ -460,14 +521,17 @@ def main():
     #swbd_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
     swbd_dir = '/afs/inf.ed.ac.uk/user/s18/s1899827/xml'
     #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
-    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/swbd'
-    save_dir = '../data/swbd'
+    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/swbd2'
     #annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
     annotated_files = '../data/swbd/annotated_files.txt'
+    #annotated_files = '../data/swbd/toy_annotated_files.txt'
+    #save_dir = '../data/swbd_acc'
+    save_dir = '../data/swbd_kontrast'
+    #save_dir = '../data/swbd'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
     #preprocessor.preproc(acc_only=True,out_file='swbd_acc.pkl')
-    preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
-    #import pdb;pdb.set_trace()
+    preprocessor.preproc(acc_only=False,kontrast_only=True, out_file='swbd_kontrast.pkl')
+    #preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
 
 if __name__=="__main__":
     main()

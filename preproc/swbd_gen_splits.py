@@ -3,8 +3,10 @@ import pickle
 import random
 import os
 
-data_path = '../data/swbd'
-dict_file = 'swbd.pkl'
+data_path = '../data/swbd_kontrast'
+#data_path = '../data/swbd_new_only'
+#dict_file = 'swbd.pkl'
+dict_file = 'swbd_kontrast.pkl'
 #dict_file = 'swbd_acc.pkl'
 
 
@@ -13,6 +15,41 @@ with open(os.path.join(data_path,dict_file),'rb') as f:
 
 utt_ids = list(set([utt for para in nested for utt in nested['utt2toks']]))
 print(f'Total utts: {len(utt_ids)}')
+
+def gen_pos_vocab(split_dict):
+    pos2freq = {}
+    labels = set()
+    for utt_id in split_dict['train']:
+        tokens = nested['utt2toks'][utt_id]
+        pos_strs = [nested['tok2pos'][tok] for tok in tokens]
+
+        for pos in pos_strs:
+            if pos in pos2freq:
+                pos2freq[pos] += 1
+            else:
+                pos2freq[pos] = 1
+    i2lbl = {0:'PAD'}
+    lbl2i = {'PAD':0}
+    for i,lbl in enumerate(labels):
+       lbl2i[lbl] = i + 1
+       i2lbl[i+1] = lbl
+
+    ordered_pos = [key for key,value in sorted(pos2freq.items(), key=lambda item: item[1],reverse=True)]
+    pos2i = {'PAD':0,
+           'UNK':1}
+    i2pos = {0:'PAD',
+           1:'UNK'}
+    for i,pos in enumerate(ordered_pos):
+        pos2i[pos] = i + 2
+        i2pos[i + 2] = pos
+    pos_vocab_dict = {'w2i':pos2i,
+                  'i2w':i2pos,
+                  'w2freq':pos2freq,
+                  'i2lbl':i2lbl,
+                  'lbl2i':lbl2i}
+    #return w2i,i2w,w2freq
+    return pos_vocab_dict
+
 
 def gen_vocab(split_dict):
     w2freq = {}
@@ -29,7 +66,7 @@ def gen_vocab(split_dict):
                 w2freq[tok] = 1
         #TODO: add something like:
         #import pdb;pdb.set_trace()
-        labels.update(set(nested['utt2bio'][utt_id]))
+        #labels.update(set(nested['utt2bio'][utt_id]))
 
     i2lbl = {0:'PAD'}
     lbl2i = {'PAD':0}
@@ -95,12 +132,13 @@ for i in range(num_folds):
     test_start = test_end
 
     vocab_dict = gen_vocab(split_ids)
-
+    pos_vocab_dict = gen_pos_vocab(split_ids)
 
     with open(os.path.join(data_path,'splits',f'{output_name}{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
     with open(os.path.join(data_path,'splits',f'{output_name}{i}.vocab'),'wb') as f:
         pickle.dump(vocab_dict, f)
-
+    with open(os.path.join(data_path,'splits',f'{output_name}{i}.posvocab'),'wb') as f:
+        pickle.dump(pos_vocab_dict, f)
 
 

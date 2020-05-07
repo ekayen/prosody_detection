@@ -6,13 +6,18 @@ import numpy as np
 import pandas as pd
 from random import randint
 from sklearn.metrics import precision_recall_fscore_support
+from torch.nn import functional as F
+import time
 
 def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False,
-             print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False,non_default_only=False):
+             print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False,non_default_only=False, prf=False,maj_baseline=False):
+
+    t1 = time.time()
     model.eval()
     true_pos_pred = 0
     total_pred = 0
     tot_utts = 0
+    print(f'eval set size: {len(dataset)}')
     dataloader = data.DataLoader(dataset, **dataloader_params)
     count_ones = 0 # TODO TMP
     print_lines = []
@@ -41,20 +46,24 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 output = model(x)
             # Stopword baseline here: just labels stopwords/padding 0 and all else 1:
             if stopword_baseline or non_default_only:
+                #import pdb;pdb.set_trace()
                 text_list = text.tolist()
                 text_list = [[0 if tok in stopword_list else 1 for tok in lst] for lst in text_list]
                 content_baseline = torch.tensor(text_list,dtype=torch.int64)
                 content_baseline = content_baseline.transpose(0,1)
-                content_baseline = content_baseline.view(content_baseline.shape[0],content_baseline.shape[1],1).to(device)
+                content_baseline = content_baseline.view(content_baseline.shape[0],content_baseline.shape[1]).to(device)
+                content_baseline = F.one_hot(content_baseline)
                 #import pdb;pdb.set_trace()
                 if stopword_baseline:
                     output = content_baseline
-
+            #import pdb;pdb.set_trace()
             if tok_level_pred:
                 seq_len = y.shape[1]
 
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])]  # list of len curr_bat_size, each element is len of that utterance
+
+
 
                 #output = output.view(output.shape[0],output.shape[1]).transpose(0, 1)
                 output = output.transpose(0, 1)
@@ -66,6 +75,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 #output = output.detach().flatten()
                 y = y.flatten()
 
+                #import pdb;pdb.set_trace()
 
                 tmp_out = []
                 tmp_lbl = []
@@ -78,6 +88,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
 
+                #import pdb;pdb.set_trace()
 
                 if non_default_only:
                     content_baseline = torch.cat(tmp_cont_baseline)
@@ -92,12 +103,18 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 y = lbl
 
             else:
-                output = output.detach().view(output.shape[-2])
+                #import pdb;pdb.set_trace()
+                #output = output.detach().view(output.shape[-2])
+                output = output.detach().view(output.shape[-2],output.shape[-1])
 
             threshold = 0
             #prediction = (output > threshold).type(torch.int64) * 1
             #import pdb;pdb.set_trace()
             prediction = output.argmax(-1)
+            if maj_baseline:
+                prediction = torch.zeros(prediction.shape,dtype=torch.long).to(device)
+
+            #print(prediction.sum())
 
             if print_predictions:
 
@@ -114,7 +131,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                     prediction_list = prediction_list[lens[i]:]
                     lbl_list = lbl_list[lens[i]:]
 
-                print_lines.extend([(sents[i],lbls[i],preds[i]) for i in range(len(sents))])
+                print_lines.extend([(sents[i],lbls[i],preds[i],id[i]) for i in range(len(sents))])
 
             count_ones += prediction.sum().item()
 
@@ -130,6 +147,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
 
 
     acc = true_pos_pred/total_pred
+
     if noisy:
         print(f'Accuracy: {round(acc,5)}')
         print(f'Total_pred: {total_pred}')
@@ -138,10 +156,10 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
     if print_predictions:
         model_name = gen_model_name(cfg,cfg['datasplit'])
         with open(os.path.join(cfg['results_path'],f'{model_name}.pred'),'w') as f:
-            f.write(f'text\tlabels\tpredicted_labels\n')
+            f.write(f'ID\ttext\tlabels\tpredicted_labels\n')
             for line in print_lines:
                 sent = [vocab_dict['i2w'][i] for i in line[0]]
-                f.write(f'{" ".join(sent)}\t{" ".join(line[1])}\t{" ".join(line[2])}')
+                f.write(f'{line[-1]}\t{" ".join(sent)}\t{" ".join(line[1])}\t{" ".join(line[2])}')
                 f.write('\n')
     if non_default_only:
         precision,recall,fscore,support = precision_recall_fscore_support(prediction.cpu(),y.cpu())
@@ -150,6 +168,15 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
         #print(f'recall: {recall}')
         #print(f'support: {support}')
         return acc, total_pred, true_pos_pred, tot_utts, precision[0], precision[1], recall[0], recall[1]
+    if prf:        
+        precision,recall,fscore,support = precision_recall_fscore_support(prediction.cpu(),y.cpu())
+        if noisy:
+            print(f'Precision: {precision}')
+            print(f'Recall: {recall}')
+            print(f'F-score: {fscore}')
+        return acc, total_pred, true_pos_pred, tot_utts, precision, recall, fscore
+    t2 = time.time()
+    print(f'eval time:{t2-t1}')
     return acc, total_pred, true_pos_pred, tot_utts
 
 def evaluate_lengths(dataset,dataloader_params,model,device,recurrent=True,utterance_file='../data/utterances.txt'):

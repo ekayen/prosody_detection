@@ -66,6 +66,12 @@ class BurncDataset(data.Dataset):
         # 4: F0final_sma
         # 5: pcm_zcr_sma
 
+        self.content_pos = set(['^NN^NNS', 'PRP', '^VBZ', 'PRP$', '^VBP^RB', 'LS', '^PRP',
+                                '^VBD', '^NN', 'FW', 'VBZ', 'VBP', '^VBN', 'RB', 'VBN', '^VB',
+                                'CD', 'NNPS', '^JJ', '^DT^NN', 'VB', 'NNS^POS', 'JJ',
+                                'RBR', 'JJS', 'VBD', '^NNS', '^VBG', 'XX', '^IN', 'NNS', '^VB^RP',
+                                '^VBP', 'JJR', 'GW', '^NNS^POS', 'VBG', '^NNP', '^PRP$',
+                                'NNP', 'HVS', 'NN', 'RBS', 'JJ|RB', '^RB'])
 
         if not datasplit:
             datasplit = cfg['datasplit']
@@ -78,6 +84,11 @@ class BurncDataset(data.Dataset):
             self.ids = [tok for utt_id in self.utt_ids for tok in input_dict['utt2toks'][utt_id]]
         elif self.segmentation=='utterances':
             self.ids = self.utt_ids
+
+        if 'pos_only' in cfg:
+            self.pos_only = cfg['pos_only']
+        else:
+            self.pos_only = False
 
     def __len__(self):
         return len(self.ids)
@@ -130,7 +141,7 @@ class BurncDataset(data.Dataset):
             tok_ids = [iden]
             if self.context_window:
                 tok_ids = self.get_context(tok_ids)
-        if self.segmentation=='utterances':
+        elif self.segmentation=='utterances':
             tok_ids = self.input_dict['utt2toks'][iden]
         return tok_ids
 
@@ -190,6 +201,12 @@ class BurncDataset(data.Dataset):
     def get_tokens(self,tok_ids):
         tok_ints = []
         for tok_id in tok_ids:
+            if self.pos_only:
+                #import pdb;pdb.set_trace()
+                if self.input_dict['tok2pos'][tok_id] in self.w2i:
+                    tok_ints.append(self.w2i[self.input_dict['tok2pos'][tok_id]])
+                else:
+                    tok_ints.append(self.w2i['UNK'])
             if self.input_dict['tok2str'][tok_id] in self.w2i:
                 tok_ints.append(self.w2i[self.input_dict['tok2str'][tok_id]])
             else:
@@ -217,20 +234,45 @@ class SwbdDatasetInfostruc(BurncDataset):
     '''
     '''
     def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
-                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None,bio=True):
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None,labelling='bio'):
         super(SwbdDatasetInfostruc, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
                                                  overwrite_speech,scramble_speech,stopwords_only,
                                                  binary_vocab,ablate_feat)
         self.w2i = w2i
         self.i2lbl = vocab_dict['i2lbl']
         self.lbl2i = vocab_dict['lbl2i']
-        self.bio = bio
+        self.labelling = labelling
 
     def get_labels(self,iden):
-        if self.bio:
+        if self.labelling == 'bio':
             Y = torch.tensor([self.lbl2i[lbl] for lbl in self.input_dict['utt2bio'][iden]])
-        else:
+        elif self.labelling == 'new':
             Y = torch.tensor(self.input_dict['utt2new'][iden])
+        elif self.labelling == 'old':
+            Y = torch.tensor(self.input_dict['utt2old'][iden])
+        elif self.labelling == 'new_heads':
+            labels = self.input_dict['utt2new'][iden]
+            pos = [self.input_dict['tok2pos'][tok] for tok in self.input_dict['utt2toks'][iden]]
+            thinned_labels = []
+            for i in range(len(labels)):
+                if labels[i]==1:
+                    #TODO check for out of bounds first
+                    if pos[i] in self.content_pos:
+                        thinned_labels.append(labels[i])
+                    elif i==0 and labels[i+1]==0:
+                        thinned_labels.append(labels[i])
+                    elif i==len(labels)-1 and labels[i-1]==0:
+                        thinned_labels.append(labels[i])
+                    elif labels[i-1]==0 and labels[i+1]==0:
+                        thinned_labels.append(labels[i])
+                    else:
+                        thinned_labels.append(0)
+                else:
+                    thinned_labels.append(labels[i])
+            Y = torch.tensor(thinned_labels)
+        elif self.labelling == 'kontrast':
+            Y = torch.tensor(self.input_dict['utt2kontrast'][iden])
+
         if self.tok_pad_len and not self.segmentation == 'tokens':
             Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
         return Y
@@ -393,12 +435,10 @@ def plot_results(plot_data,model_name,results_path,p_r_scores=False):
         df = pd.DataFrame(dict(epochs=plot_data['time'],
                            train_losses=plot_data['loss'],
                            train_accs=plot_data['train_acc'],
-                           dev_accs=plot_data['dev_acc'],
-                           non_default_accs=plot_data['non_default_acc'],
-                           non_default_precision_0=plot_data['non_default_precision_0'],
-                           non_default_precision_1 = plot_data['non_default_precision_1'],
-                           non_default_recall_0 = plot_data['non_default_recall_0'],
-                           non_default_recall_1 = plot_data['non_default_recall_1']))
+                            dev_accs=plot_data['dev_acc'],
+                               dev_prec=plot_data['dev_prec'],
+                               dev_rec =plot_data['dev_rec'],
+                               dev_f=plot_data['dev_f'] ))
     else:
         df = pd.DataFrame(dict(epochs=plot_data['time'],
                            train_losses=plot_data['loss'],
@@ -519,21 +559,21 @@ def main():
         cfg = yaml.load(f, yaml.FullLoader)
     #burnc_dict = '../data/burnc/burnc.pkl'
     #burnc_dict = '../data/swbd/swbd_acc.pkl'
-    burnc_dict = '../data/swbd/swbd.pkl'
+    burnc_dict = '../data/swbd_new_only/swbd_new_only.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
     #cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
-    cfg['datasplit'] = '../data/swbd/splits/tenfold0.yaml'
+    cfg['datasplit'] = '../data/swbd_new_only/splits/tenfold0.yaml'
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
     #vocab_file = f'../data/burnc/splits/{splt}.vocab'
-    vocab_file = f'../data/swbd/splits/{splt}.vocab'
+    vocab_file = f'../data/swbd_new_only/splits/{splt}.vocab'
     print(vocab_file)
     with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
-
-    dataset = SwbdDatasetInfostruc(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,vocab_dict=vocab_dict,bio=False)
+    dataset = SwbdDatasetInfostruc(cfg,input_dict,vocab_dict['w2i'],vocab_size=30,mode='train',
+                                   datasplit=None,vocab_dict=vocab_dict,labelling='new')#,bio=False)
     item = dataset.__getitem__(4)
     import pdb;pdb.set_trace()
 

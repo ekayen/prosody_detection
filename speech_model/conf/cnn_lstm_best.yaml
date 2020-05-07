@@ -14,7 +14,7 @@ eval_every:
 
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'CELoss'
+model_name: 'CELoss_text'
 results_path: 'results/baseline'
 
 train_params:
@@ -50,7 +50,7 @@ frame_pad_size: 5
 
 
 # Text-specific params
-inputs: speech
+inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
