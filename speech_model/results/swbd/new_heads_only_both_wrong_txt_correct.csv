@@ -1,0 +1,1008 @@
+sw2397_s224
+so it it no big deal for me to pick those up
+-----------  --  ---  ---  --  ---  ----  ---  ---  --  ----  -----  --
+text         so  it   it   no  big  deal  for  me   to  pick  those  up
+pos          RB  BES  BES  DT  JJ   NN    IN   PRP  TO  VB    DT     RB
+labels       0   0    0    1   1    1     0    0    0   0     0      0
+full labels  0   0    0    1   1    1     0    0    0   0     0      0
+sp_pred      0   0    0    0   0    0     1    0    0   1     0      0
+txt_pred     0   0    0    1   1    1     0    0    0   0     0      0
+both_pred    0   0    0    1   1    1     1    0    0   0     0      0
+-----------  --  ---  ---  --  ---  ----  ---  ---  --  ----  -----  --
+
+sw2840_s152_a
+got a call while i was there
+-----------  ---  --  ----  -----  ---  ---  -----
+text         got  a   call  while  i    was  there
+pos          VBD  DT  NN    IN     PRP  VBD  RB
+labels       0    1   1     0      0    0    0
+full labels  0    1   1     0      0    0    0
+sp_pred      0    1   1     1      0    0    0
+txt_pred     0    1   1     0      0    0    0
+both_pred    0    1   1     1      0    0    0
+-----------  ---  --  ----  -----  ---  ---  -----
+
+sw2609_s215
+and uh he makes a very uh
+-----------  ---  --  ---  -----  --  ----  --
+text         and  uh  he   makes  a   very  uh
+pos          CC   UH  PRP  VBZ    DT  JJ    UH
+labels       0    0   0    0      1   1     1
+full labels  0    0   0    0      1   1     1
+sp_pred      0    0   0    0      0   0     0
+txt_pred     0    0   0    0      1   1     1
+both_pred    1    0   1    0      1   1     1
+-----------  ---  --  ---  -----  --  ----  --
+
+sw2615_s129
+that that what i like because theyve theyve got plenty of power
+-----------  ----  ----  ----  ---  ----  -------  ------  ------  ---  ------  --  -----
+text         that  that  what  i    like  because  theyve  theyve  got  plenty  of  power
+pos          BES   BES   WP    PRP  VBP   IN       VBP     VBP     VBN  NN      IN  NN
+labels       0     0     0     0    0     0        0       0       0    1       1   1
+full labels  0     0     0     0    0     0        0       0       0    1       1   1
+sp_pred      0     0     0     1    1     1        0       0       0    0       0   0
+txt_pred     0     0     0     0    0     0        0       0       0    1       1   1
+both_pred    0     0     0     0    0     0        0       0       0    1       0   0
+-----------  ----  ----  ----  ---  ----  -------  ------  ------  ---  ------  --  -----
+
+sw2302_s19_c
+just kind of UNK it off just spend a day or a day and a half like most folks do
+-----------  ----  ----  --  ---  ---  ---  ----  -----  --  ---  --  --  ---  ---  --  ----  ----  ----  -----  ---
+text         just  kind  of  UNK  it   off  just  spend  a   day  or  a   day  and  a   half  like  most  folks  do
+pos          RB    RB    RB  VBG  PRP  RP   RB    VB     DT  NN   CC  DT  NN   CC   DT  NN    IN    JJS   NNS    VBP
+labels       0     0     0   0    0    0    0     0      1   1    0   0   0    0    0   0     0     0     0      0
+full labels  0     0     0   0    0    0    0     0      1   1    0   0   0    0    0   0     0     0     0      0
+sp_pred      0     0     0   0    0    0    0     0      0   0    0   0   0    0    0   0     0     0     0      0
+txt_pred     0     0     0   0    0    0    0     0      1   1    0   0   0    0    0   0     0     0     0      0
+both_pred    0     0     0   0    0    0    0     0      0   1    1   1   1    1    0   0     0     0     0      0
+-----------  ----  ----  --  ---  ---  ---  ----  -----  --  ---  --  --  ---  ---  --  ----  ----  ----  -----  ---
+
+sw3096_s114_b
+the society of women
+-----------  ---  -------  --  -----
+text         the  society  of  women
+pos          DT   NNP      IN  NNP
+labels       1    1        0   0
+full labels  1    1        0   0
+sp_pred      1    1        0   1
+txt_pred     1    1        0   0
+both_pred    1    1        1   0
+-----------  ---  -------  --  -----
+
+sw2295_s123
+but you know what if
+-----------  ---  ---  ----  ----  --
+text         but  you  know  what  if
+pos          CC   PRP  VBP   WP    IN
+labels       0    0    0     1     0
+full labels  0    0    0     1     0
+sp_pred      0    0    0     1     0
+txt_pred     0    0    0     1     0
+both_pred    0    0    0     0     0
+-----------  ---  ---  ----  ----  --
+
+sw4633_s140
+then when they get down here they realize the cost of living is outrageous
+-----------  ----  ----  ----  ---  ----  ----  ----  -------  ---  ----  --  ------  ---  ----------
+text         then  when  they  get  down  here  they  realize  the  cost  of  living  is   outrageous
+pos          RB    WRB   PRP   VBP  IN    RB    PRP   VBP      DT   NN    IN  NN      VBZ  JJ
+labels       0     0     0     0    0     0     0     0        1    1     1   1       0    0
+full labels  0     0     0     0    0     0     0     0        1    1     1   1       0    0
+sp_pred      0     0     0     0    0     0     0     1        0    0     0   0       0    0
+txt_pred     0     0     0     0    0     0     0     0        1    1     1   1       0    0
+both_pred    0     0     0     0    0     0     0     0        1    1     0   0       0    0
+-----------  ----  ----  ----  ---  ----  ----  ----  -------  ---  ----  --  ------  ---  ----------
+
+sw2970_s250
+and on the cover of time magazine
+-----------  ---  --  ---  -----  --  ----  --------
+text         and  on  the  cover  of  time  magazine
+pos          CC   IN  DT   NN     IN  NNP   NN
+labels       0    0   1    1      0   0     0
+full labels  0    0   1    1      0   0     0
+sp_pred      1    0   0    1      0   0     0
+txt_pred     0    0   1    1      0   0     0
+both_pred    0    0   1    1      1   1     1
+-----------  ---  --  ---  -----  --  ----  --------
+
+sw2041_s187
+and one of the ones that had an impact was
+-----------  ---  ---  --  ---  ----  ----  ---  --  ------  ---
+text         and  one  of  the  ones  that  had  an  impact  was
+pos          CC   NN   IN  DT   NNS   WDT   VBD  DT  NN      VBD
+labels       0    1    0   0    0     0     0    0   0       0
+full labels  0    1    0   0    0     0     0    0   0       0
+sp_pred      0    1    0   0    0     0     0    0   0       0
+txt_pred     0    1    0   0    0     0     0    0   0       0
+both_pred    0    1    0   0    0     0     0    1   1       1
+-----------  ---  ---  --  ---  ----  ----  ---  --  ------  ---
+
+sw3660_s35_b
+you know as as better for the country and better for the working UNK
+-----------  ---  ----  --  --  ------  ---  ---  -------  ---  ------  ---  ---  -------  ---
+text         you  know  as  as  better  for  the  country  and  better  for  the  working  UNK
+pos          PRP  VBP   RB  RB  JJR     IN   DT   NN       CC   JJR     IN   DT   NN       NNS
+labels       0    0     0   0   0       0    0    0        0    0       0    1    1        1
+full labels  0    0     0   0   0       0    0    0        0    0       0    1    1        1
+sp_pred      0    0     0   0   0       0    0    0        0    0       0    0    0        0
+txt_pred     0    0     0   0   0       0    0    0        0    0       0    1    1        1
+both_pred    0    0     0   0   0       0    0    0        0    0       0    0    0        0
+-----------  ---  ----  --  --  ------  ---  ---  -------  ---  ------  ---  ---  -------  ---
+
+sw2784_s17
+no argument here
+-----------  --  --------  ----
+text         no  argument  here
+pos          DT  NN        RB
+labels       1   1         0
+full labels  1   1         0
+sp_pred      1   1         1
+txt_pred     1   1         0
+both_pred    1   1         1
+-----------  --  --------  ----
+
+sw4101_s60
+but we have actually quite an extensive
+-----------  ---  ---  ----  --------  -----  --  ---------
+text         but  we   have  actually  quite  an  extensive
+pos          CC   PRP  VBP   RB        PDT    DT  JJ
+labels       0    0    0     0         1      1   1
+full labels  0    0    0     0         1      1   1
+sp_pred      0    0    1     1         0      0   0
+txt_pred     0    0    0     0         1      1   1
+both_pred    0    1    0     0         1      1   1
+-----------  ---  ---  ----  --------  -----  --  ---------
+
+sw2998_s1
+um what do you think
+-----------  --  ----  ---  ---  -----
+text         um  what  do   you  think
+pos          UH  WP    VBP  PRP  VB
+labels       0   1     0    0    0
+full labels  0   1     0    0    0
+sp_pred      1   1     0    0    0
+txt_pred     0   1     0    0    0
+both_pred    1   1     0    0    0
+-----------  --  ----  ---  ---  -----
+
+sw2486_s38
+what about the miniskirt miniskirt
+-----------  ----  -----  ---  ---------  ---------
+text         what  about  the  miniskirt  miniskirt
+pos          WP    IN     DT   NN         NN
+labels       1     0      0    0          0
+full labels  1     0      0    0          0
+sp_pred      1     0      0    1          1
+txt_pred     1     0      0    0          0
+both_pred    1     1      0    0          0
+-----------  ----  -----  ---  ---------  ---------
+
+sw2020_s27_a
+i like a little bit of a lot of different types of music
+-----------  ---  ----  --  ------  ---  --  --  ---  --  ---------  -----  --  -----
+text         i    like  a   little  bit  of  a   lot  of  different  types  of  music
+pos          PRP  VBP   DT  JJ      NN   IN  DT  NN   IN  JJ         NNS    IN  NN
+labels       0    0     1   1       1    0   1   1    0   0          0      0   0
+full labels  0    0     1   1       1    0   1   1    0   0          0      0   0
+sp_pred      0    0     0   0       0    0   1   1    0   0          0      0   0
+txt_pred     0    0     1   1       1    0   1   1    0   0          0      0   0
+both_pred    0    0     1   1       1    1   1   1    0   0          0      0   0
+-----------  ---  ----  --  ------  ---  --  --  ---  --  ---------  -----  --  -----
+
+sw2611_s138
+uh uh a little simple shell shell UNK you know that you can make for about
+-----------  --  --  --  ------  ------  -----  -----  ---  ---  ----  ----  ---  ---  ----  ---  -----
+text         uh  uh  a   little  simple  shell  shell  UNK  you  know  that  you  can  make  for  about
+pos          UH  UH  DT  JJ      JJ      NN     NN     NN   PRP  VBP   WDT   PRP  MD   VB    IN   RB
+labels       0   0   0   0       0       0      0      0    0    0     0     0    0    0     0    1
+full labels  0   0   0   0       0       0      0      0    0    0     0     0    0    0     0    1
+sp_pred      0   0   0   0       0       0      0      0    0    0     0     0    0    0     0    0
+txt_pred     0   0   0   0       0       0      0      0    0    0     0     0    0    0     0    1
+both_pred    0   0   1   1       1       1      1      0    0    0     0     0    0    0     1    0
+-----------  --  --  --  ------  ------  -----  -----  ---  ---  ----  ----  ---  ---  ----  ---  -----
+
+sw2429_s222_a
+im im gonna gonna have lots of dinner parties
+-----------  ---  ---  -----  -----  ----  ----  --  ------  -------
+text         im   im   gonna  gonna  have  lots  of  dinner  parties
+pos          VBP  VBP  TO     TO     VB    NNS   IN  NN      NNS
+labels       0    0    0      0      0     1     0   0       0
+full labels  0    0    0      0      0     1     0   0       0
+sp_pred      0    0    0      0      0     1     1   1       1
+txt_pred     0    0    0      0      0     1     0   0       0
+both_pred    0    0    0      0      0     1     0   0       1
+-----------  ---  ---  -----  -----  ----  ----  --  ------  -------
+
+sw2790_s95_b
+people- people were a lot better back then as far as having higher standards
+-----------  -------  ------  ----  --  ---  ------  ----  ----  --  ---  --  ------  ------  ---------
+text         people-  people  were  a   lot  better  back  then  as  far  as  having  higher  standards
+pos          NNS      NNS     VBD   DT  NN   JJ      RB    RB    RB  RB   IN  JJR     JJR     NNS
+labels       0        0       0     0   0    0       0     0     0   0    0   0       1       1
+full labels  0        0       0     0   0    0       0     0     0   0    0   0       1       1
+sp_pred      0        0       0     0   0    0       0     0     0   0    0   0       0       0
+txt_pred     0        0       0     0   0    0       0     0     0   0    0   0       1       1
+both_pred    0        0       0     1   1    0       0     0     0   0    0   0       0       0
+-----------  -------  ------  ----  --  ---  ------  ----  ----  --  ---  --  ------  ------  ---------
+
+sw2461_s92_a
+right now are political suicide
+-----------  -----  ---  ---  ---------  -------
+text         right  now  are  political  suicide
+pos          RB     RB   VBP  JJ         NN
+labels       0      0    0    1          1
+full labels  0      0    0    1          1
+sp_pred      1      1    0    0          0
+txt_pred     0      0    0    1          1
+both_pred    0      0    0    1          0
+-----------  -----  ---  ---  ---------  -------
+
+sw2667_s271
+well um do a lot of people take advantage of it
+-----------  ----  --  ---  --  ---  --  ------  ----  ---------  --  ---
+text         well  um  do   a   lot  of  people  take  advantage  of  it
+pos          UH    UH  VBP  DT  NN   IN  NNS     VB    NN         IN  PRP
+labels       0     0   0    1   1    0   0       0     1          0   0
+full labels  0     0   0    1   1    0   0       0     1          0   0
+sp_pred      0     0   0    0   0    0   0       0     0          0   0
+txt_pred     0     0   0    1   1    0   0       0     1          0   0
+both_pred    0     0   0    1   1    0   0       0     0          0   0
+-----------  ----  --  ---  --  ---  --  ------  ----  ---------  --  ---
+
+sw2667_s207
+it it just a put off
+-----------  ---  ---  ----  --  ---  ---
+text         it   it   just  a   put  off
+pos          BES  BES  RB    DT  GW   ^NN
+labels       0    0    0     1   1    1
+full labels  0    0    0     1   1    1
+sp_pred      0    0    1     1   1    1
+txt_pred     0    0    0     1   1    1
+both_pred    0    0    0     1   1    0
+-----------  ---  ---  ----  --  ---  ---
+
+sw3523_s40
+uh in fact i know the school districts down here
+-----------  --  --  ----  ---  ----  ---  ------  ---------  ----  ----
+text         uh  in  fact  i    know  the  school  districts  down  here
+pos          UH  IN  NN    PRP  VBP   DT   NN      NNS        IN    RB
+labels       0   0   0     0    0     1    1       1          1     1
+full labels  0   0   0     0    0     1    1       1          1     1
+sp_pred      0   0   0     1    1     0    0       0          0     0
+txt_pred     0   0   0     0    0     1    1       1          1     1
+both_pred    0   0   0     0    1     1    1       1          1     1
+-----------  --  --  ----  ---  ----  ---  ------  ---------  ----  ----
+
+sw2832_s58_a
+and uh the way in which
+-----------  ---  --  ---  ---  --  -----
+text         and  uh  the  way  in  which
+pos          CC   UH  DT   NN   IN  WDT
+labels       0    0   1    1    1   0
+full labels  0    0   1    1    1   0
+sp_pred      0    0   0    0    0   0
+txt_pred     0    0   1    1    1   0
+both_pred    0    0   1    1    0   0
+-----------  ---  --  ---  ---  --  -----
+
+sw4113_s54_a
+the uh you know the idea of
+-----------  ---  --  ---  ----  ---  ----  --
+text         the  uh  you  know  the  idea  of
+pos          DT   UH  PRP  VBP   DT   NN    IN
+labels       0    0   0    0     1    1     1
+full labels  0    0   0    0     1    1     1
+sp_pred      0    0   0    0     0    0     0
+txt_pred     0    0   0    0     1    1     1
+both_pred    0    0   0    1     1    1     1
+-----------  ---  --  ---  ----  ---  ----  --
+
+sw2617_s79_a
+uh or more of a political action i guess you getting into their UNK UNK which you really ca ca do as as another country
+-----------  --  --  ----  --  --  ---------  ------  ---  -----  ---  -------  ----  -----  ---  ---  -----  ---  ------  --  --  --  --  --  -------  -------
+text         uh  or  more  of  a   political  action  i    guess  you  getting  into  their  UNK  UNK  which  you  really  ca  ca  do  as  as  another  country
+pos          UH  CC  RBR   IN  DT  JJ         NN      PRP  VBP    PRP  VBG      IN    PRP$   JJ   NNS  WDT    PRP  RB      RB  RB  VB  RB  IN  DT       NN
+labels       0   0   1     0   0   0          0       0    0      0    0        0     0      0    0    0      0    0       0   0   0   0   0   0        0
+full labels  0   0   1     0   0   0          0       0    0      0    0        0     0      0    0    0      0    0       0   0   0   0   0   0        0
+sp_pred      0   0   0     0   0   0          0       0    0      0    0        0     0      0    0    0      0    0       0   0   0   0   0   0        0
+txt_pred     0   0   1     0   0   0          0       0    0      0    0        0     0      0    0    0      0    0       0   0   0   0   0   0        0
+both_pred    0   0   1     0   1   1          0       0    0      0    0        0     0      0    0    0      0    0       0   0   0   0   0   0        0
+-----------  --  --  ----  --  --  ---------  ------  ---  -----  ---  -------  ----  -----  ---  ---  -----  ---  ------  --  --  --  --  --  -------  -------
+
+sw3691_s51_a
+that thing grew to be seven and a half feet
+-----------  ----  -----  ----  --  --  -----  ---  --  ----  ----
+text         that  thing  grew  to  be  seven  and  a   half  feet
+pos          DT    NN     VBD   TO  VB  CD     CC   DT  DT    NNS
+labels       0     0      0     0   0   1      1    1   1     1
+full labels  0     0      0     0   0   1      1    1   1     1
+sp_pred      0     0      0     0   0   0      0    0   0     0
+txt_pred     0     0      0     0   0   1      1    1   1     1
+both_pred    0     0      0     0   0   0      1    1   1     1
+-----------  ----  -----  ----  --  --  -----  ---  --  ----  ----
+
+sw3699_s58_d
+you know UNK oh
+-----------  ---  ----  ---  --
+text         you  know  UNK  oh
+pos          PRP  VBP   RB   UH
+labels       0    1     1    1
+full labels  0    1     1    1
+sp_pred      0    0     0    0
+txt_pred     0    1     1    1
+both_pred    0    0     0    0
+-----------  ---  ----  ---  --
+
+sw2866_s153
+there there a big difference between baltimore and washington even though theyre theyre so close
+-----------  -----  -----  --  ---  ----------  -------  ---------  ---  ----------  ----  ------  ------  ------  --  -----
+text         there  there  a   big  difference  between  baltimore  and  washington  even  though  theyre  theyre  so  close
+pos          BES    BES    DT  JJ   NN          IN       NNP        CC   NNP         RB    IN      VBP     VBP     RB  RB
+labels       0      0      1   1    1           1        0          0    0           0     0       0       0       0   0
+full labels  0      0      1   1    1           1        0          0    0           0     0       0       0       0   0
+sp_pred      0      0      0   0    0           0        1          0    0           0     0       0       0       0   0
+txt_pred     0      0      1   1    1           1        0          0    0           0     0       0       0       0   0
+both_pred    0      0      1   1    1           1        1          0    0           0     0       0       0       0   0
+-----------  -----  -----  --  ---  ----------  -------  ---------  ---  ----------  ----  ------  ------  ------  --  -----
+
+sw3756_s17
+the one that looks like a UNK
+-----------  ---  ---  ----  -----  ----  --  ---
+text         the  one  that  looks  like  a   UNK
+pos          DT   NN   WDT   VBZ    IN    DT  NN
+labels       0    0    0     0      0     1   1
+full labels  0    0    0     0      0     1   1
+sp_pred      1    1    0     0      0     0   0
+txt_pred     0    0    0     0      0     1   1
+both_pred    1    1    0     1      1     1   1
+-----------  ---  ---  ----  -----  ----  --  ---
+
+sw3288_s53
+well you know uh living in dallas you know weve weve got uh UNK to UNK eight UNK of traffic
+-----------  ----  ---  ----  --  ------  --  ------  ---  ----  ----  ----  ---  --  ---  --  ---  -----  ---  --  -------
+text         well  you  know  uh  living  in  dallas  you  know  weve  weve  got  uh  UNK  to  UNK  eight  UNK  of  traffic
+pos          UH    PRP  VBP   UH  VBG     IN  NNP     PRP  VBP   VBP   VBP   VBN  UH  NN   IN  NN   CD     NNS  IN  NN
+labels       0     0    0     0   0       0   0       0    0     0     0     0    0   0    0   0    1      1    1   1
+full labels  0     0    0     0   0       0   0       0    0     0     0     0    0   0    0   0    1      1    1   1
+sp_pred      0     0    0     0   0       0   0       0    0     0     0     0    0   0    0   0    0      0    0   0
+txt_pred     0     0    0     0   0       0   0       0    0     0     0     0    0   0    0   0    1      1    1   1
+both_pred    0     0    0     0   0       0   0       0    0     0     0     0    0   0    0   0    1      1    0   0
+-----------  ----  ---  ----  --  ------  --  ------  ---  ----  ----  ----  ---  --  ---  --  ---  -----  ---  --  -------
+
+sw2445_s210
+and then a big UNK it would pick you up
+-----------  ---  ----  --  ---  ---  ---  -----  ----  ---  --
+text         and  then  a   big  UNK  it   would  pick  you  up
+pos          CC   RB    DT  JJ   NN   PRP  MD     VB    PRP  RP
+labels       0    0     1   1    1    0    0      0     0    0
+full labels  0    0     1   1    1    0    0      0     0    0
+sp_pred      0    0     0   0    0    0    0      1     0    0
+txt_pred     0    0     1   1    1    0    0      0     0    0
+both_pred    0    0     1   1    1    0    0      1     0    0
+-----------  ---  ----  --  ---  ---  ---  -----  ----  ---  --
+
+sw2617_s189
+giving a UNK to stand on
+-----------  ------  --  ---  --  -----  --
+text         giving  a   UNK  to  stand  on
+pos          VBG     DT  NN   TO  VB     IN
+labels       0       1   1    1   1      1
+full labels  0       1   1    1   1      1
+sp_pred      0       1   1    0   0      0
+txt_pred     0       1   1    1   1      1
+both_pred    0       1   1    1   1      0
+-----------  ------  --  ---  --  -----  --
+
+sw3174_s16
+but yet that can be carried to an extreme too
+-----------  ---  ---  ----  ---  --  -------  --  --  -------  ---
+text         but  yet  that  can  be  carried  to  an  extreme  too
+pos          CC   RB   DT    MD   VB  VBN      IN  DT  NN       RB
+labels       0    0    0     0    0   0        0   1   1        0
+full labels  0    0    0     0    0   0        0   1   1        0
+sp_pred      0    0    0     0    1   1        0   0   0        0
+txt_pred     0    0    0     0    0   0        0   1   1        0
+both_pred    0    0    0     0    0   0        0   1   1        1
+-----------  ---  ---  ----  ---  --  -------  --  --  -------  ---
+
+sw2145_s90_a
+uh the the morals that they would be taught
+-----------  --  ---  ---  ------  ----  ----  -----  --  ------
+text         uh  the  the  morals  that  they  would  be  taught
+pos          UH  DT   DT   NNS     WDT   PRP   MD     VB  VBN
+labels       0   0    1    1       0     0     1      1   1
+full labels  0   0    1    1       0     0     1      1   1
+sp_pred      0   0    0    0       0     0     0      0   0
+txt_pred     0   0    1    1       0     0     1      1   1
+both_pred    0   1    1    1       1     0     1      1   0
+-----------  --  ---  ---  ------  ----  ----  -----  --  ------
+
+sw2641_s268
+we live also live in the city now actually in UNK
+-----------  ---  ----  ----  ----  --  ---  ----  ---  --------  --  ---
+text         we   live  also  live  in  the  city  now  actually  in  UNK
+pos          PRP  VBP   RB    VBP   IN  DT   NN    RB   RB        IN  NNP
+labels       0    0     0     0     0   1    1     0    0         0   0
+full labels  0    0     0     0     0   1    1     0    0         0   0
+sp_pred      0    0     0     0     0   0    1     0    0         0   0
+txt_pred     0    0     0     0     0   1    1     0    0         0   0
+both_pred    0    0     0     0     0   0    0     0    0         0   1
+-----------  ---  ----  ----  ----  --  ---  ----  ---  --------  --  ---
+
+sw2667_s164
+um it it a lot more fun than some other things i could do i guess
+-----------  --  ---  ---  --  ---  ----  ---  ----  ----  -----  ------  ---  -----  --  ---  -----
+text         um  it   it   a   lot  more  fun  than  some  other  things  i    could  do  i    guess
+pos          UH  BES  BES  DT  NN   RBR   JJ   IN    DT    JJ     NNS     PRP  MD     VB  PRP  VBP
+labels       0   0    0    1   1    0     0    0     0     0      0       0    0      0   0    0
+full labels  0   0    0    1   1    0     0    0     0     0      0       0    0      0   0    0
+sp_pred      0   0    0    0   0    0     1    0     0     0      0       0    0      0   0    0
+txt_pred     0   0    0    1   1    0     0    0     0     0      0       0    0      0   0    0
+both_pred    0   0    0    1   1    1     1    1     0     0      0       0    0      0   0    0
+-----------  --  ---  ---  --  ---  ----  ---  ----  ----  -----  ------  ---  -----  --  ---  -----
+
+sw2628_s197_d
+you know be there at every UNK and call
+-----------  ---  ----  --  -----  --  -----  ---  ---  ----
+text         you  know  be  there  at  every  UNK  and  call
+pos          PRP  VBP   VB  RB     IN  DT     NN   CC   NN
+labels       0    0     0   0      0   1      1    1    1
+full labels  0    0     0   0      0   1      1    1    1
+sp_pred      0    0     0   0      0   0      0    0    0
+txt_pred     0    0     0   0      0   1      1    1    1
+both_pred    0    0     0   0      0   1      1    0    0
+-----------  ---  ----  --  -----  --  -----  ---  ---  ----
+
+sw2962_s117_a
+must have here
+-----------  ----  ----  ----
+text         must  have  here
+pos          MD    VB    RB
+labels       1     1     1
+full labels  1     1     1
+sp_pred      1     1     0
+txt_pred     1     1     1
+both_pred    1     1     0
+-----------  ----  ----  ----
+
+sw4830_s78
+and two days later he got out of jail
+-----------  ---  ---  ----  -----  ---  ---  ---  --  ----
+text         and  two  days  later  he   got  out  of  jail
+pos          CC   CD   NNS   RB     PRP  VBD  IN   IN  NN
+labels       0    1    1     0      0    0    0    0   0
+full labels  0    1    1     0      0    0    0    0   0
+sp_pred      0    0    0     0      0    0    0    0   0
+txt_pred     0    1    1     0      0    0    0    0   0
+both_pred    1    1    1     0      0    0    0    0   0
+-----------  ---  ---  ----  -----  ---  ---  ---  --  ----
+
+sw3021_s76
+you had to fill out an application and
+-----------  ---  ---  --  ----  ---  --  -----------  ---
+text         you  had  to  fill  out  an  application  and
+pos          PRP  VBD  TO  VB    RP   DT  NN           CC
+labels       0    0    0   0     0    1   1            0
+full labels  0    0    0   0     0    1   1            0
+sp_pred      0    0    1   1     0    0   1            0
+txt_pred     0    0    0   0     0    1   1            0
+both_pred    0    0    0   0     0    1   1            1
+-----------  ---  ---  --  ----  ---  --  -----------  ---
+
+sw4101_s36_b
+there there the opportunity for both
+-----------  -----  -----  ---  -----------  ---  ----
+text         there  there  the  opportunity  for  both
+pos          BES    BES    DT   NN           IN   DT
+labels       0      0      1    1            1    0
+full labels  0      0      1    1            1    0
+sp_pred      0      0      1    1            0    0
+txt_pred     0      0      1    1            1    0
+both_pred    0      0      1    1            1    1
+-----------  -----  -----  ---  -----------  ---  ----
+
+sw4101_s41_c
+the people that do the
+-----------  ---  ------  ----  ---  ---
+text         the  people  that  do   the
+pos          DT   NNS     WDT   VBP  DT
+labels       0    0       0     0    1
+full labels  0    0       0     0    1
+sp_pred      0    1       1     0    0
+txt_pred     0    0       0     0    1
+both_pred    0    0       0     1    1
+-----------  ---  ------  ----  ---  ---
+
+sw3023_s33
+and i see that even he was met without with with little success
+-----------  ---  ---  ---  ----  ----  ---  ---  ---  -------  ----  ----  ------  -------
+text         and  i    see  that  even  he   was  met  without  with  with  little  success
+pos          CC   PRP  VBP  IN    RB    PRP  VBD  VBN  IN       IN    IN    JJ      NN
+labels       0    0    0    0     0     0    0    0    0        0     0     1       1
+full labels  0    0    0    0     0     0    0    0    0        0     0     1       1
+sp_pred      0    0    0    0     0     0    0    0    0        0     0     0       0
+txt_pred     0    0    0    0     0     0    0    0    0        0     0     1       1
+both_pred    0    0    0    0     0     0    0    0    1        0     0     0       0
+-----------  ---  ---  ---  ----  ----  ---  ---  ---  -------  ----  ----  ------  -------
+
+sw2397_s36
+theyre theyre like UNK
+-----------  ------  ------  ----  ---
+text         theyre  theyre  like  UNK
+pos          VBP     VBP     IN    NNS
+labels       0       0       0     1
+full labels  0       0       0     1
+sp_pred      0       0       1     1
+txt_pred     0       0       0     1
+both_pred    0       0       1     1
+-----------  ------  ------  ----  ---
+
+sw4831_s64_c
+the the UNK get smaller on the top of the tree
+-----------  ---  ---  ---  ---  -------  --  ---  ---  --  ---  ----
+text         the  the  UNK  get  smaller  on  the  top  of  the  tree
+pos          DT   DT   NNS  VBP  JJR      IN  DT   NN   IN  DT   NN
+labels       0    0    0    0    0        0   1    1    0   0    0
+full labels  0    0    0    0    0        0   1    1    0   0    0
+sp_pred      0    0    0    0    0        0   0    0    0   0    0
+txt_pred     0    0    0    0    0        0   1    1    0   0    0
+both_pred    1    1    1    1    1        0   1    1    0   0    0
+-----------  ---  ---  ---  ---  -------  --  ---  ---  --  ---  ----
+
+sw3140_s28
+i mean there there plenty of things to talk about there
+-----------  ---  ----  -----  -----  ------  --  ------  --  ----  -----  -----
+text         i    mean  there  there  plenty  of  things  to  talk  about  there
+pos          PRP  VBP   BES    BES    NN      IN  NNS     TO  VB    IN     RB
+labels       0    0     0      0      1       0   0       0   0     0      0
+full labels  0    0     0      0      1       0   0       0   0     0      0
+sp_pred      0    0     0      0      0       0   0       1   1     0      0
+txt_pred     0    0     0      0      1       0   0       0   0     0      0
+both_pred    0    0     0      0      1       0   0       1   1     1      0
+-----------  ---  ----  -----  -----  ------  --  ------  --  ----  -----  -----
+
+sw2559_s12
+mostly it dealt with uh UNK companies these uh UNK UNK
+-----------  ------  ---  -----  ----  --  ---  ---------  -----  --  ---  ---
+text         mostly  it   dealt  with  uh  UNK  companies  these  uh  UNK  UNK
+pos          RB      PRP  VBD    IN    UH  NN   NNS        DT     UH  JJ   NN
+labels       0       0    0      0     0   1    1          1      1   1    1
+full labels  0       0    0      0     0   1    1          1      1   1    1
+sp_pred      0       0    0      0     0   1    0          0      0   0    0
+txt_pred     0       0    0      0     0   1    1          1      1   1    1
+both_pred    0       0    0      1     1   1    1          0      0   1    1
+-----------  ------  ---  -----  ----  --  ---  ---------  -----  --  ---  ---
+
+sw4880_s5
+and ive ive got UNK
+-----------  ---  ---  ---  ---  ---
+text         and  ive  ive  got  UNK
+pos          CC   VBP  VBP  VBN  DT
+labels       0    0    0    0    1
+full labels  0    0    0    0    1
+sp_pred      1    1    0    0    0
+txt_pred     0    0    0    0    1
+both_pred    0    0    0    1    1
+-----------  ---  ---  ---  ---  ---
+
+sw2503_s219
+it it been a pleasure talking to you
+-----------  ---  ---  ----  --  --------  -------  --  ---
+text         it   it   been  a   pleasure  talking  to  you
+pos          HVS  HVS  VBN   DT  NN        VBG      IN  PRP
+labels       0    0    0     1   1         0        0   0
+full labels  0    0    0     1   1         0        0   0
+sp_pred      0    0    0     1   1         1        0   0
+txt_pred     0    0    0     1   1         0        0   0
+both_pred    0    0    0     1   1         1        1   0
+-----------  ---  ---  ----  --  --------  -------  --  ---
+
+sw2241_s144
+but the the way they behave
+-----------  ---  ---  ---  ---  ----  ------
+text         but  the  the  way  they  behave
+pos          CC   DT   DT   NN   PRP   VBP
+labels       0    0    1    1    0     1
+full labels  0    0    1    1    0     1
+sp_pred      0    0    0    0    0     0
+txt_pred     0    0    1    1    0     1
+both_pred    0    1    1    1    0     1
+-----------  ---  ---  ---  ---  ----  ------
+
+sw2832_s242
+and we and we had we had almost id id say about
+-----------  ---  ---  ---  ---  ---  ---  ---  ------  --  --  ---  -----
+text         and  we   and  we   had  we   had  almost  id  id  say  about
+pos          CC   PRP  CC   PRP  VBD  PRP  VBD  RB      MD  MD  VB   RB
+labels       0    0    0    0    0    0    0    1       0   0   1    1
+full labels  0    0    0    0    0    0    0    1       0   0   1    1
+sp_pred      0    0    0    1    1    0    0    0       0   0   0    0
+txt_pred     0    0    0    0    0    0    0    1       0   0   1    1
+both_pred    0    0    0    1    0    0    0    0       0   0   0    0
+-----------  ---  ---  ---  ---  ---  ---  ---  ------  --  --  ---  -----
+
+sw3876_s16_b
+like milk UNK or if they have water in them1
+-----------  ----  ----  ---  --  --  ----  ----  -----  --  -----
+text         like  milk  UNK  or  if  they  have  water  in  them1
+pos          UH    NN    NNS  CC  IN  PRP   VBP   NN     IN  PRP
+labels       0     0     0    0   0   0     0     1      0   0
+full labels  0     0     0    0   0   0     0     1      0   0
+sp_pred      1     1     1    0   0   0     0     0      0   0
+txt_pred     0     0     0    0   0   0     0     1      0   0
+both_pred    1     1     1    0   0   0     0     0      0   0
+-----------  ----  ----  ---  --  --  ----  ----  -----  --  -----
+
+sw3049_s28_c
+the one about the old people
+-----------  ---  ---  -----  ---  ---  ------
+text         the  one  about  the  old  people
+pos          DT   NN   IN     DT   JJ   NNS
+labels       0    0    0      1    1    1
+full labels  0    0    0      1    1    1
+sp_pred      0    0    0      0    0    0
+txt_pred     0    0    0      1    1    1
+both_pred    1    1    1      0    0    0
+-----------  ---  ---  -----  ---  ---  ------
+
+sw4812_s66_a
+there there some noise on this end
+-----------  -----  -----  ----  -----  --  ----  ---
+text         there  there  some  noise  on  this  end
+pos          BES    BES    DT    NN     IN  DT    NN
+labels       0      0      1     1      0   0     0
+full labels  0      0      1     1      0   0     0
+sp_pred      0      0      1     1      1   1     0
+txt_pred     0      0      1     1      0   0     0
+both_pred    0      0      1     1      1   0     0
+-----------  -----  -----  ----  -----  --  ----  ---
+
+sw2932_s21
+are most of the houses in your area three bedroom two bath
+-----------  ---  ----  --  ---  ------  --  ----  ----  -----  -------  ---  ----
+text         are  most  of  the  houses  in  your  area  three  bedroom  two  bath
+pos          VBP  JJS   IN  DT   NNS     IN  PRP$  NN    CD     NN       CD   NN
+labels       0    1     0   0    0       0   0     0     0      0        0    0
+full labels  0    1     0   0    0       0   0     0     0      0        0    0
+sp_pred      0    0     0   0    0       0   0     0     0      0        0    0
+txt_pred     0    1     0   0    0       0   0     0     0      0        0    0
+both_pred    0    1     0   0    0       0   0     0     1      0        0    0
+-----------  ---  ----  --  ---  ------  --  ----  ----  -----  -------  ---  ----
+
+sw3096_s11_a
+a lot to be made though
+-----------  --  ---  --  --  ----  ------
+text         a   lot  to  be  made  though
+pos          DT  NN   TO  VB  VBN   RB
+labels       1   1    0   0   0     0
+full labels  1   1    0   0   0     0
+sp_pred      1   1    0   0   0     0
+txt_pred     1   1    0   0   0     0
+both_pred    1   1    1   1   0     0
+-----------  --  ---  --  --  ----  ------
+
+sw3523_s127
+by the phone and all that
+-----------  --  ---  -----  ---  ---  ----
+text         by  the  phone  and  all  that
+pos          IN  DT   NN     CC   PDT  DT
+labels       0   1    1      0    0    0
+full labels  0   1    1      0    0    0
+sp_pred      0   0    0      0    0    0
+txt_pred     0   1    1      0    0    0
+both_pred    0   1    1      1    1    0
+-----------  --  ---  -----  ---  ---  ----
+
+sw3606_s150
+and i saw there were some stop signs i mean UNK up to the writing
+-----------  ---  ---  ---  -----  ----  ----  ----  -----  ---  ----  ---  --  --  ---  -------
+text         and  i    saw  there  were  some  stop  signs  i    mean  UNK  up  to  the  writing
+pos          CC   PRP  VBD  EX     VBD   DT    NN    NNS    PRP  VBP   VBN  IN  TO  DT   NN
+labels       0    0    0    0      0     1     1     1      0    1     1    1   1   0    0
+full labels  0    0    0    0      0     1     1     1      0    1     1    1   1   0    0
+sp_pred      0    0    0    0      0     0     0     0      0    0     0    0   0   0    0
+txt_pred     0    0    0    0      0     1     1     1      0    1     1    1   1   0    0
+both_pred    0    0    0    0      0     1     1     1      0    1     0    0   0   0    0
+-----------  ---  ---  ---  -----  ----  ----  ----  -----  ---  ----  ---  --  --  ---  -------
+
+sw4691_s168_c
+you know uh with with a
+-----------  ---  ----  --  ----  ----  --
+text         you  know  uh  with  with  a
+pos          PRP  VBP   UH  IN    IN    DT
+labels       0    0     0   0     0     1
+full labels  0    0     0   0     0     1
+sp_pred      1    1     1   1     0     0
+txt_pred     0    0     0   0     0     1
+both_pred    0    0     0   0     1     1
+-----------  ---  ----  --  ----  ----  --
+
+sw2012_s50_b
+uh if that that the case of a tree falling in the forest
+-----------  --  --  ----  ----  ---  ----  --  --  ----  -------  --  ---  ------
+text         uh  if  that  that  the  case  of  a   tree  falling  in  the  forest
+pos          UH  IN  BES   BES   DT   NN    IN  DT  NN    VBG      IN  DT   NN
+labels       0   0   0     0     1    1     1   1   1     1        1   1    1
+full labels  0   0   0     0     1    1     1   1   1     1        1   1    1
+sp_pred      0   0   0     0     0    0     0   1   1     1        0   0    0
+txt_pred     0   0   0     0     1    1     1   1   1     1        1   1    1
+both_pred    0   0   0     0     0    0     1   1   1     1        1   0    0
+-----------  --  --  ----  ----  ---  ----  --  --  ----  -------  --  ---  ------
+
+sw2302_s58
+and let let you know let let get rid of some of this UNK UNK
+-----------  ---  ---  ---  ---  ----  ---  ---  ---  ---  --  ----  --  ----  ---  ---
+text         and  let  let  you  know  let  let  get  rid  of  some  of  this  UNK  UNK
+pos          CC   PRP  PRP  PRP  VBP   PRP  PRP  VB   VBN  IN  DT    IN  DT    NN   NN
+labels       0    0    0    0    0     0    0    0    0    0   1     0   0     0    0
+full labels  0    0    0    0    0     0    0    0    0    0   1     0   0     0    0
+sp_pred      0    0    0    0    0     0    0    0    0    0   0     0   0     0    0
+txt_pred     0    0    0    0    0     0    0    0    0    0   1     0   0     0    0
+both_pred    0    0    0    0    0     0    0    0    0    1   1     1   1     1    1
+-----------  ---  ---  ---  ---  ----  ---  ---  ---  ---  --  ----  --  ----  ---  ---
+
+sw3049_s33_a
+UNK UNK UNK UNK
+-----------  ---  ---  ---  ---
+text         UNK  UNK  UNK  UNK
+pos          JJ   VBN  JJ   NN
+labels       1    1    1    1
+full labels  1    1    1    1
+sp_pred      1    1    1    1
+txt_pred     1    1    1    1
+both_pred    0    1    1    1
+-----------  ---  ---  ---  ---
+
+sw4830_s21
+and that that why jury selection is often very difficult
+-----------  ---  ----  ----  ---  ----  ---------  ---  -----  ----  ---------
+text         and  that  that  why  jury  selection  is   often  very  difficult
+pos          CC   BES   BES   WRB  NN    NN         VBZ  RB     RB    JJ
+labels       0    0     0     0    1     1          0    0      0     0
+full labels  0    0     0     0    1     1          0    0      0     0
+sp_pred      0    0     0     0    0     1          0    0      0     0
+txt_pred     0    0     0     0    1     1          0    0      0     0
+both_pred    0    0     0     0    0     1          0    0      0     0
+-----------  ---  ----  ----  ---  ----  ---------  ---  -----  ----  ---------
+
+sw2836_s206_a
+you know people who do do UNK read the newspapers in our town or whatever
+-----------  ---  ----  ------  ---  --  --  ---  ----  ---  ----------  --  ----  ----  --  --------
+text         you  know  people  who  do  do  UNK  read  the  newspapers  in  our   town  or  whatever
+pos          PRP  VBP   NNS     WP   RB  RB  RB   VB    DT   NNS         IN  PRP$  NN    CC  WP
+labels       0    0     0       0    0   0   0    0     1    1           1   0     0     0   0
+full labels  0    0     0       0    0   0   0    0     1    1           1   0     0     0   0
+sp_pred      0    0     0       0    0   0   0    0     0    0           0   0     0     0   0
+txt_pred     0    0     0       0    0   0   0    0     1    1           1   0     0     0   0
+both_pred    0    0     0       0    0   0   0    0     0    0           0   0     0     0   0
+-----------  ---  ----  ------  ---  --  --  ---  ----  ---  ----------  --  ----  ----  --  --------
+
+sw2729_s211
+it was it was just really a fight to you know get her clean
+-----------  ---  ---  ---  ---  ----  ------  --  -----  --  ---  ----  ---  ---  -----
+text         it   was  it   was  just  really  a   fight  to  you  know  get  her  clean
+pos          PRP  VBD  PRP  VBD  RB    RB      DT  NN     IN  PRP  VBP   VB   PRP  JJ
+labels       0    0    0    0    0     0       1   1      0   0    0     0    0    0
+full labels  0    0    0    0    0     0       1   1      0   0    0     0    0    0
+sp_pred      0    0    0    0    0     0       0   0      0   0    0     0    0    0
+txt_pred     0    0    0    0    0     0       1   1      0   0    0     0    0    0
+both_pred    0    0    0    0    0     0       1   1      1   0    1     1    0    0
+-----------  ---  ---  ---  ---  ----  ------  --  -----  --  ---  ----  ---  ---  -----
+
+sw2956_s105
+well do do give too much credit to the american public for their UNK ability
+-----------  ----  --  --  ----  ---  ----  ------  --  ---  --------  ------  ---  -----  ---  -------
+text         well  do  do  give  too  much  credit  to  the  american  public  for  their  UNK  ability
+pos          UH    RB  RB  VB    RB   JJ    NN      IN  DT   JJ        NN      IN   PRP$   JJ   NN
+labels       0     0   0   0     1    1     1       0   0    0         0       0    0      0    0
+full labels  0     0   0   0     1    1     1       0   0    0         0       0    0      0    0
+sp_pred      0     0   0   0     0    0     0       0   1    1         1       0    0      0    0
+txt_pred     0     0   0   0     1    1     1       0   0    0         0       0    0      0    0
+both_pred    0     0   0   0     0    1     1       0   1    0         1       1    0      0    0
+-----------  ----  --  --  ----  ---  ----  ------  --  ---  --------  ------  ---  -----  ---  -------
+
+sw2479_s32_a
+kind of had different different ideas from what probably the majority of people have
+-----------  ----  --  ---  ---------  ---------  -----  ----  ----  --------  ---  --------  --  ------  ----
+text         kind  of  had  different  different  ideas  from  what  probably  the  majority  of  people  have
+pos          RB    RB  VBN  JJ         JJ         NNS    IN    WP    RB        DT   NN        IN  NNS     VBP
+labels       0     0   0    0          0          0      0     0     0         1    1         0   0       0
+full labels  0     0   0    0          0          0      0     0     0         1    1         0   0       0
+sp_pred      0     0   0    0          0          0      0     0     0         0    0         0   0       0
+txt_pred     0     0   0    0          0          0      0     0     0         1    1         0   0       0
+both_pred    0     0   0    1          1          1      0     0     0         1    1         0   0       0
+-----------  ----  --  ---  ---------  ---------  -----  ----  ----  --------  ---  --------  --  ------  ----
+
+sw2285_s177_a
+you know
+-----------  ---  ----
+text         you  know
+pos          PRP  VBP
+labels       0    1
+full labels  0    1
+sp_pred      1    0
+txt_pred     0    1
+both_pred    0    0
+-----------  ---  ----
+
+sw2717_s211_b
+fine and penalty UNK with it
+-----------  ----  ---  -------  ---  ----  ---
+text         fine  and  penalty  UNK  with  it
+pos          NN    CC   NN       VBN  IN    PRP
+labels       1     1    1        1    1     0
+full labels  1     1    1        1    1     0
+sp_pred      1     1    1        1    0     0
+txt_pred     1     1    1        1    1     0
+both_pred    0     0    1        1    1     0
+-----------  ----  ---  -------  ---  ----  ---
+
+sw2962_s162
+i mean i im im not making UNK for
+-----------  ---  ----  ---  ---  ---  ---  ------  ---  ---
+text         i    mean  i    im   im   not  making  UNK  for
+pos          PRP  VBP   PRP  VBP  VBP  RB   VBG     NNS  IN
+labels       0    0     0    0    0    0    0       1    1
+full labels  0    0     0    0    0    0    0       1    1
+sp_pred      0    0     0    1    1    0    0       0    0
+txt_pred     0    0     0    0    0    0    0       1    1
+both_pred    0    0     0    0    0    0    1       1    0
+-----------  ---  ----  ---  ---  ---  ---  ------  ---  ---
+
+sw4113_s89_a
+there are advantages to having
+-----------  -----  ---  ----------  --  ------
+text         there  are  advantages  to  having
+pos          EX     VBP  NNS         IN  VBG
+labels       0      0    1           1   1
+full labels  0      0    1           1   1
+sp_pred      0      1    1           0   0
+txt_pred     0      0    1           1   1
+both_pred    0      1    1           1   1
+-----------  -----  ---  ----------  --  ------
+
+sw2828_s113
+well another thing i think would be UNK would be to have some sort of
+-----------  ----  -------  -----  ---  -----  -----  --  ---  -----  --  --  ----  ----  ----  --
+text         well  another  thing  i    think  would  be  UNK  would  be  to  have  some  sort  of
+pos          UH    DT       NN     PRP  VBP    MD     VB  JJ   MD     VB  TO  VB    DT    NN    IN
+labels       0     0        0      0    0      0      0   0    0      0   0   0     1     1     1
+full labels  0     0        0      0    0      0      0   0    0      0   0   0     1     1     1
+sp_pred      0     0        0      0    0      0      0   0    0      0   0   0     0     0     0
+txt_pred     0     0        0      0    0      0      0   0    0      0   0   0     1     1     1
+both_pred    0     0        1      0    0      0      0   0    0      0   0   0     1     1     0
+-----------  ----  -------  -----  ---  -----  -----  --  ---  -----  --  --  ----  ----  ----  --
+
+sw3756_s84
+but we had all this UNK to paint and lots of it
+-----------  ---  ---  ---  ---  ----  ---  --  -----  ---  ----  --  ---
+text         but  we   had  all  this  UNK  to  paint  and  lots  of  it
+pos          CC   PRP  VBD  PDT  DT    NN   TO  VB     CC   NNS   IN  PRP
+labels       0    0    0    0    0     0    0   0      0    1     0   0
+full labels  0    0    0    0    0     0    0   0      0    1     0   0
+sp_pred      0    0    0    0    0     1    0   0      0    0     0   0
+txt_pred     0    0    0    0    0     0    0   0      0    1     0   0
+both_pred    0    0    0    1    1     1    1   1      1    1     1   0
+-----------  ---  ---  ---  ---  ----  ---  --  -----  ---  ----  --  ---
+
+sw2604_s60
+and we got some great public works out of it
+-----------  ---  ---  ---  ----  -----  ------  -----  ---  --  ---
+text         and  we   got  some  great  public  works  out  of  it
+pos          CC   PRP  VBD  DT    JJ     JJ      NNS    IN   IN  PRP
+labels       0    0    0    1     1      1       1      0    0   0
+full labels  0    0    0    1     1      1       1      0    0   0
+sp_pred      0    0    0    0     0      0       0      0    0   0
+txt_pred     0    0    0    1     1      1       1      0    0   0
+both_pred    0    1    0    1     1      1       1      0    0   0
+-----------  ---  ---  ---  ----  -----  ------  -----  ---  --  ---
+
+sw2252_s6_a
+takes awhile to to get used to something
+-----------  -----  ------  --  --  ---  ----  --  ---------
+text         takes  awhile  to  to  get  used  to  something
+pos          VBZ    RB      TO  TO  VB   JJ    IN  NN
+labels       0      1       0   0   0    0     0   0
+full labels  0      1       0   0   0    0     0   0
+sp_pred      1      1       1   0   0    0     0   0
+txt_pred     0      1       0   0   0    0     0   0
+both_pred    1      1       1   1   1    1     1   0
+-----------  -----  ------  --  --  ---  ----  --  ---------
+
+sw4830_s64_a
+you know all
+-----------  ---  ----  ---
+text         you  know  all
+pos          PRP  VBP   DT
+labels       0    0     1
+full labels  0    0     1
+sp_pred      1    0     0
+txt_pred     0    0     1
+both_pred    0    1     1
+-----------  ---  ----  ---
+
+sw2252_s42
+and finally you know who knows
+-----------  ---  -------  ---  ----  ---  -----
+text         and  finally  you  know  who  knows
+pos          CC   RB       PRP  VBP   WP   VBZ
+labels       0    0        0    0     1    0
+full labels  0    0        0    0     1    0
+sp_pred      1    1        0    0     0    0
+txt_pred     0    0        0    0     1    0
+both_pred    1    1        0    1     0    0
+-----------  ---  -------  ---  ----  ---  -----
+
+sw2525_s250
+and i mean theyre theyre the first ones that take the brunt of everything
+-----------  ---  ---  ----  ------  ------  ---  -----  ----  ----  ----  ---  -----  --  ----------
+text         and  i    mean  theyre  theyre  the  first  ones  that  take  the  brunt  of  everything
+pos          CC   PRP  VBP   VBP     VBP     DT   JJ     NNS   WDT   VBP   DT   NN     IN  NN
+labels       0    0    0     0       0       0    0      0     0     0     1    1      0   0
+full labels  0    0    0     0       0       0    0      0     0     0     1    1      0   0
+sp_pred      0    0    0     0       0       0    0      0     0     0     0    0      0   0
+txt_pred     0    0    0     0       0       0    0      0     0     0     1    1      0   0
+both_pred    0    0    0     0       0       1    1      1     0     1     1    1      0   0
+-----------  ---  ---  ----  ------  ------  ---  -----  ----  ----  ----  ---  -----  --  ----------
+
+sw3103_s174_b
+that would be a UNK
+-----------  ----  -----  --  --  ---
+text         that  would  be  a   UNK
+pos          DT    MD     VB  DT  JJ
+labels       0     0      0   1   1
+full labels  0     0      0   1   1
+sp_pred      0     0      0   1   1
+txt_pred     0     0      0   1   1
+both_pred    0     1      1   1   1
+-----------  ----  -----  --  --  ---
+
+sw2441_s250
+i mean my other pet peeve is unions
+-----------  ---  ----  ----  -----  ---  -----  ---  ------
+text         i    mean  my    other  pet  peeve  is   unions
+pos          PRP  VBP   PRP$  JJ     NN   NN     VBZ  NNS
+labels       0    0     0     0      0    0      0    1
+full labels  0    0     0     0      0    0      0    1
+sp_pred      0    0     0     1      1    1      0    0
+txt_pred     0    0     0     0      0    0      0    1
+both_pred    0    0     0     0      0    0      0    0
+-----------  ---  ----  ----  -----  ---  -----  ---  ------
+
+sw4765_s65_c
+UNK attitude toward it
+-----------  ---  --------  ------  ---
+text         UNK  attitude  toward  it
+pos          JJ   NN        IN      PRP
+labels       1    1         1       0
+full labels  1    1         1       0
+sp_pred      1    1         1       0
+txt_pred     1    1         1       0
+both_pred    1    1         0       0
+-----------  ---  --------  ------  ---
+
+sw2461_s159
+i maybe im im wrong because1 i have have you know been in that kind of environment for a long time
+-----------  ---  -----  ---  ---  -----  --------  ---  ----  ----  ---  ----  ----  --  ----  ----  --  -----------  ---  --  ----  ----
+text         i    maybe  im   im   wrong  because1  i    have  have  you  know  been  in  that  kind  of  environment  for  a   long  time
+pos          PRP  RB     VBP  VBP  JJ     IN        PRP  RB    RB    PRP  VBP   VBN   IN  DT    NN    IN  NN           IN   DT  JJ    NN
+labels       0    0      0    0    0      0         0    0     0     0    0     0     0   0     0     0   0            0    1   1     1
+full labels  0    0      0    0    0      0         0    0     0     0    0     0     0   0     0     0   0            0    1   1     1
+sp_pred      0    0      0    0    0      0         0    0     0     0    0     0     0   0     0     0   0            0    0   0     0
+txt_pred     0    0      0    0    0      0         0    0     0     0    0     0     0   0     0     0   0            0    1   1     1
+both_pred    0    0      0    0    0      0         0    0     0     0    0     0     0   1     1     0   0            0    1   1     0
+-----------  ---  -----  ---  ---  -----  --------  ---  ----  ----  ---  ----  ----  --  ----  ----  --  -----------  ---  --  ----  ----
+
+sw3288_s180
+i soon i need a lot of repairs done on on this one
+-----------  ---  ----  ---  ----  --  ---  --  -------  ----  --  --  ----  ---
+text         i    soon  i    need  a   lot  of  repairs  done  on  on  this  one
+pos          PRP  RB    PRP  VBP   DT  NN   IN  NNS      VBN   IN  IN  DT    NN
+labels       0    0     0    0     1   1    0   0        0     0   0   0     0
+full labels  0    0     0    0     1   1    0   0        0     0   0   0     0
+sp_pred      0    0     0    0     0   0    0   0        0     0   0   0     0
+txt_pred     0    0     0    0     1   1    0   0        0     0   0   0     0
+both_pred    0    0     0    0     1   1    1   1        0     0   0   0     0
+-----------  ---  ----  ---  ----  --  ---  --  -------  ----  --  --  ----  ---
+

@@ -1,3 +1,5 @@
+venv
+.idea
 data/nxt-subset
 data/mac_morpho/ag*
 data/mac_morpho/b*
@@ -17,7 +19,7 @@ data/burnc/utt*
 data/burnc/text*
 data/emb/*
 data/*.pkl
-data/*.pkl
+data/*/*.pkl
 speech_model/results/refactor/*.pt
 speech_model/results/refactor/cnn_only/*.pt
 speech_model/results/refactor/replication/*.pt
@@ -35,7 +37,17 @@ speech_model/results/refactor/text_vocab/*.pt
 speech_model/results/refactor/both_*/*.pt
 speech_model/results/refactor/cnn_lstm_3tok*/*.pt
 speech_model/results/refactor/speech_over/*.pt
+speech_model/results/refactor/text_stopwords/*.pt
+speech_model/results/refactor/text_stopwords/*.png
+speech_model/results/refactor/cluster_results/*.pt
+speech_model/results/refactor/cluster_results/*.png
 speech_model/results/refactor/*/*.pt
 speech_model/results/refactor/*/*.png
+speech_model/*/*/*.pt
+speech_model/*/*/*.png
+speech_model/results/swbd/*.png
+speech_model/results/swbd/*.pt
 speech_model/both_exp*
 speech_model/crossval*
+preproc/check_data/figs/*
+*/__pycache__

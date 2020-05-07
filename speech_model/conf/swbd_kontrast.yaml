@@ -1,0 +1,69 @@
+# dataloader params
+segmentation: utterances
+context_window: False
+datasplit: ../data/swbd_kontrast/splits/tenfold3.yaml
+#datasplit: ../data/swbd/splits/tenfold1.yaml
+feats: tok2pros
+bitmark: True
+#predict: infostruc
+
+# Debugging params
+VERBOSE: False
+LENGTH_ANALYSIS: False
+print_every: 500
+eval_every:
+
+
+# i/o params
+all_data: '../data/swbd_kontrast/swbd_kontrast.pkl'
+#all_data: '../data/swbd/swbd.pkl'
+model_name: 'konstrast_speech'
+results_path: 'results/swbd'
+predict: infostruc
+
+train_params:
+  batch_size: 64
+  shuffle: True
+  num_workers: 6
+
+eval_params:
+  batch_size: 64
+  shuffle: True
+  num_workers: 6
+
+# Model params
+tok_level_pred: True
+batch_size: 1
+include_lstm: True
+bidirectional: True
+learning_rate: 0.001
+hidden_size: 128
+pad_len: 2150
+frame_pad_len: 1290
+tok_pad_len: 55
+num_epochs: 25
+cnn_layers: 3
+lstm_layers: 2
+dropout: 0.5
+feat_dim: 6
+postlstm_context: False
+weight_decay: 0.00001
+flatten_method: sum
+frame_filter_size: 11
+frame_pad_size: 5
+
+num_classes: 2
+labelling: kontrast
+
+# Text-specific params
+inputs: speech
+embedding_dim: 300
+use_pretrained: True
+vocab_size: 5000
+glove_path_100: '../data/emb/glove.6B.100d.txt'
+glove_path_300: '../data/emb/glove.6B.300d.txt'
+bottleneck_feats: 2000
+
+seed: 256
+
+pos_only: False

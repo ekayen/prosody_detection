@@ -1,0 +1,14 @@
+name,vocab,emb,tok
+full_eval_burnc_breath_sent_smaller_l2_b64-d5-e20-v3100-lr001-glove.tsv,3100,100,text2labels_breath_sent
+full_eval_burnc_breath_sent_smaller_l2_b64-d5-e20-v3100-lr001-glove300,3100,300,text2labels_breath_sent
+full_eval_burnc_breath_sent_smaller_l2_b64-d5-e20-v3100-lr001,3100,,text2labels_breath_sent
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v2700-lr001-glove300,2700,300,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v2700-lr001,2700,,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v3100-lr001-glove300,3100,300,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v3100-lr001-glove,3100,100,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v3100-lr001,3100,,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v4000-lr001-glove300,4000,300,text2labels_breath_tok
+full_eval_burnc_breath_smaller_l2_b64-d5-e20-v4000-lr001,4000,,text2labels_breath_tok
+full_eval_burnc_smaller_l2_b64-d5-e20-v3100-lr001-glove300,3100,300,text2labels
+full_eval_burnc_smaller_l2_b64-d5-e20-v3100-lr001-glove100,3100,100,text2labels
+full_eval_burnc_smaller_l2_b64-d5-e20-v3100-lr001,3100,,text2labels
