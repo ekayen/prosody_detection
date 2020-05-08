@@ -517,21 +517,18 @@ class SwbdPreprocessor:
 
 
 def main():
-    #swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
-    #swbd_dir = '/afs/inf.ed.ac.uk/group/corpora/large/switchboard/nxt/xml'
+
     swbd_dir = '/afs/inf.ed.ac.uk/user/s18/s1899827/xml'
-    #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd'
-    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/swbd2'
-    #annotated_files = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/swbd/annotated_files.txt'
+    pros_feat_dir = '~/opensmile-2.3.0/swbd2'
     annotated_files = '../data/swbd/annotated_files.txt'
-    #annotated_files = '../data/swbd/toy_annotated_files.txt'
-    #save_dir = '../data/swbd_acc'
     save_dir = '../data/swbd_kontrast'
-    #save_dir = '../data/swbd'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
-    #preprocessor.preproc(acc_only=True,out_file='swbd_acc.pkl')
-    preprocessor.preproc(acc_only=False,kontrast_only=True, out_file='swbd_kontrast.pkl')
-    #preprocessor.preproc(acc_only=False, out_file='swbd.pkl')
+
+    # acc_only: only save instances that are annotated with accent info
+    # kontrast_only: only save instances that are annotated with kontrast info
+    # default is to save all instances that are annotated with new/mediated/old.
+    # This is a superset of the other two.
+    preprocessor.preproc(acc_only=False,kontrast_only=False, out_file='swbd.pkl')
 
 if __name__=="__main__":
     main()
