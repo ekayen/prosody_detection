@@ -1,2 +1,3 @@
 python burnc_preproc.py
-./run_stopwords.sh
+python burnc_gen_splits.py
+./run_stopwords.sh ../data/burnc/splits

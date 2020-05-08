@@ -13,6 +13,9 @@ with open('../data/burnc/burnc.pkl','rb') as f:
 import pdb;pdb.set_trace()
 """
 
+vocab_path = sys.argv[1]
+vocab_name = sys.argv[2]
+
 def text_reg(word):
     remove = punctuation.replace('-', '').replace('<', '').replace('>', '')
     word = word.lower().replace("'s", "").replace("n't", "").replace('/n', '').replace('/v', '')
@@ -23,13 +26,6 @@ def text_reg(word):
 
     return word
 
-#vocab_path = '../data/burnc/splits'
-#vocab_path = '../data/swbd/splits'
-#vocab_path = '../data/swbd_acc/splits'
-#vocab_path = '../data/swbd_new_only/splits'
-vocab_path = '../data/swbd_kontrast/splits'
-
-vocab_name = sys.argv[1]
 
 pth = os.path.join(vocab_path,f'{vocab_name}.vocab')
 

@@ -252,7 +252,7 @@ class SwbdPreprocessor:
         for file in file_list:
 
             conversation,speaker,_,_ = file.strip().split('.')
-
+            print(conversation)
             # Map from terminals to phonwords
             term_path = os.path.join(self.swbd_dir, 'terminals', '.'.join([conversation, speaker, 'terminals', 'xml']))
             term_file = open(term_path, "r")
@@ -388,7 +388,6 @@ class SwbdPreprocessor:
                         if pw_id in self.tok2utt: self.tok2tone[pw] = 0  # added condition that tok has to be in tok2utt
 
             kontrast_path = os.path.join(self.swbd_dir, 'kontrast', '.'.join([conversation, 'kontrast', 'xml']))
-
             found = 0
             not_found = 0
             if os.path.exists(kontrast_path):
@@ -409,7 +408,7 @@ class SwbdPreprocessor:
                         import pdb;pdb.set_trace()
                     if tok not in self.tok2kontrast and tok in self.tok2utt:  # added condition that tok has to be in tok2utt
                         self.tok2kontrast[tok] = None
-
+        print('a')
 
         self.utt_ids = list(self.utt2toks.keys())
         broken_toks = []
@@ -417,18 +416,23 @@ class SwbdPreprocessor:
             if self.tok2times[tok][0]==self.tok2times[tok][1]:
                 broken_toks.append(tok)
 
+        print('b')
         for utt_id in self.utt2toks:
             utt_start = self.tok2times[self.utt2toks[utt_id][0]][0]
             self.utt2tokentimes[utt_id] = [float(self.tok2times[tok][0]) for tok in self.utt2toks[utt_id]] + [self.tok2times[self.utt2toks[utt_id][-1]][-1]]
             self.utt2startend[utt_id] = (self.utt2tokentimes[utt_id][0],self.utt2tokentimes[utt_id][-1])
             self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]
             self.utt2frames[utt_id] = torch.tensor([int(round(float(tim-utt_start)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
-
+        print('c')
         self.make_BIO()
+        print('d')
         self.make_new_tags()
+        print('e')
         self.make_old_tags()
+        print('f')
         self.make_kontrast_tags()
-
+        print('g')
+        
     def make_new_tags(self):
         for utt in self.utt2toks:
             toks = [tok for tok in self.utt2toks[utt]]
@@ -507,11 +511,16 @@ class SwbdPreprocessor:
 
 
     def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False,kontrast_only=False):
+        print('1')
         with open(self.annotated_files,'r') as f:
             file_list = f.readlines()
+        print('2')
         self.text_preproc(file_list)
+        print('3')
         self.acoustic_preproc()
+        print('4')
         self.gen_nested_dict(acc_only,kontrast_only)
+        print('5')
         if write_dict:
             self.save_nested(name=out_file)
 
