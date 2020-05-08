@@ -1,3 +1,7 @@
+"""
+Anonymized
+"""
+
 from torch import nn
 import torch
 import torch.nn.functional as F
@@ -327,24 +331,6 @@ class SpeechEncoder(nn.Module):
                     return x,hidden,post_cnn_feats,post_lstm_feats
                 else:
                     return x, hidden
-                """
-                else:
-                    # TODO make it possible to incorporate text here (maybe)
-                    # NOTE: this path is quite inefficiently written right now. If you continue with this model, rewrite.
-                    # (The main culprit is the two reshapings to make it cooperate with the LSTM which isn't batch-first
-                    # that is easy enough to change if this is going to be used more heavily, but didn't want to change the
-                    # constructor function for the sake of this version of the model, if it's not gonna be used a lot)
-
-                    x = x.view(x.shape[0], x.shape[1], x.shape[2]).transpose(1, 2).transpose(0,1).contiguous()  # here: W x N x C
-                    x,hidden = self.lstm(x,hidden) # In: seq_len, batch, channels. Out: seq_len, batch, hidden*2
-                    x = x.transpose(0,1).transpose(1,2).contiguous()
-                    x = x.view(x.shape[0],x.shape[1],x.shape[2],1)
-                    x = self.token_split(x, toktimes)  # TODO make work with batches
-                    x = x.view(x.shape[0],x.shape[2],x.shape[1])
-                    x = self.fc(x) # In: seq_len, batch, hidden*2. Out: seq_len, batch, num_classes
-
-                    return x,hidden
-                """
 
 
             else:

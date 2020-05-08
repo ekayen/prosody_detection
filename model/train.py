@@ -1,5 +1,5 @@
 """
-By: Elizabeth Nielsen
+Anonymized
 """
 import pickle
 from torch import nn
@@ -17,7 +17,7 @@ import pdb
 from torchsummary import summary
 import time
 
-print_time = True
+print_time = False
 
 def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
 
@@ -30,11 +30,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         'dev_prec': [],
         'dev_rec': [],
         'dev_f': []
-       # 'non_default_acc': [],
-       # 'non_default_precision_0': [],
-       # 'non_default_precision_1': [],
-       # 'non_default_recall_0': [],
-       # 'non_default_recall_1': []
     }
 
     recent_losses = []
@@ -49,12 +44,12 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     print('done')
     """
 
-    #"""
+    """
     # Majority baseline:
     dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
                            noisy=True, print_predictions=True, vocab_dict=vocab_dict,
                            prf=True,maj_baseline=True)
-    #"""
+    """
 
     #train_params = cfg['train_params']
 
@@ -82,8 +77,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
             hidden = model.init_hidden(curr_bat_size)
             output,_ = model(speech,text,toktimes,hidden)
 
-            #import pdb;pdb.set_trace()
-
             if cfg['tok_level_pred']:
                 num_toks = [np.trim_zeros(np.array(toktimes[i:i + 1]).squeeze(), 'b').shape[0] - 1 for i in
                             range(toktimes.shape[0])] # list of len curr_bat_size, each element is len of that utterance
@@ -107,37 +100,16 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
                     tmp_out.append(output_seg)
                     tmp_lbl.append(labels[i * seq_len:i * seq_len + num_toks[i]])
 
-                    # Experiment: don't flatten at all
-                    #tmp_out.append(output[:num_toks[i],i].flatten())
-                    #tmp_lbl.append(labels[i,:num_toks[i]].flatten())
-
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
 
 
                 tot_toks += out.shape[0]
 
-                #import pdb;pdb.set_trace()
-                #loss = criterion(out, lbl.float())
                 loss = criterion(out, lbl)
             else:
-                #loss = criterion(output.view(curr_bat_size), labels.float())
-                #import pdb;pdb.set_trace()
                 loss = criterion(output.view(output.shape[-2],output.shape[-1]), labels)#.float())
             loss.backward()
-            #plot_grad_flow(model.named_parameters())
-            #plt.show()
-            """
-            # Check for exploding gradients
-            for n, p in model.named_parameters():
-                if (p.requires_grad) and ("bias" not in n):
-                    curr_min, curr_max = p.grad.min(), p.grad.max()
-                    if curr_min <= min_grad:
-                        min_grad = curr_min
-                    if curr_max >= max_grad:
-                        max_grad = curr_max
-            print(f'min/max grad: {min_grad}, {max_grad}')
-            """
 
             if torch.sum(torch.isnan(speech)).item() > 0:
                 print('NaNs!!!!')
@@ -154,7 +126,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
             timestep += curr_bat_size
             print_progress(timestep/epoch_size, info=f'Epoch {epoch}')
 
-        # Print stuff!
 
         # time
         plot_data['time'].append(epoch)
@@ -179,29 +150,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         plot_data['dev_rec'].append(dev_results[5])
         plot_data['dev_f'].append(dev_results[6])
 
-        """
-        # Also record precision and recall for non-default words (that is, unaccented content words and accented fn words)
-        non_default_acc,_,_,_, precision_0, precision_1, recall_0, recall_1 = evaluate(cfg, devset, cfg['eval_params'],
-                                                                                       model, device,
-                                                                                       tok_level_pred=cfg['tok_level_pred'],
-                                                                                       noisy=False,
-                                                                                       print_predictions=True,
-                                                                                       vocab_dict=vocab_dict,
-                                                                                       non_default_only=True,
-                                                                                       stopword_list=stopword_list)
-        
-
-        plot_data['non_default_acc'].append(non_default_acc)
-        plot_data['non_default_precision_0'].append(precision_0)
-        plot_data['non_default_precision_1'].append(precision_1)
-        plot_data['non_default_recall_0'].append(recall_0)
-        plot_data['non_default_recall_1'].append(recall_1)
-
-        """
         print()
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
-        #print(f'Total train utts: {train_results[3]}\ttrain toks: {train_results[1]},\ttotal correct: {train_results[2]}')
-        #print(f'Total dev utts: {dev_results[3]}\tdev toks: {dev_results[1]},\ttotal correct: {dev_results[2]}')
         t2 = time.time()
         if print_time: print(f'Epoch time: {t2-t1}')
 
@@ -212,7 +162,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     print('Memory usage:',process.memory_info().rss/1000000000, 'GB')
 
     plot_results(plot_data,model_name,cfg['results_path'],p_r_scores=True)
-    #plot_results(plot_data,model_name,cfg['results_path'])
 
     print('Saving model ...')
     model_path = os.path.join(cfg['results_path'], model_name + '.pt')
@@ -292,8 +241,6 @@ def main():
 
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
-
-    #report_hparams(cfg,datasplit)
 
     set_seeds(seed)
 
@@ -439,7 +386,6 @@ def main():
 
     model.to(device)
 
-    #criterion = nn.BCEWithLogitsLoss() # TODO ! Change to cross entropy loss (which is softmax + nllloss)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(),
                                  lr=cfg['learning_rate'],
