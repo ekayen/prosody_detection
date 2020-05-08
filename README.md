@@ -27,6 +27,7 @@ cd ~/opensmile-2.3.0
 ./burnc_feat_extract.sh
 ```
 
+You may need to adjust the paths in the main function of `burnc_preproc.py` to point to the places where you have saved the raw BURNC data and extracted features. 
 
 
 ### Preparing model input

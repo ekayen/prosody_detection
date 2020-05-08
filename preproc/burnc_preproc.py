@@ -19,8 +19,9 @@ import torch
 TOKENIZATION_METHOD = 'breath_tok'
 
 class BurncPreprocessor:
-    def __init__(self,burnc_dir,pros_feat_dir,mfcc_file,kaldi_dir,speakers_file,save_dir,tok_method='breath_tok',filter_para=['f2bs02p1']):
+    def __init__(self,burnc_dir,pros_feat_dir,mfcc_file,kaldi_dir,speakers_file,save_dir,tok_method='breath_tok',filter_para=['f2bs02p1'],kaldi_prep=False):
 
+        self.kaldi_prep = kaldi_prep
         self.burnc_dir = burnc_dir
         self.kaldi_dir = kaldi_dir
         self.speakers_file = speakers_file
@@ -393,7 +394,8 @@ class BurncPreprocessor:
 
     def acoustic_preproc(self):
         self.load_opensmile_feats()
-        self.load_kaldi_feats()
+        if self.kaldi_prep:
+            self.load_kaldi_feats()
 
     def get_tok_feats(self,df,start,end):
         tok_df = df.loc[df['frameTime'] >= start]
@@ -473,9 +475,9 @@ class BurncPreprocessor:
         with open(os.path.join(save_dir,name),'wb') as f:
             pickle.dump(self.nested,f)
 
-    def preproc(self,kaldi_prep=False,write_dict=True,out_file='burnc.pkl'):
+    def preproc(self,write_dict=True,out_file='burnc.pkl'):
         self.text_preproc()
-        if kaldi_prep:
+        if self.kaldi_prep:
             self.write_kaldi_inputs()
         self.acoustic_preproc()
         self.gen_nested_dict()
@@ -486,15 +488,14 @@ class BurncPreprocessor:
 
 def main():
     speakers_file = 'burnc_speakers.txt'
-    burnc_dir = "/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data"
-    #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/opensmile-2.3.0/burnc'
-    pros_feat_dir = '/home/elizabeth/opensmile-2.3.0/burnc'
-    mfcc_dir = '/home/elizabeth/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
-    kaldi_dir = 'tmp'
+    burnc_dir = "~/repos/kaldi/egs/burnc/kaldi_features/data"
+    pros_feat_dir = '~/opensmile-2.3.0/burnc'
+    mfcc_dir = '~/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
+    kaldi_dir = 'tmp' # Obsolete, can point anywhere
     save_dir = 'tmp'
 
-    proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir)
-    proc.preproc(out_file='burnc_utt.pkl')
+    proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir,kaldi_prep=False)
+    proc.preproc(out_file='burnc.pkl')
 
 
 if __name__ == "__main__":
