@@ -29,6 +29,7 @@ cd ~/opensmile-2.3.0
 
 You may need to adjust the paths in the main function of `burnc_preproc.py` to point to the places where you have saved the raw BURNC data and extracted features. 
 
+This same process can be adapted to preprocess Switchboard NXT as well, substituting the relevant SWBD scripts for BURNC scripts where necessary.
 
 ### Preparing model input
 

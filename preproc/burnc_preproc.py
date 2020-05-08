@@ -492,7 +492,7 @@ def main():
     pros_feat_dir = '~/opensmile-2.3.0/burnc'
     mfcc_dir = '~/repos/kaldi/egs/burnc/kaldi_features/data/train_breath_tok/feats.scp'
     kaldi_dir = 'tmp' # Obsolete, can point anywhere
-    save_dir = 'tmp'
+    save_dir = 'data'
 
     proc = BurncPreprocessor(burnc_dir,pros_feat_dir,mfcc_dir,kaldi_dir,speakers_file,save_dir,kaldi_prep=False)
     proc.preproc(out_file='burnc.pkl')
