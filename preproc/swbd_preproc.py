@@ -511,16 +511,11 @@ class SwbdPreprocessor:
 
 
     def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False,kontrast_only=False):
-        print('1')
         with open(self.annotated_files,'r') as f:
             file_list = f.readlines()
-        print('2')
         self.text_preproc(file_list)
-        print('3')
         self.acoustic_preproc()
-        print('4')
         self.gen_nested_dict(acc_only,kontrast_only)
-        print('5')
         if write_dict:
             self.save_nested(name=out_file)
 

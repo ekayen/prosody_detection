@@ -10,8 +10,8 @@ import os
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--saved_model', help='path to saved model')
-    parser.add_argument("-c", "--config", help="path to config file", default='conf/cnn_lstm_best.yaml')
+    parser.add_argument('-m', '--saved_model', help='path to saved model',default='results/CELoss_both_tenfold0_s256_cnn3_lstm2_d5_lr1e-3_wd1e-5_f11_p5_sum_b2000_h128_e300_v3000.pt')
+    parser.add_argument("-c", "--config", help="path to config file", default='conf/mustc.yaml')
     parser.add_argument('-d', '--datasplit',
                         help='optional path to datasplit yaml file to override path specified in config')
 
@@ -85,11 +85,16 @@ def main():
                 cfg[arg] = cfg2arg[arg]
 
     seed = cfg['seed']
+
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
+
+    #import pdb;pdb.set_trace()
+
     with open(cfg['datasplit'].replace('yaml', 'vocab'), 'rb') as f:
         vocab_dict = pickle.load(f)
+
 
 
     # Load text data:
@@ -164,7 +169,7 @@ def main():
                           batch_size=cfg['train_params']['batch_size'],
                           lstm_layers=cfg['lstm_layers'],
                           bidirectional=cfg['bidirectional'],
-                          num_classes=1,
+                          num_classes=cfg['num_classes'],
                           dropout=cfg['dropout'],
                           include_lstm=cfg['include_lstm'],
                           tok_level_pred=cfg['tok_level_pred'],
@@ -189,9 +194,9 @@ def main():
 
     model.to(device)
 
-    testset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='test',datasplit=datasplit,
-                           overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,
-                           ablate_feat=ablate_feat)
+    #testset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='test',datasplit=datasplit,
+    #                       overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,
+    #                       ablate_feat=ablate_feat)
 
     devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev',datasplit=datasplit,
                            overwrite_speech=overwrite_speech,stopwords_only=stopwords_only,binary_vocab=binary_vocab,
@@ -202,7 +207,7 @@ def main():
     with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
         stopword_list = pickle.load(f)
 
-    acc = evaluate(cfg,testset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=True,
+    acc = evaluate(cfg,devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=True,
              print_predictions=True,vocab_dict=vocab_dict,stopword_baseline=args.stopword_baseline,stopword_list=stopword_list)
 
     datasplit_name = os.path.split(datasplit)[-1].split('.')[0]

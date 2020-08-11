@@ -146,6 +146,11 @@ class BurncDataset(data.Dataset):
         return tok_ids
 
     def get_speech_feats(self,tok_ids):
+        #print(self.input_dict['tok2utt'][tok_ids[0]])
+        #print(tok_ids)
+        tok_ids = [tok_id for tok_id in tok_ids if tok_id in self.input_dict[self.feats]]
+        if tok_ids == []:
+            import pdb;pdb.set_trace()
         tok_feats = [self.input_dict[self.feats][tok_id] for tok_id in tok_ids]
         if self.bitmark and self.segmentation=='tokens':
             tmp = []
@@ -229,6 +234,7 @@ class BurncDataset(data.Dataset):
         speech_feats = self.get_speech_feats(tok_ids)
 
         return iden, (speech_feats,tok_ints,toktimes), labels
+
 
 class SwbdDatasetInfostruc(BurncDataset):
     '''
@@ -554,28 +560,45 @@ def main():
     # FOR TESTING ONLY
     #cfg_file = 'conf/replication_pros.yaml'
     #cfg_file = 'conf/cnn_lstm_pros.yaml'
-    cfg_file = 'conf/swbd.yaml'
+    #cfg_file = 'conf/swbd.yaml'
+    cfg_file = 'conf/mustc.yaml'
     with open(cfg_file, 'r') as f:
         cfg = yaml.load(f, yaml.FullLoader)
     #burnc_dict = '../data/burnc/burnc.pkl'
     #burnc_dict = '../data/swbd/swbd_acc.pkl'
-    burnc_dict = '../data/swbd_new_only/swbd_new_only.pkl'
+    burnc_dict = '../data/mustc/mustc.pkl'
     with open(burnc_dict,'rb') as f:
         input_dict = pickle.load(f)
     #cfg['datasplit'] = '../data/burnc/splits/tenfold1.yaml'
-    cfg['datasplit'] = '../data/swbd_new_only/splits/tenfold0.yaml'
+    cfg['datasplit'] = '../data/mustc/splits/mustc.yaml'
     splt = cfg['datasplit'].split('/')[-1].split('.')[0]
     #vocab_file = f'../data/burnc/splits/{splt}.vocab'
-    vocab_file = f'../data/swbd_new_only/splits/{splt}.vocab'
+    vocab_file = f'../data/mustc/splits/{splt}.vocab'
     print(vocab_file)
+
+    empty_utts = []
+    for utt in input_dict['utt2toks']:
+        if input_dict['utt2toks'][utt] == []:
+            empty_utts.append(utt)
+
+
     with open(vocab_file, 'rb') as f:
         vocab_dict = pickle.load(f)
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
-    dataset = SwbdDatasetInfostruc(cfg,input_dict,vocab_dict['w2i'],vocab_size=30,mode='train',
-                                   datasplit=None,vocab_dict=vocab_dict,labelling='new')#,bio=False)
-    item = dataset.__getitem__(4)
-    import pdb;pdb.set_trace()
+    dataset = BurncDataset(cfg,input_dict,vocab_dict['w2i'],vocab_size=30,mode='dev',
+                                   datasplit=cfg['datasplit'])#,bio=False)
+
+    item = dataset.__getitem__(27)
+    print('going over dataset')
+    for i in range(len(dataset)):
+        item = dataset.__getitem__(i)
+        """
+        try:
+            item = dataset.__getitem__(i)
+        except:
+            import pdb;pdb.set_trace()
+        """
 
     """
     num_utt = len(dataset)
@@ -607,7 +630,7 @@ def main():
     list_vocab = [(k,v) for k,v in zip(vocab_dict['w2i'].keys(),vocab_dict['w2i'].values())]
 
     
-    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='train',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
+    dataset = BurncDataset(cfg,input_dict, vocab_dict['w2i'], vocab_size=30,mode='dev',datasplit=None,overwrite_speech=False,scramble_speech=True,stopwords_only=True,ablate_feat='intensity')
 
     
 

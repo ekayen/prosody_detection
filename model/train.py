@@ -393,12 +393,14 @@ def main():
 
     set_seeds(seed)
 
+    """
     print('stopword_baseline')
     with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
         stopword_list = pickle.load(f)
 
     evaluate(cfg,devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'], stopword_baseline=True, stopword_list=stopword_list)
-
+    """
+    
     train(model, criterion, optimizer, trainset, devset, cfg, device, model_name,vocab_dict)
 
     run_test = False

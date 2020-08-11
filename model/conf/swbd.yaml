@@ -1,8 +1,7 @@
 # dataloader params
 segmentation: utterances
 context_window: False
-datasplit: ../data/swbd_new_only/splits/tenfold1.yaml
-#datasplit: ../data/swbd/splits/tenfold1.yaml
+datasplit: ../data/swbd_acc/splits/tenfold1.yaml
 feats: tok2pros
 bitmark: True
 #predict: infostruc
@@ -15,11 +14,9 @@ eval_every:
 
 
 # i/o params
-all_data: '../data/swbd_new_only/swbd_new_only.pkl'
-#all_data: '../data/swbd/swbd.pkl'
-model_name: 'pos_only_is_both_new_only'
+all_data: '../data/swbd_acc/swbd_acc.pkl'
+model_name: 'pa_speech'
 results_path: 'results/swbd'
-predict: infostruc
 
 train_params:
   batch_size: 64
@@ -53,17 +50,15 @@ frame_filter_size: 11
 frame_pad_size: 5
 
 num_classes: 2
-labelling: new
+bio: False
 
 # Text-specific params
-inputs: both
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
-vocab_size: 5000
+vocab_size: 7800
 glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.300d.txt'
 bottleneck_feats: 2000
 
 seed: 256
-
-pos_only: True
