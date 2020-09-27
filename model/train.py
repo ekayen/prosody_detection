@@ -61,6 +61,7 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     print('Training model ...')
     max_grad = float("-inf")
     min_grad = float("inf")
+    best_dev_acc = 0
     for epoch in range(cfg['num_epochs']):
         t1 = time.time()
         timestep = 0
@@ -154,6 +155,12 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
         t2 = time.time()
         if print_time: print(f'Epoch time: {t2-t1}')
+        if dev_results[0] > best_dev_acc:
+            print('Saving model ...')
+            model_path = os.path.join(cfg['results_path'], f'{model_name}.pt')
+            print(model_path)
+            best_dev_acc = dev_results[0]
+        torch.save(model.state_dict(), model_path)
 
 
     print('done')
@@ -163,11 +170,11 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
 
     plot_results(plot_data,model_name,cfg['results_path'],p_r_scores=True)
 
-    print('Saving model ...')
-    model_path = os.path.join(cfg['results_path'], model_name + '.pt')
-    print(model_path)
-    torch.save(model.state_dict(), model_path)
-    print('done')
+    #print('Saving model ...')
+    #model_path = os.path.join(cfg['results_path'], model_name + '.pt')
+    #print(model_path)
+    #torch.save(model.state_dict(), model_path)
+    #print('done')
 
 def main():
 
@@ -219,7 +226,12 @@ def main():
     int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim','vocab_size','seed']
     float_args = ['dropout','weight_decay','learning_rate']
 
-    seed = cfg['seed']
+    if args.seed:
+        seed = int(args.seed)
+    else:
+        seed = cfg['seed']
+    
+    print(f'SEED: {seed}')
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if args.datasplit:
