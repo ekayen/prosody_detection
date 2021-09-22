@@ -285,7 +285,8 @@ def main():
                 w2i[w] = i
             else:
                 if cfg['inputs']=='text' or cfg['inputs']=='both':
-                    print("WARNING: vocab size is not smaller than actual vocab")
+                    pass
+                    #print("WARNING: vocab size is not smaller than actual vocab")
         return w2i, i2w
 
     w2i, i2w = truncate_dicts(vocab_dict, cfg['vocab_size'])

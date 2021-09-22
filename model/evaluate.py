@@ -15,8 +15,11 @@ import time
 def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level_pred=False,noisy=True,text_only=False,
              print_predictions=False,vocab_dict=None,stopword_list=None,stopword_baseline=False,
              #non_default_only=False,
-             prf=False,maj_baseline=False):
+             prf=False,maj_baseline=False,bootstrap_resample=False):
 
+    predictions = []
+    ys = []
+    
     model.eval()
     true_pos_pred = 0
     total_pred = 0
@@ -106,17 +109,15 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 y = lbl
 
             else:
-                #import pdb;pdb.set_trace()
-                #output = output.detach().view(output.shape[-2])
                 output = output.detach().view(output.shape[-2],output.shape[-1])
 
             threshold = 0
-            #prediction = (output > threshold).type(torch.int64) * 1
-            #import pdb;pdb.set_trace()
             prediction = output.argmax(-1)
             if maj_baseline:
                 prediction = torch.zeros(prediction.shape,dtype=torch.long).to(device)
 
+            predictions.append(prediction)
+            ys.append(y)
             #print(prediction.sum())
 
             if print_predictions:
@@ -138,9 +139,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
 
             count_ones += prediction.sum().item()
 
-            #prediction = torch.tensor(prediction,dtype=torch.int64)
             if tok_level_pred:
-                #total_pred += prediction.shape[1]
                 total_pred += prediction.shape[0]
                 true_pos_pred += (prediction == y).int().sum().item()
 
@@ -151,6 +150,7 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
 
     acc = true_pos_pred/total_pred
 
+    
     if noisy:
         print(f'Accuracy: {round(acc,5)}')
         print(f'Total_pred: {total_pred}')
@@ -164,6 +164,29 @@ def evaluate(cfg,dataset,dataloader_params,model,device,recurrent=True,tok_level
                 sent = [vocab_dict['i2w'][i] for i in line[0]]
                 f.write(f'{line[-1]}\t{" ".join(sent)}\t{" ".join(line[1])}\t{" ".join(line[2])}')
                 f.write('\n')
+    if bootstrap_resample:
+        boot_accs = []
+
+        from random import choices
+        num_utt = len(predictions)
+        for i in range(1000):
+            curr_preds = []
+            curr_lbls = []
+            idxes = random.choices(list(range(num_utt)),k=num_utt)
+            for idx in idxes:
+                curr_preds.append(predictions[idx].cpu())
+                curr_lbls.extend(ys[idx])
+            curr_pred = np.concatenate(curr_preds)
+            curr_lbl = np.array([int(l) for l in curr_lbls])
+            total_pred = curr_pred.shape[0]
+            true_pos_pred = (curr_pred==curr_lbl).sum().item()
+            boot_acc = (true_pos_pred/total_pred)
+            boot_accs.append(boot_acc)
+        boot_accs = np.array(boot_accs)
+        print(f'bootstrap_mean: {np.mean(boot_accs)}')
+        print(f'bootstrap_std: {np.std(boot_accs)}')
+
+            
     """
     if non_default_only:
         precision,recall,fscore,support = precision_recall_fscore_support(prediction.cpu(),y.cpu())

@@ -208,8 +208,9 @@ def main():
         stopword_list = pickle.load(f)
 
     acc = evaluate(cfg,devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],noisy=True,
-             print_predictions=True,vocab_dict=vocab_dict,stopword_baseline=args.stopword_baseline,stopword_list=stopword_list)
+                   print_predictions=True,vocab_dict=vocab_dict,stopword_baseline=args.stopword_baseline,stopword_list=stopword_list,bootstrap_resample=True)
 
+    
     datasplit_name = os.path.split(datasplit)[-1].split('.')[0]
 
     out_path = os.path.join(os.path.dirname(args.saved_model),f'{args.output_file}_{datasplit_name}.tsv')
