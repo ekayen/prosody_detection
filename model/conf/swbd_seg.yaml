@@ -1,0 +1,11 @@
+speech_dir: /afs/inf.ed.ac.uk/group/project/prosody/prosody_nlp/data/input_features/turn_part_fixed
+
+
+train_params:
+  batch_size: 64
+  shuffle: True
+  num_workers: 6
+
+frame_pad_len: 55164
+tok_pad_len: 258
+vocab_size: 14555
