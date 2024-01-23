@@ -1,9 +1,12 @@
 # dataloader params
-segmentation: tokens
-context_window: True
-datasplit: ../data/burnc/splits/tenfold0.yaml
+segmentation: utterances
+context_window: False
+datasplit: ../data/swbd/splits/tenfold1.yaml
 feats: tok2pros
 bitmark: True
+predict: infostruc
+labelling: new
+only_eval_np: True
 
 # Debugging params
 VERBOSE: False
@@ -11,10 +14,11 @@ LENGTH_ANALYSIS: False
 print_every: 500
 eval_every:
 
+
 # i/o params
-all_data: '../data/burnc/burnc.pkl'
-model_name: 'text_cnn_lstm_3tok'
-results_path: 'results/refactor/text_cnn_lstm_3tok'
+all_data: '../data/swbd/swbd.pkl'
+model_name: 'infostruc_new'
+results_path: 'results/swbd'
 
 train_params:
   batch_size: 64
@@ -26,38 +30,37 @@ eval_params:
   shuffle: True
   num_workers: 6
 
-# model params
-tok_level_pred: False
+# Model params
+tok_level_pred: True
+batch_size: 1
 include_lstm: True
-bidirectional: False
+bidirectional: True
 learning_rate: 0.001
 hidden_size: 128
-frame_pad_len: 420
-tok_pad_len: 3
-# if no context, smaller pad length:
-#frame_pad_len: 373
-datasource: 'BURNC'
+pad_len: 2150
+frame_pad_len: 1290
+tok_pad_len: 55
 num_epochs: 25
 cnn_layers: 3
 lstm_layers: 2
 dropout: 0.5
-feat_dim: 7
-#feat_dim: 6
+feat_dim: 6
 postlstm_context: False
 weight_decay: 0.00001
-frame_filter_size: 11
 flatten_method: sum
+frame_filter_size: 11
 frame_pad_size: 5
-num_classes: 2
 
-seed: 256
+num_classes: 2
+bio: False
 
 # Text-specific params
-inputs: text
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
-vocab_size: 3000
+vocab_size: 7800
 glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.300d.txt'
 bottleneck_feats: 2000
 
+seed: 256

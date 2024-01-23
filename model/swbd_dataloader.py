@@ -16,7 +16,7 @@ import os
 from nltk.corpus import stopwords,cmudict
 
 class SwbdSegDataset(data.Dataset):
-    def __init__(self,cfg,w2i,mode='train',datasplit=None):
+    def __init__(self,cfg,w2i,mode='train'):
 
         self.vocab_size = cfg['vocab_size']
         self.w2i = self.adjust_vocab_size(w2i)
@@ -44,16 +44,9 @@ class SwbdSegDataset(data.Dataset):
         self.id2tokids = dict(zip(self.ids,self.tokids))
         
 
-        if not datasplit:
-            datasplit = cfg['datasplit']
-
         self.frame_pad_len = cfg['frame_pad_len']
         self.tok_pad_len = cfg['tok_pad_len']
             
-        if 'pos_only' in cfg:
-            self.pos_only = cfg['pos_only']
-        else:
-            self.pos_only = False
 
     def __len__(self):
         return len(self.ids)
@@ -64,29 +57,41 @@ class SwbdSegDataset(data.Dataset):
         utt_fbank = self.fbank[iden]
         utt_frames = np.concatenate((utt_pitch,utt_fbank),axis=0)
         # TODO make it possible to ablate one of these feats
+        """
         for idx in range(len(parts)):
             if idx+1 < len(parts):
                 if parts[idx][-1] < parts[idx+1][0]:
                     utt_frames[:,parts[idx][-1]+1:parts[idx+1][0]] = 0
+        """
+        utt_frames = torch.tensor(utt_frames,dtype=torch.float32)
+        if self.frame_pad_len:
+
+            utt_frames = self.pad_right(utt_frames,self.frame_pad_len,num_dims=2,pad_val=0)
+        utt_frames = torch.transpose(utt_frames,0,1)
         return utt_frames
 
     def get_pause(self,iden):
-        pause = self.pause[iden]['pause_aft']
+        pause = torch.tensor(self.pause[iden]['pause_aft'],dtype=torch.float32)
+        pause = self.pad_right(pause,self.tok_pad_len,num_dims=1,pad_val=0)
         return pause
 
     def get_dur(self,iden):
-        dur = self.dur[iden]
+        dur = torch.tensor(self.dur[iden],dtype=torch.float32)
+        dur = self.pad_right(dur,self.tok_pad_len,num_dims=2,pad_val=0)
+        dur = torch.transpose(dur,0,1)
         return dur
     
     def pad_right(self,arr,pad_len,num_dims=2,pad_val=0):
         if arr.shape[0] < pad_len:
-            dff = pad_len - arr.shape[0]
+            
+            dff = pad_len - arr.shape[-1]
+
             if num_dims==2: # For padding 2d speech data
-                try:
-                    arr = F.pad(arr, pad=(0, 0, 0, dff), mode='constant',value=pad_val)
-                except:
-                    print(arr.shape)
-                    print(dff)
+                #try:
+                arr = F.pad(arr, pad=(0, dff, 0, 0), mode='constant',value=pad_val)
+                #except:
+                #    print(arr.shape)
+                #    print(dff)
             elif num_dims==1: # For padding 1d string data
                 arr = F.pad(arr, pad=(0, dff), mode='constant',value=pad_val)
         else:
@@ -97,11 +102,14 @@ class SwbdSegDataset(data.Dataset):
         """
         return the initial timestamps from the partition
         """
-        toktimes = torch.tensor([part[0] for part in self.partition[iden]], dtype=torch.float32)
+        curr_part = self.partition[iden]
+        toktimes = [part[0] for part in curr_part]+[curr_part[-1][-1]]
+        toktimes = torch.tensor(toktimes, dtype=torch.float32)
+        toktimes = self.pad_right(toktimes,self.tok_pad_len,num_dims=1,pad_val=0)
         return toktimes
     
     def get_labels(self,iden):
-        Y = torch.tensor(self.id2lbl[iden],dtype=torch.float32)
+        Y = torch.tensor(self.id2lbl[iden],dtype=torch.long)
         
         if self.tok_pad_len:
             Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
@@ -114,7 +122,9 @@ class SwbdSegDataset(data.Dataset):
         return w2i
 
     def get_tokens(self,iden):
-        toks = torch.tensor(self.id2tokids[iden],dtype=torch.float32)
+        toks = torch.tensor(self.id2tokids[iden],dtype=torch.long)
+        if self.tok_pad_len:
+            toks = self.pad_right(toks,self.tok_pad_len,num_dims=1,pad_val=self.w2i['PAD'])
         return toks
 
     def load_ids(self):
@@ -143,8 +153,14 @@ class SwbdSegDataset(data.Dataset):
 
     def text2tokid(self):
         tokids = []
-        for txt in self.text:
-           tokids.append([self.w2i[wd] for wd in txt])
+        for line in self.text:
+            new_line = []
+            for wd in line:
+                if wd in self.w2i:
+                    new_line.append(self.w2i[wd])
+                else:
+                    new_line.append(self.w2i['UNK'])
+            tokids.append(new_line)
         return tokids
     
     def __getitem__(self, index):
@@ -153,6 +169,8 @@ class SwbdSegDataset(data.Dataset):
         labels = self.get_labels(iden)
         toktimes = self.get_toktimes(iden)
         tok_ints = self.get_tokens(iden)
-        
-        return iden, frames, labels, toktimes, tok_ints
+        pause = self.get_pause(iden)
+        dur = self.get_dur(iden)
+
+        return iden, frames,pause,dur, labels, toktimes, tok_ints
 

@@ -40,6 +40,11 @@ class BurncDataset(data.Dataset):
         self.stopwords_only = stopwords_only
         self.binary_vocab = binary_vocab
 
+        if 'combine_dets' in cfg:
+            self.combine_dets = cfg['combine_dets'] # If true, replace all articles (a, an, the) with the same token (a)
+        else:
+            self.combine_dets = False
+        
         self.stopwords = set(stopwords.words('english'))
         if self.stopwords_only:
             self.w2i = {word:2 for word in self.stopwords}
@@ -80,6 +85,12 @@ class BurncDataset(data.Dataset):
         with open(datasplit, 'r') as f:
             split_ids = yaml.load(f, yaml.FullLoader)
         self.utt_ids = split_ids[self.mode]
+        for utt in self.utt_ids:
+            if not utt in self.input_dict['utt2toks']:
+                print('!')
+                print(utt)
+                import pdb;pdb.set_trace()
+                
         if self.segmentation=='tokens':
             self.ids = [tok for utt_id in self.utt_ids for tok in input_dict['utt2toks'][utt_id]]
         elif self.segmentation=='utterances':
@@ -206,8 +217,9 @@ class BurncDataset(data.Dataset):
     def get_tokens(self,tok_ids):
         tok_ints = []
         for tok_id in tok_ids:
+            if self.input_dict['tok2str'][tok_id] in ['an','a','the'] and self.combine_dets:
+                tok_ints.append(self.w2i['a'])                
             if self.pos_only:
-                #import pdb;pdb.set_trace()
                 if self.input_dict['tok2pos'][tok_id] in self.w2i:
                     tok_ints.append(self.w2i[self.input_dict['tok2pos'][tok_id]])
                 else:
@@ -240,22 +252,32 @@ class SwbdDatasetInfostruc(BurncDataset):
     '''
     '''
     def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
-                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None,labelling='bio'):
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None):
         super(SwbdDatasetInfostruc, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
                                                  overwrite_speech,scramble_speech,stopwords_only,
                                                  binary_vocab,ablate_feat)
         self.w2i = w2i
-        self.i2lbl = vocab_dict['i2lbl']
-        self.lbl2i = vocab_dict['lbl2i']
-        self.labelling = labelling
+        #self.i2lbl = vocab_dict['i2lbl']
+        #self.lbl2i = vocab_dict['lbl2i']
+        self.labelling = cfg['labelling']
 
     def get_labels(self,iden):
-        if self.labelling == 'bio':
-            Y = torch.tensor([self.lbl2i[lbl] for lbl in self.input_dict['utt2bio'][iden]])
-        elif self.labelling == 'new':
+        #if self.labelling == 'bio':
+        #    Y = torch.tensor([self.lbl2i[lbl] for lbl in self.input_dict['utt2bio'][iden]])
+        if self.labelling == 'new':
             Y = torch.tensor(self.input_dict['utt2new'][iden])
         elif self.labelling == 'old':
             Y = torch.tensor(self.input_dict['utt2old'][iden])
+        elif self.labelling == 'old_np':
+            old = np.array(self.input_dict['utt2old'][iden])
+            unlbl = np.array([0 if lbl=='O' else 1 for lbl in self.input_dict['utt2bio'][iden]])
+            old[unlbl==0]=2
+            Y = torch.tensor(old)
+        elif self.labelling == 'new_np':
+            new = np.array(self.input_dict['utt2new'][iden])
+            unlbl = np.array([0 if lbl=='O' else 1 for lbl in self.input_dict['utt2bio'][iden]])
+            new[unlbl==0]=2
+            Y = torch.tensor(new)
         elif self.labelling == 'new_heads':
             labels = self.input_dict['utt2new'][iden]
             pos = [self.input_dict['tok2pos'][tok] for tok in self.input_dict['utt2toks'][iden]]
@@ -278,7 +300,9 @@ class SwbdDatasetInfostruc(BurncDataset):
             Y = torch.tensor(thinned_labels)
         elif self.labelling == 'kontrast':
             Y = torch.tensor(self.input_dict['utt2kontrast'][iden])
-
+        else:
+            print(self.labelling)
+            import pdb;pdb.set_trace()
         if self.tok_pad_len and not self.segmentation == 'tokens':
             Y = self.pad_right(Y, self.tok_pad_len, num_dims=1)
         return Y
@@ -294,6 +318,19 @@ class SwbdDatasetInfostruc(BurncDataset):
         speech_feats = self.get_speech_feats(tok_ids)
 
         return iden, (speech_feats,tok_ints,toktimes), labels
+
+class SwbdDataset(BurncDataset):
+    '''
+    '''
+    def __init__(self,cfg,input_dict, w2i, vocab_size=3000,mode='train',datasplit=None,overwrite_speech=False,
+                 scramble_speech=False,stopwords_only=False,binary_vocab=False,ablate_feat=None,vocab_dict=None):
+        super(SwbdDatasetInfostruc, self).__init__(cfg,input_dict, w2i, vocab_size,mode,datasplit,
+                                                 overwrite_speech,scramble_speech,stopwords_only,
+                                                 binary_vocab,ablate_feat)
+        #self.w2i = w2i
+        #self.i2lbl = vocab_dict['i2lbl']
+        #self.lbl2i = vocab_dict['lbl2i']
+        #self.labelling = cfg['labelling']
 
 
 
@@ -444,7 +481,10 @@ def plot_results(plot_data,model_name,results_path,p_r_scores=False):
                             dev_accs=plot_data['dev_acc'],
                                dev_prec=plot_data['dev_prec'],
                                dev_rec =plot_data['dev_rec'],
-                               dev_f=plot_data['dev_f'] ))
+                               dev_f=plot_data['dev_f'],
+                               #dev_np_f=plot_data['dev_np_f']
+                               )
+                          )
     else:
         df = pd.DataFrame(dict(epochs=plot_data['time'],
                            train_losses=plot_data['loss'],
@@ -463,30 +503,42 @@ def plot_results(plot_data,model_name,results_path,p_r_scores=False):
     plt.show()
     df.to_csv('{}/{}.tsv'.format(results_path,model_name), sep='\t')
 
-def gen_model_name(cfg,datasplit):
+def gen_model_name(cfg,datasplit=None,seg=False):
     name_sections = []
     name_sections.append(cfg['model_name'])
-    datasplit = datasplit.split('/')[-1].split('.')[0]
-    name_sections.append(datasplit)
-    name_sections.append(f's{cfg["seed"]}')
-    name_sections.append(f'cnn{cfg["cnn_layers"]}')
-    if cfg['include_lstm']:
-        name_sections.append(f'lstm{cfg["lstm_layers"]}')
-    dropout = int(float(cfg['dropout'])*10)
-    name_sections.append(f'd{dropout}')
-    lr = '{:.0e}'.format(Decimal(cfg['learning_rate']))
-    name_sections.append(f'lr{lr}')
-    if not cfg['weight_decay']==0:
-        #wd = int(cfg['weight_decay']*100000)
-        wd = '{:.0e}'.format(Decimal(cfg['weight_decay']))
-        name_sections.append(f'wd{wd}')
-    name_sections.append(f'f{cfg["frame_filter_size"]}')
-    name_sections.append(f'p{cfg["frame_pad_size"]}')
-    name_sections.append(f'{cfg["flatten_method"]}')
-    name_sections.append(f'b{cfg["bottleneck_feats"]}')
-    name_sections.append(f'h{cfg["hidden_size"]}')
-    name_sections.append(f'e{cfg["embedding_dim"]}')
-    name_sections.append(f'v{cfg["vocab_size"]}')
+
+    if datasplit:
+        datasplit = datasplit.split('/')[-1].split('.')[0]
+        name_sections.append(datasplit)
+    # name_sections.append(f's{cfg["seed"]}')
+    if not seg:
+        """
+        name_sections.append(f'cnn{cfg["cnn_layers"]}')
+        if cfg['include_lstm']:
+            name_sections.append(f'lstm{cfg["lstm_layers"]}')
+        dropout = int(float(cfg['dropout'])*10)
+        name_sections.append(f'd{dropout}')
+        lr = '{:.0e}'.format(Decimal(cfg['learning_rate']))
+        name_sections.append(f'lr{lr}')
+        if not cfg['weight_decay']==0:
+            #wd = int(cfg['weight_decay']*100000)
+            wd = '{:.0e}'.format(Decimal(cfg['weight_decay']))
+            name_sections.append(f'wd{wd}')
+        name_sections.append(f'f{cfg["frame_filter_size"]}')
+        name_sections.append(f'p{cfg["frame_pad_size"]}')
+        name_sections.append(f'{cfg["flatten_method"]}')
+        name_sections.append(f'b{cfg["bottleneck_feats"]}')
+        name_sections.append(f'h{cfg["hidden_size"]}')
+        name_sections.append(f'e{cfg["embedding_dim"]}')
+        """
+        if int(cfg['vocab_size']) < 2500:
+            name_sections.append(f'v{cfg["vocab_size"]}')
+        if 'ablate_feat' in cfg:
+            name_sections.append(f'ablate_{cfg["ablate_feat"]}')
+        if 'overwrite_speech' in cfg:
+            if cfg['overwrite_speech']:
+                name_sections.append('overwrite_speech')
+
     return '_'.join(name_sections)
 
 def report_hparams(cfg,datasplit=None):
@@ -537,7 +589,7 @@ def load_vectors(vector_file,wd_to_idx):
             word = line[0]
             if word in wd_to_idx:
                 wd_idx = wd_to_idx[word]
-                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
+                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float64)
     return vec_dict
 
 def load_vectors(vector_file,wd_to_idx):
@@ -551,7 +603,7 @@ def load_vectors(vector_file,wd_to_idx):
             word = line[0]
             if word in wd_to_idx:
                 wd_idx = wd_to_idx[word]
-                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float)
+                vec_dict[wd_idx] = np.array(line[1:]).astype(np.float64)
     return vec_dict
 
 

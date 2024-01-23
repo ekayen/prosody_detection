@@ -215,7 +215,7 @@ def main():
 
     out_path = os.path.join(os.path.dirname(args.saved_model),f'{args.output_file}_{datasplit_name}.tsv')
     with open(out_path,'w') as f:
-        f.write(f'\tepochs\ttrain_losses\ttrain_accs\tdev_accs\n')
+        f.write(f'\tepochs\ttrain_losses\ttrain_accs\tdev_accs\tdev_\n')
         f.write(f'0\t0\t0\t0\t{acc[0]}')
         print(f'wrote results to {out_path}')
 

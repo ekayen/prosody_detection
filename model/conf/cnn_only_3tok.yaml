@@ -11,10 +11,11 @@ LENGTH_ANALYSIS: False
 print_every: 500
 eval_every:
 
+
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
-model_name: 'text_cnn_lstm_3tok'
-results_path: 'results/refactor/text_cnn_lstm_3tok'
+model_name: 'cnn_only_speech'
+results_path: 'results/thesis'
 
 train_params:
   batch_size: 64
@@ -26,38 +27,39 @@ eval_params:
   shuffle: True
   num_workers: 6
 
-# model params
+# Model params
 tok_level_pred: False
-include_lstm: True
-bidirectional: False
+batch_size: 1
+include_lstm: False
+bidirectional: True
 learning_rate: 0.001
-hidden_size: 128
+hidden_size: 512
+pad_len: 2150
 frame_pad_len: 420
 tok_pad_len: 3
-# if no context, smaller pad length:
-#frame_pad_len: 373
-datasource: 'BURNC'
 num_epochs: 25
 cnn_layers: 3
 lstm_layers: 2
-dropout: 0.5
-feat_dim: 7
-#feat_dim: 6
+dropout: 0.3
+feat_dim: 6
 postlstm_context: False
-weight_decay: 0.00001
-frame_filter_size: 11
+weight_decay: 0
 flatten_method: sum
-frame_pad_size: 5
+frame_filter_size: 9
+frame_pad_size: 4
 num_classes: 2
+
 
 seed: 256
 
+
 # Text-specific params
-inputs: text
+inputs: speech
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
 glove_path_100: '../data/emb/glove.6B.100d.txt'
 glove_path_300: '../data/emb/glove.6B.300d.txt'
-bottleneck_feats: 2000
+bottleneck_feats: 1600
+
 

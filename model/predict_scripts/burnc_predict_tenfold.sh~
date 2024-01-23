@@ -1,0 +1,11 @@
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold0.pt -o burnc_test_both -d ../data/burnc/splits/tenfold0.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold1.pt -o burnc_test_both -d ../data/burnc/splits/tenfold1.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold2.pt -o burnc_test_both -d ../data/burnc/splits/tenfold2.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold3.pt -o burnc_test_both -d ../data/burnc/splits/tenfold3.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold4.pt -o burnc_test_both -d ../data/burnc/splits/tenfold4.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold5.pt -o burnc_test_both -d ../data/burnc/splits/tenfold5.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold6.pt -o burnc_test_both -d ../data/burnc/splits/tenfold6.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold7.pt -o burnc_test_both -d ../data/burnc/splits/tenfold7.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold8.pt -o burnc_test_both -d ../data/burnc/splits/tenfold8.yaml
+python predict_test.py -c conf/cnn_lstm_full.yaml -rs 23 -m results/thesis/both_tenfold9.pt -o burnc_test_both -d ../data/burnc/splits/tenfold9.yaml
+

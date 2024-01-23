@@ -14,13 +14,13 @@ from model import SpeechEncoder
 import numpy as np
 import argparse
 import pdb
-from torchsummary import summary
 import time
 
 print_time = False
 
-def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict):
+def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_dict,testset=None):
 
+    stopping_score = cfg['stopping_score'] if 'stopping_score' in cfg else 'f'
 
     plot_data = {
         'time': [],
@@ -29,7 +29,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         'dev_acc': [],
         'dev_prec': [],
         'dev_rec': [],
-        'dev_f': []
+        'dev_f': [],
+        #'dev_np_f': []
     }
 
     recent_losses = []
@@ -44,24 +45,57 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
     print('done')
     """
 
-    """
+    #"""
     # Majority baseline:
-    dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
+    print('-'*30)
+    print('MAJORITY BASELINE')
+    print('dev:')
+    dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,
+                           epoch=-1,
+                           tok_level_pred=cfg['tok_level_pred'],
                            noisy=True, print_predictions=True, vocab_dict=vocab_dict,
                            prf=True,maj_baseline=True)
+    if testset:
+        print()
+        print('test:')
+        dev_results = evaluate(cfg, testset, cfg['eval_params'], model, device,
+                           epoch=-1,
+                           tok_level_pred=cfg['tok_level_pred'],
+                           noisy=True, print_predictions=True, vocab_dict=vocab_dict,
+                           prf=True,maj_baseline=True)
+
+    print('-'*30)
     """
+    print('RANDOM BASELINE')
+    print('dev:')
+    dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,
+                           epoch=-1,
+                           tok_level_pred=cfg['tok_level_pred'],
+                           noisy=True, print_predictions=True, vocab_dict=vocab_dict,
+                           prf=True,maj_baseline=False,random_baseline=True)
+    if testset:
+        print('test:')
+        test_results = evaluate(cfg, testset, cfg['eval_params'], model, device,
+                           epoch=-1,
+                           tok_level_pred=cfg['tok_level_pred'],
+                           noisy=True, print_predictions=True, vocab_dict=vocab_dict,
+                           prf=True,maj_baseline=False,random_baseline=True)
+
+    print('-'*30)
+    """
+    
 
     #train_params = cfg['train_params']
-
     traingen = data.DataLoader(trainset, **cfg['train_params'])
 
     epoch_size = len(trainset)
     print(f'Epoch size: {epoch_size}')
-    
+
     print('Training model ...')
     max_grad = float("-inf")
     min_grad = float("inf")
-    best_dev_acc = 0
+    
+    best_dev_score = 0
     for epoch in range(cfg['num_epochs']):
         t1 = time.time()
         timestep = 0
@@ -83,10 +117,8 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
                             range(toktimes.shape[0])] # list of len curr_bat_size, each element is len of that utterance
                 seq_len = cfg['tok_pad_len']
 
-                #import pdb;pdb.set_trace()
 
                 # Flatten output and labels:
-
 
                 #output = output.view(output.shape[0], output.shape[1]).transpose(0,1)
                 output = output.transpose(0,1)
@@ -103,7 +135,6 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
 
                 out = torch.cat(tmp_out)
                 lbl = torch.cat(tmp_lbl)
-
 
                 tot_toks += out.shape[0]
 
@@ -136,30 +167,47 @@ def train(model,criterion,optimizer,trainset,devset,cfg,device,model_name,vocab_
         plot_data['loss'].append(train_loss)
 
         # train acc
-        train_results = evaluate(cfg, trainset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
-                                 noisy=False,print_predictions=True,vocab_dict=vocab_dict)
+        train_results = evaluate(cfg,
+                                 trainset,
+                                 cfg['eval_params'],
+                                 model,
+                                 device,
+                                 epoch,
+                                 tok_level_pred=cfg['tok_level_pred'],
+                                 noisy=False,
+                                 print_predictions=True,
+                                 vocab_dict=vocab_dict)
         plot_data['train_acc'].append(train_results[0])
 
         # dev acc
         with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
             stopword_list = pickle.load(f)
 
-        dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device,tok_level_pred=cfg['tok_level_pred'],
-                               noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list,prf=True)
+        dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device, epoch,tok_level_pred=cfg['tok_level_pred'],
+                               noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list,prf=True,prev_best_score=best_dev_score)
+        """
+        np_level_dev_results = evaluate(cfg, devset, cfg['eval_params'], model, device, epoch,tok_level_pred=cfg['tok_level_pred'],
+                                        noisy=False,print_predictions=True,vocab_dict=vocab_dict,stopword_list=stopword_list,prf=True,prev_best_score=best_dev_score,np_level=True)
+        """
         plot_data['dev_acc'].append(dev_results[0])
         plot_data['dev_prec'].append(dev_results[4])
         plot_data['dev_rec'].append(dev_results[5])
         plot_data['dev_f'].append(dev_results[6])
+        # plot_data['dev_np_f'].append(np_level_dev_results[6])
 
         print()
-        print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}')
+        print(f'Epoch: {epoch}\tTrain loss: {round(train_loss,5)}\tTrain acc: {round(train_results[0],5)}\tDev acc:{round(dev_results[0],5)}\tDev fscore:{dev_results[6]}') #\tDev NP-level fscore:{np_level_dev_results[6]}')
         t2 = time.time()
         if print_time: print(f'Epoch time: {t2-t1}')
-        if dev_results[0] > best_dev_acc:
+        if stopping_score == 'acc':
+            curr_dev_score = dev_results[0]
+        elif stopping_score == 'f':
+            curr_dev_score = dev_results[-1][-1]
+        if curr_dev_score > best_dev_score:
             print('Saving model ...')
             model_path = os.path.join(cfg['results_path'], f'{model_name}.pt')
             print(model_path)
-            best_dev_acc = dev_results[0]
+            best_dev_score = curr_dev_score
         torch.save(model.state_dict(), model_path)
 
 
@@ -202,6 +250,7 @@ def main():
                         help='vocab size -- optional, overrides the one in the config')
     parser.add_argument('-s', '--seed',
                         help='seed -- optional, overrides the one in the config')
+    parser.add_argument('-a', '--ablate_feat', help='which feature to ablate -- optional, overrides the one in the config')
 
     args = parser.parse_args()
     with open(args.config, 'r') as f:
@@ -220,7 +269,8 @@ def main():
                'hidden_size': args.hidden_size,
                'embedding_dim': args.embedding_dim,
                'vocab_size': args.vocab_size,
-               'seed': args.seed
+               'seed': args.seed,
+               'ablate_feat': args.ablate_feat
                }
 
     int_args = ['frame_filter_size','frame_pad_size','cnn_layers','lstm_layers','bottleneck_feats','hidden_size','embedding_dim','vocab_size','seed']
@@ -233,6 +283,8 @@ def main():
     
     print(f'SEED: {seed}')
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f'Running on {device}')
+    #device = torch.device("cpu")
 
     if args.datasplit:
         datasplit = args.datasplit
@@ -254,6 +306,36 @@ def main():
     with open(cfg['all_data'], 'rb') as f:
         data_dict = pickle.load(f)
 
+
+    """
+    # FOR DEBUGGING
+    with open(datasplit, 'r') as f:
+        split_ids = yaml.load(f, yaml.FullLoader)
+
+
+    all_toks = [data_dict['utt2toks'][utt] for utt in data_dict['utt_ids']]
+    all_toks = [item for row in all_toks for item in row]
+
+    missing_utts = {'dev':[],'train':[],'test':[]}
+    missing_toks = {'dev':[],'train':[],'test':[]}
+    for split in ['dev','train','test']:
+        for idnum in split_ids[split]:
+            print(idnum)
+            assert idnum in data_dict['utt_ids']
+            assert idnum in data_dict['utt2toks']
+            toks = []
+            toks = data_dict['utt2toks'][idnum]
+            assert toks
+            for tok in toks:
+                if not tok in data_dict['tok2tone']:
+                    missing_toks[split].append(tok)
+                    missing_utts[split].append(idnum)
+
+
+            #missing_utts[split] = [idnum for idnum in split_ids[split] if not idnum in data_dict['utt_ids']]
+
+    """
+    
     set_seeds(seed)
 
     # Load text data:
@@ -314,6 +396,7 @@ def main():
 
     if 'overwrite_speech' in cfg:
         overwrite_speech = cfg['overwrite_speech']
+        print(f'OVERWRITE SPEECH: {overwrite_speech}')
     else:
         overwrite_speech = False
 
@@ -337,15 +420,45 @@ def main():
     else:
         ablate_feat = None
 
-    if 'predict' in cfg:
-        if cfg['predict'] == 'infostruc':
-            trainset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+
+    # EKN 2024: In practice, I want these hparams set any time I'm doing 3tok pred
+    # (plus also segmentation = utterance, but that's a property of datasets):
+    if not cfg['tok_level_pred']:
+        try:
+            assert cfg['context_window']
+        except:
+            print('Trying to run 3 tok pred with only one tok -- override this assert if you meant to do that')
+            print("note: the not implemented error isn't technically true, but this isn't the default behavior, so this is here as a beefed-up warning")
+            raise NotImplementedError
+        try:
+            assert cfg['bitmark']
+        except:
+            print('Trying to run 3 tok pred without bitmarking -- override this assert if you meant to do that')
+            print("note: the not implemented error isn't technically true, but this isn't the default behavior, so this is here as a beefed-up warning")
+            raise NotImplementedError
+        try:
+            assert cfg['segmentation']=='tokens'
+        except:
+            print('The 3 tok pred path is being used (i.e., ~tok_level_pred), and that means the segmentation level should be tokens, not utterances')
+            raise NotImplementedError
+            
+
+        
+    predict = cfg['predict'] if 'predict' in cfg else 'pitchacc'
+    data_source = cfg['data_source'] if 'data_source' in cfg else 'burnc'
+    
+    if predict == 'infostruc':
+        trainset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
                                     overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat,labelling=cfg['labelling'],vocab_dict=vocab_dict)
-            devset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
+                                    binary_vocab=binary_vocab, ablate_feat=ablate_feat,vocab_dict=vocab_dict)
+        devset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
                                   overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,labelling=cfg['labelling'],vocab_dict=vocab_dict)
-        else:
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,vocab_dict=vocab_dict)
+        testset = SwbdDatasetInfostruc(cfg, data_dict, w2i, cfg['vocab_size'], mode='test', datasplit=datasplit,
+                                  overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat,vocab_dict=vocab_dict)
+    else:
+        if data_source == 'burnc':
 
             trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
                                     overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
@@ -353,15 +466,22 @@ def main():
             devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
                                   overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
                                   binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+            testset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='test', datasplit=datasplit,
+                                  overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                  binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+            
+        else:
+            
+            trainset = SwbdDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
+                                   overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                   binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+            devset = SwbdDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
+                                 overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                 binary_vocab=binary_vocab, ablate_feat=ablate_feat)
+            testset = SwbdDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='test', datasplit=datasplit,
+                                 overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
+                                 binary_vocab=binary_vocab, ablate_feat=ablate_feat)
 
-    else:
-
-        trainset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='train', datasplit=datasplit,
-                                overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                                binary_vocab=binary_vocab, ablate_feat=ablate_feat)
-        devset = BurncDataset(cfg, data_dict, w2i, cfg['vocab_size'], mode='dev', datasplit=datasplit,
-                              overwrite_speech=overwrite_speech, stopwords_only=stopwords_only,
-                              binary_vocab=binary_vocab, ablate_feat=ablate_feat)
 
     print('done')
 
@@ -406,20 +526,41 @@ def main():
 
     set_seeds(seed)
 
-    """
-    print('stopword_baseline')
+    print()
+    print('stopword_baseline, dev set')
     with open(cfg['datasplit'].replace('yaml', 'stop'), 'rb') as f:
         stopword_list = pickle.load(f)
+ 
+    evaluate(cfg,
+             devset,
+             cfg['eval_params'],
+             model,
+             device,
+             epoch = -1,
+             tok_level_pred=cfg['tok_level_pred'],
+             prf = True,
+             stopword_baseline=True,
+             stopword_list=stopword_list)
 
-    evaluate(cfg,devset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'], stopword_baseline=True, stopword_list=stopword_list)
     """
-    
-    train(model, criterion, optimizer, trainset, devset, cfg, device, model_name,vocab_dict)
+    print()
+    print('stopword_baseline, test set')
+    evaluate(cfg, testset, cfg['eval_params'], model, device, epoch = -1, tok_level_pred=cfg['tok_level_pred'], prf = True, stopword_baseline=True, stopword_list=stopword_list)
+    """
+    train(model,
+          criterion,
+          optimizer,
+          trainset,
+          devset,
+          cfg,
+          device,
+          model_name,
+          vocab_dict)#,testset=testset)
 
     run_test = False
 
     if run_test:
-        testset = BurncDatasetSpeech(cfg, data_dict, mode='test', datasplit=datasplit)
+        testset = BurncDataset(cfg, data_dict, mode='test', datasplit=datasplit)
         evaluate(cfg, testset, cfg['eval_params'], model, device, tok_level_pred=cfg['tok_level_pred'],
                  noisy=True, print_predictions=True)
 

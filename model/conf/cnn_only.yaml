@@ -48,7 +48,7 @@ weight_decay: 0
 flatten_method: sum
 frame_filter_size: 9
 frame_pad_size: 4
-
+num_classes: 2
 
 seed: 256
 
@@ -58,7 +58,8 @@ inputs: text
 embedding_dim: 300
 use_pretrained: True
 vocab_size: 3000
-glove_path: '../data/emb/glove.6B.100d.txt'
+glove_path_100: '../data/emb/glove.6B.100d.txt'
+glove_path_300: '../data/emb/glove.6B.300d.txt'
 bottleneck_feats: 1600
 
 

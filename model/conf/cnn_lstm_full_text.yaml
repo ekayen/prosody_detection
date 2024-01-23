@@ -15,7 +15,7 @@ eval_every:
 # i/o params
 all_data: '../data/burnc/burnc.pkl'
 model_name: 'text'
-results_path: 'results/crossval_redo'
+results_path: 'results/thesis'
 
 train_params:
   batch_size: 64

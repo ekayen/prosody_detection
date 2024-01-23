@@ -39,6 +39,14 @@ class SwbdPreprocessor:
         self.utt_ids = []
         self.utt2frames = {}
 
+        self.utt2nps = {} # BIO tags for whether or not something is in an NP
+        self.utt2nts = {} # utterance id to nonterminal ids
+        self.nt2term = {}
+
+        self.pw2term = {}
+        self.term2pw = {}
+
+        
         self.utt2toks = {}
         self.tok2spk = {}
         self.tok2utt = {}
@@ -158,7 +166,12 @@ class SwbdPreprocessor:
         self.nested['tok2pos'] = self.tok2pos
         self.nested['tok2kontrast'] = self.tok2kontrast
         self.nested['utt2kontrast'] = self.utt2kontrast
+        self.nested['utt2nps'] = self.utt2nps
+        self.nested['utt2nts'] = self.utt2nts
+        self.nested['pw2term'] = self.pw2term
+        self.nested['term2pw'] = self.term2pw
 
+        
         # Go through things in annotated_files.txt in the pros_feat_dir
         #   Find corresponding syntax file
         #   Go through each sentence in syntax file (store in utt_ids)
@@ -245,11 +258,9 @@ class SwbdPreprocessor:
         self.utt2tones
         self.tok2infostat
         '''
-        pw2term = {}
-        term2pw = {}
 
 
-        for file in file_list:
+        for file in file_list[:5]: # TODO debug only
 
             conversation,speaker,_,_ = file.strip().split('.')
             print(conversation)
@@ -269,8 +280,8 @@ class SwbdPreprocessor:
                     if phonwords:
                         pw_num = SwbdPreprocessor.extract_id_from_href(phonwords[0]['href'])
                         pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
-                        pw2term[pw_id] = term_id
-                        term2pw[term_id] = pw_id
+                        self.pw2term[pw_id] = term_id
+                        self.term2pw[term_id] = pw_id
                         self.tok2pos[pw_id] = pos
 
             # Put all the phonwords in the appropriate dictionaries. Ignore terminals that are not aligned with phonwords
@@ -283,7 +294,7 @@ class SwbdPreprocessor:
                 pw_num = pw['nite:id']
                 pw_id = SwbdPreprocessor.get_id(conversation,pw_num)
 
-                if pw_id in pw2term:
+                if pw_id in self.pw2term:
                     self.tok2tokstr[pw_id] = SwbdPreprocessor.text_reg(pw['orth'])
                     self.tok2times[pw_id] = (float(pw['nite:start']),float(pw['nite:end']))
 
@@ -305,16 +316,23 @@ class SwbdPreprocessor:
             for sentence in sentences:
                 sentence_num = sentence['nite:id']
                 utt_id = SwbdPreprocessor.get_id(conversation,sentence_num)
+                sentence_nonterminals = [SwbdPreprocessor.get_id(conversation,nt['nite:id']) for nt in sentence.find_all('nt')  if nt['cat']=='NP' or nt['cat']=='WHNP']
+                self.utt2nts[utt_id] = sentence_nonterminals
                 sentence_terminals = sentence.find_all('nite:child')
+
                 for terminal in sentence_terminals:
                     terminal_num = SwbdPreprocessor.extract_id_from_href(terminal['href'])
                     term_id =  SwbdPreprocessor.get_id(conversation,terminal_num)
-                    if term_id in term2pw:
-                        pw_id = term2pw[term_id]
-                        if utt_id in self.utt2toks:
+                    if term_id in self.term2pw:
+                        pw_id = self.term2pw[term_id]
+                        """
+                        if utt_id in self.utt2toks: # I think I was splitting at big gaps? Let's try turning that off.
                             gap = self.tok2times[pw_id][0] - self.tok2times[self.utt2toks[utt_id][-1]][-1]
                             if gap > self.gap_threshold:
+                                print(term_id)
+                                print(pw_id)
                                 utt_id = self.utt_id_incr(utt_id)
+                        """
                         if conversation in self.conv2utt:
                             if not utt_id == self.conv2utt[conversation][-1]:
                                 self.conv2utt[conversation].append(utt_id)
@@ -336,18 +354,17 @@ class SwbdPreprocessor:
             # Now find infostatus for tokens
 
             # First use the syntax file to map non-terminals to terminals
-            nt2term = {}
             syn_non_terminals = syn_soup.find_all('nt')
             for nt in syn_non_terminals:
-                nt_id = nt['nite:id']
+                nt_id = SwbdPreprocessor.get_id(conversation,nt['nite:id'])
                 terms = nt.find_all('nite:child')
                 for term in terms:
                     term_num = SwbdPreprocessor.extract_id_from_href(term['href'])
                     term_id = SwbdPreprocessor.get_id(conversation,term_num)
-                    if nt_id in nt2term:
-                        nt2term[nt_id].append(term_id)
+                    if nt_id in self.nt2term:
+                        self.nt2term[nt_id].append(term_id)
                     else:
-                        nt2term[nt_id] = [term_id]
+                        self.nt2term[nt_id] = [term_id]
 
             # Then go through the markables files and assign the infostat to terminals
             infostruc_path = os.path.join(self.swbd_dir, 'markable', '.'.join([conversation, speaker, 'markable', 'xml']))
@@ -361,14 +378,18 @@ class SwbdPreprocessor:
                     if not infostat in self.allowed_infostats:
                         infostat = None
                 except:
+                    # import pdb;pdb.set_trace()
                     infostat = None
-                syn_nt = SwbdPreprocessor.extract_id_from_href(markable.find_all('nite:pointer')[0]['href'])
-                if syn_nt in nt2term:
-                    for term in nt2term[syn_nt]:
-                        if term in term2pw:
-                            if term2pw[term] in self.tok2utt: self.tok2infostat[term2pw[term]] = infostat
-                elif syn_nt in term2pw: # sometimes the markable is marked on a terminal, not a non-terminal
-                    if term2pw[term] in self.tok2utt: self.tok2infostat[term2pw[syn_nt]] = infostat  # added condition that tok has to be in tok2utt
+                syn_nt = SwbdPreprocessor.get_id(conversation,SwbdPreprocessor.extract_id_from_href(markable.find_all('nite:pointer')[0]['href']))
+                if syn_nt in self.nt2term:
+                    for term in self.nt2term[syn_nt]:
+                        if term in self.term2pw:
+                            if self.term2pw[term] in self.tok2utt:
+                                self.tok2infostat[self.term2pw[term]] = infostat
+
+                # EDIT: actually want to ignore these terminals -- they're children of other marked non-terminals.
+                #elif syn_nt in term2pw: # sometimes the markable is marked on a terminal, not a non-terminal
+                #    if term2pw[term] in self.tok2utt: self.tok2infostat[term2pw[syn_nt]] = infostat  # added condition that tok has to be in tok2utt
             for tok in self.conv2tok[conversation]:
                 if tok not in self.tok2infostat and tok in self.tok2utt: # added condition that tok has to be in tok2utt
                     self.tok2infostat[tok] = None
@@ -400,8 +421,8 @@ class SwbdPreprocessor:
                     terms = kontrast.find_all('nite:child')
                     term_ids = ['_'.join([conversation,SwbdPreprocessor.extract_id_from_href(term['href'])]) for term in terms]
                     for term_id in term_ids:
-                        if term_id in term2pw:
-                            self.tok2kontrast[term2pw[term_id]] = kontrast_type
+                        if term_id in self.term2pw:
+                            self.tok2kontrast[self.term2pw[term_id]] = kontrast_type
 
                 for tok in self.conv2tok[conversation]:
                     if conversation == 'sw2295':
@@ -424,6 +445,8 @@ class SwbdPreprocessor:
             self.utt2text[utt_id] = [self.tok2tokstr[tok] for tok in self.utt2toks[utt_id]]
             self.utt2frames[utt_id] = torch.tensor([int(round(float(tim-utt_start)*100)) for tim in self.utt2tokentimes[utt_id]],dtype=torch.float32)
         print('c')
+        self.make_np_BIO()
+        print('made utt2nps')
         self.make_BIO()
         print('d')
         self.make_new_tags()
@@ -447,6 +470,24 @@ class SwbdPreprocessor:
             oldness = [1 if tag=='old' else 0 for tag in tags]
             self.utt2old[utt] = oldness
 
+    def make_np_BIO(self):
+        for utt in self.utt2toks:
+            self.utt2nps[utt] = ['O']*len(self.utt2toks[utt])
+            nts = self.utt2nts[utt]
+            for nt in nts:
+                terms = self.nt2term[nt]
+                pws = [self.term2pw[term] for term in terms if term in self.term2pw]
+                if pws:
+                    start_idx = self.utt2toks[utt].index(pws[0])
+                    end_idx = self.utt2toks[utt].index(pws[-1])
+                    self.utt2nps[utt][start_idx] = 'B'
+                    if end_idx > start_idx:
+                        for i in range(start_idx+1,end_idx+1):
+                            self.utt2nps[utt][i] = 'I'
+            print(self.utt2nps[utt])
+            print([self.tok2tokstr[tok] for tok in self.utt2toks[utt]])             
+            import pdb;pdb.set_trace()
+            
     def make_BIO(self):
         for utt in self.utt2toks:
             b = 'B-'
@@ -481,7 +522,10 @@ class SwbdPreprocessor:
         tok_df = df.loc[df['frameTime'] >= start]
         tok_df = tok_df.loc[tok_df['frameTime'] < end]
         #import pdb;pdb.set_trace()
-        tok_df = tok_df[self.pros_feat_names]
+        try:
+            tok_df = tok_df[self.pros_feat_names]
+        except:
+            import pdb;pdb.set_trace()
         if len(tok_df)==0:
             return torch.tensor([])
         feat_tensors = []
@@ -495,12 +539,16 @@ class SwbdPreprocessor:
 
     def load_opensmile_feats(self):
         for conv in self.conv2utt:
-            filename = '.'.join([conv,'is13','csv'])
+            print(conv)
+            conv_expanded = conv.replace('sw','sw0')
+            filename = '.'.join([conv_expanded,'is13','csv'])
             feat_df = pd.read_csv(os.path.join(self.pros_feat_dir, filename), sep=';')
-            feat_df = feat_df[['frameTime'] + self.pros_feat_names]
+            try:
+                feat_df = feat_df[['frameTime'] + self.pros_feat_names]
+            except:
+                import pdb;pdb.set_trace()
             for utt in self.conv2utt[conv]:
                 for tok in self.utt2toks[utt]:
-                    print(tok)
                     tok_start = self.tok2times[tok][0]
                     tok_end = self.tok2times[tok][1]
                     self.tok2prosfeats[tok] = self.get_tok_feats(feat_df, tok_start, tok_end)
@@ -513,6 +561,7 @@ class SwbdPreprocessor:
     def preproc(self,write_dict=True,out_file='swbd.pkl',acc_only=False,kontrast_only=False):
         with open(self.annotated_files,'r') as f:
             file_list = f.readlines()
+        #file_list = file_list[:5] # DEBUG
         self.text_preproc(file_list)
         self.acoustic_preproc()
         self.gen_nested_dict(acc_only,kontrast_only)
@@ -522,17 +571,20 @@ class SwbdPreprocessor:
 
 def main():
 
-    swbd_dir = '/afs/inf.ed.ac.uk/user/s18/s1899827/xml'
-    pros_feat_dir = '~/opensmile-2.3.0/swbd2'
+    #swbd_dir = '/afs/inf.ed.ac.uk/user/s18/s1899827/xml'
+    swbd_dir = '/group/corporapublic/switchboard/nxt/xml'
+    #pros_feat_dir = '~/opensmile-2.3.0/swbd2'
+    #pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/prosody_nlp/data/input_features/opensmile/'
+    pros_feat_dir = '/afs/inf.ed.ac.uk/group/project/prosody/prosody_detection/data/swbd/opensmile'
     annotated_files = '../data/swbd/annotated_files.txt'
-    save_dir = '../data/swbd_kontrast'
+    save_dir = '../data/swbd'
     preprocessor = SwbdPreprocessor(swbd_dir,pros_feat_dir,save_dir,annotated_files)
 
     # acc_only: only save instances that are annotated with accent info
     # kontrast_only: only save instances that are annotated with kontrast info
     # default is to save all instances that are annotated with new/mediated/old.
     # This is a superset of the other two.
-    preprocessor.preproc(acc_only=False,kontrast_only=False, out_file='swbd.pkl')
+    preprocessor.preproc(acc_only=False,kontrast_only=False, out_file='swbd.unsplit.nps.pkl')
 
 if __name__=="__main__":
     main()

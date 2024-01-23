@@ -41,8 +41,8 @@ def gen_vocab(split_dict):
 # totally random, no consideration of speaker
 # 10 splits, 0 is default
 ##################################################################
-num_folds = 5
-#num_folds = 10
+#num_folds = 5
+num_folds = 10
 
 seeds = [860, 33, 616, 567, 375, 262, 293, 502, 295, 886]
 utt_ids = sorted(utt_ids)
@@ -78,14 +78,15 @@ for i in range(num_folds):
 
     vocab_dict = gen_vocab(split_ids)
 
+    print('vocab size:', len(vocab_dict['w2i']))
 
+    """
     with open(os.path.join(data_path,'splits',f'{output_name}{i}.yaml'), 'w') as f:
         yaml.dump(split_ids, f)
     with open(os.path.join(data_path,'splits',f'{output_name}{i}.vocab'),'wb') as f:
         pickle.dump(vocab_dict, f)
-
-
-
+    """
+asdfasdf
 ##################################################################
 # Second set of splits:
 # each speaker held out, with held out size of 20%

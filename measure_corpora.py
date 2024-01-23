@@ -1,5 +1,8 @@
 import os
+from bs4 import BeautifulSoup
 import subprocess
+import pickle
+
 def sec2hms(secs):
     mins = int(secs/60)
     s = secs - (mins*60)
@@ -38,6 +41,7 @@ print(f'burnc time in h:mm:ss: {h}:{m}:{s}')
 ## SWBD INFOSTRUC                 ##
 ####################################
 
+"""
 swbd_t = 0
 already_seen = set()
 swbd_dir = '/group/corporapublic/switchboard/switchboard1/swb1'
@@ -54,6 +58,7 @@ with open(swbd_list,'r') as f:
 print(f'infostruc swbd time in seconds: {swbd_t}')
 h,m,s = sec2hms(swbd_t)
 print(f'infostruc swbd time in h:mm:ss: {h}:{m}:{s}')
+"""
 
 ####################################
 ## SWBD PROSODY                   ##
@@ -65,16 +70,27 @@ already_seen = set()
 swbd_dir = '/group/corporapublic/switchboard/switchboard1/swb1'
 nxt_dir =  '/group/corporapublic/switchboard/nxt/xml'
 convs = set()
-for fl in os.listdir(os.path.join(nxt_dir,'accent')):
+#for fl in os.listdir(os.path.join(nxt_dir,'accent')):
 #for fl in os.listdir(os.path.join(nxt_dir,'coreference')):
+#for fl in os.listdir(os.path.join(nxt_dir,'markable')):
+for fl in os.listdir(os.path.join(nxt_dir,'syntax')):
     convs.add(fl.strip())
 
-        
+
+   
+
+def get_id(conv,idnum):
+    return '_'.join([conv,idnum])
+
+# Count audio duration        
 for conv in convs:
-    conv = line.split('.')[0][-4:]
+    conv = conv.split('.')[0][-4:]
     if not conv in already_seen:
         aud_file = os.path.join(swbd_dir,'sw0'+conv+'.sph')
-        secs = float(subprocess.check_output(['soxi', '-D',aud_file]).strip())
+        try:
+            secs = float(subprocess.check_output(['soxi', '-D',aud_file]).strip())
+        except:
+            print(f'not found {conv}')
         swbd_t += secs
         already_seen.add(conv)
 
